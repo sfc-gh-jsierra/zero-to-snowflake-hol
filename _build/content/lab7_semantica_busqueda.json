@@ -1,0 +1,251 @@
+{
+  "lab": "lab7_semantica_busqueda.html",
+  "intro": [
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab7_semantica_busqueda</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>."
+    },
+    {
+      "type": "image",
+      "src": "img/quickstart/create_a_worksheet.gif",
+      "caption": "Crear un SQL File en Workspaces (quickstart Zero to Snowflake)"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Contexto y tablas de negocio curadas",
+      "nav": "Tablas curadas",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Revisamos las tablas de negocio curadas y agregamos coordenadas de ciudades, base limpia para que la IA responda bien.",
+      "criterio": "El conteo de <code>analytics.ventas_diarias</code> devuelve 261,847 filas y se crea <code>analytics.ciudades</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Un agente de IA responde mejor sobre datos limpios y resumidos. El setup ya creo <code>analytics.ventas_diarias</code> y <code>analytics.ventas_items_mes</code>, que resumen ~670M lineas de orden. Fijamos contexto y verificamos la tabla de ventas diarias.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Contexto y verificacion",
+          "code": "-- Contexto: rol, base y warehouse del lab\nUSE ROLE accountadmin;\n\nUSE DATABASE tb_101;\n\nUSE WAREHOUSE tb_de_wh;\n\n-- Verifica filas, rango de fechas y ventas totales\nSELECT COUNT(*) AS filas, MIN(fecha) AS desde, MAX(fecha) AS hasta, SUM(ventas) AS ventas_totales\nFROM analytics.ventas_diarias;"
+        },
+        {
+          "type": "expected",
+          "html": "1 fila: <code>FILAS</code> = <strong>261,847</strong>, desde <code>2019-01-01</code> hasta <code>2022-11-01</code>, <code>VENTAS_TOTALES</code> = <strong>$10,110,817,820</strong>."
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Bug real: orders_v repite order_total",
+          "html": "La vista oficial <code>semantic_layer.orders_v</code> repite <code>order_total</code> en cada linea de detalle de la orden. Si la sumas, inflas las ventas tantas veces como lineas tenga la orden. Por eso la Semantic View de este lab se construye sobre tablas agregadas con <code>SUM(price)</code> (<code>ventas_diarias</code>, <code>ventas_items_mes</code>), no sobre <code>order_total</code>."
+        },
+        {
+          "type": "text",
+          "html": "<p>Creamos una tabla de las 30 ciudades con latitud, longitud y poblacion: sera una tabla logica de la Semantic View y servira para mapas en las apps. Las coordenadas vienen de una lista <code>VALUES</code> unida a <code>raw_pos.country</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Tabla de ciudades",
+          "code": "-- Coordenadas de las 30 ciudades (para mapas en las apps)\nCREATE OR REPLACE TABLE analytics.ciudades (\n    ciudad STRING, pais STRING, latitud FLOAT, longitud FLOAT, poblacion NUMBER\n) AS\nSELECT c.city, c.country, g.lat, g.lon, TRY_TO_NUMBER(c.city_population)\nFROM raw_pos.country c\nJOIN (SELECT column1 city, column2 lat, column3 lon FROM VALUES\n    ('Melbourne',-37.8136,144.9631),('Sydney',-33.8688,151.2093),('Rio de Janeiro',-22.9068,-43.1729),\n    ('Sao Paulo',-23.5505,-46.6333),('Montreal',45.5017,-73.5673),('Toronto',43.6532,-79.3832),\n    ('Vancouver',49.2827,-123.1207),('Cairo',30.0444,31.2357),('London',51.5074,-0.1278),\n    ('Manchester',53.4808,-2.2426),('Nice',43.7102,7.2620),('Paris',48.8566,2.3522),\n    ('Berlin',52.5200,13.4050),('Hamburg',53.5511,9.9937),('Munich',48.1351,11.5820),\n    ('Delhi',28.7041,77.1025),('Mumbai',19.0760,72.8777),('Tokyo',35.6762,139.6503),\n    ('Krakow',50.0647,19.9450),('Warsaw',52.2297,21.0122),('Cape Town',-33.9249,18.4241),\n    ('Seoul',37.5665,126.9780),('Barcelona',41.3874,2.1686),('Madrid',40.4168,-3.7038),\n    ('Stockholm',59.3293,18.0686),('Boston',42.3601,-71.0589),('Denver',39.7392,-104.9903),\n    ('New York City',40.7128,-74.0060),('San Mateo',37.5630,-122.3255),('Seattle',47.6062,-122.3321)\n) g ON g.city = c.city;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Table CIUDADES successfully created.</code> (30 ciudades)."
+        }
+      ]
+    },
+    {
+      "title": "Reviews con sentimiento precalculado por IA",
+      "nav": "Reviews + sentimiento",
+      "minutes": 1,
+      "badge": "IA",
+      "resumen": "Calculamos con IA el sentimiento de 2,000 reviews de clientes para poder filtrarlas y analizarlas despues.",
+      "criterio": "Se crea <code>analytics.reviews_sentimiento</code> con 2,000 reviews y el conteo por marca y sentimiento.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Tomamos una muestra reproducible de 2,000 reviews en ingles (ordenadas por <code>HASH(review_id)</code>) y precalculamos su sentimiento con <code>AI_SENTIMENT</code>. Guardarlo en una tabla evita pagar la llamada de IA en cada consulta y lo deja disponible como atributo de filtro para la busqueda.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Reviews con sentimiento",
+          "code": "-- Reviews en ingles con sentimiento precalculado con IA (una muestra de 2,000)\nCREATE OR REPLACE TABLE analytics.reviews_sentimiento AS\nSELECT\n    review_id, truck_brand_name AS marca, primary_city AS ciudad, date AS fecha, review,\n    AI_SENTIMENT(review):categories[0]:sentiment::STRING AS sentimiento\nFROM (\n    SELECT * FROM harmonized.truck_reviews_v\n    WHERE language ILIKE 'en%' AND review IS NOT NULL\n    ORDER BY HASH(review_id)\n    LIMIT 2000\n);\n\n-- Cuenta reviews por marca y sentimiento\nSELECT marca, sentimiento, COUNT(*) AS reviews\nFROM analytics.reviews_sentimiento GROUP BY ALL ORDER BY marca, reviews DESC;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Table REVIEWS_SENTIMIENTO successfully created.</code> El conteo muestra, por cada marca, cuantas reviews son <code>positive</code>, <code>negative</code>, <code>neutral</code> o <code>mixed</code> (2,000 en total)."
+        }
+      ]
+    },
+    {
+      "title": "Cortex Search sobre las reviews",
+      "nav": "Cortex Search",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Creamos un buscador semantico sobre las reviews que entiende el significado de las quejas, no solo palabras exactas.",
+      "criterio": "El servicio <code>analytics.tasty_bytes_review_search</code> se crea y <code>SEARCH_PREVIEW</code> devuelve 3 reviews de Freezing Point.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Las reviews son texto libre: un <code>LIKE</code> no entiende que \"the ice cream was melted\" es una queja de temperatura. <strong>Cortex Search</strong> hace busqueda <strong>hibrida</strong> (semantica con embeddings + palabras clave) y gestiona por ti el indice, los embeddings y la actualizacion. <code>ON review</code> es la columna que se busca; <code>ATTRIBUTES</code> son las columnas por las que se puede filtrar; <code>TARGET_LAG</code> define cada cuanto se refresca el indice. En el quickstart se crea por UI; aqui lo hacemos con una sentencia.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Crear el servicio",
+          "code": "-- Crea la busqueda semantica sobre las reviews\nCREATE OR REPLACE CORTEX SEARCH SERVICE analytics.tasty_bytes_review_search\n    ON review\n    ATTRIBUTES marca, ciudad, sentimiento\n    WAREHOUSE = tb_de_wh\n    TARGET_LAG = '1 day'\nAS (\n    SELECT review, review_id, marca, ciudad, sentimiento, fecha\n    FROM analytics.reviews_sentimiento\n);"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Cortex search service TASTY_BYTES_REVIEW_SEARCH successfully created.</code> (verificado en ~22 s)."
+        },
+        {
+          "type": "text",
+          "html": "<p>Lo probamos con <code>SEARCH_PREVIEW</code>: buscamos \"cold food long wait\" solo en la marca <em>Freezing Point</em> y pedimos 3 resultados.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Probar la busqueda",
+          "code": "-- Prueba: \"que dicen de comida fria o espera larga\" en una marca\nSELECT PARSE_JSON(\n  SNOWFLAKE.CORTEX.SEARCH_PREVIEW('tb_101.analytics.tasty_bytes_review_search',\n    '{\"query\": \"cold food long wait\", \"columns\": [\"review\",\"marca\",\"ciudad\",\"sentimiento\"],\n      \"filter\": {\"@eq\": {\"marca\": \"Freezing Point\"}}, \"limit\": 3}')\n):results AS resultados;"
+        },
+        {
+          "type": "expected",
+          "html": "Una celda <code>RESULTADOS</code> con un arreglo JSON de 3 reviews de <code>Freezing Point</code>, cada una con <code>review</code>, <code>marca</code>, <code>ciudad</code> y <code>sentimiento</code>."
+        },
+        {
+          "type": "text",
+          "html": "<p><strong>Verlo en la UI (opcional):</strong></p><ol><li>Ve a <strong>AI &amp; ML &gt; Cortex Search</strong>.</li><li>Selecciona <code>TB_101.ANALYTICS</code> y abre <code>TASTY_BYTES_REVIEW_SEARCH</code>.</li><li>Abre el <strong>Playground</strong> y escribe una consulta, por ejemplo <code>melted ice cream</code>; prueba filtrar por <code>sentimiento</code>.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-search-existing-service.png",
+          "caption": "El servicio creado por SQL aparece en Cortex Search"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-search-playground.gif",
+          "caption": "Playground de Cortex Search: consultas en lenguaje natural sobre las reviews"
+        },
+        {
+          "type": "callout",
+          "kind": "info",
+          "title": "Para que sirve",
+          "html": "Este servicio sera la herramienta <strong>ReviewsClientes</strong> del agente en el LAB 8."
+        }
+      ]
+    },
+    {
+      "title": "Semantic View: el diccionario de negocio",
+      "nav": "Semantic View",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Definimos el diccionario de negocio (Semantic View) que la IA usa para traducir preguntas en espanol a SQL correcto.",
+      "criterio": "<code>CREATE SEMANTIC VIEW analytics.sv_tasty_bytes</code> termina sin error.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Una <strong>SV (Semantic View)</strong> es el diccionario de negocio que la IA (Cortex Analyst) lee antes de escribir SQL. Le dice que significa cada cosa:</p><ul><li><strong>Tablas logicas</strong> (<code>TABLES</code>): ventas, items, ciudades y clima, con su llave primaria y para que usar cada una.</li><li><strong>Relaciones</strong> (<code>RELATIONSHIPS</code>): como se unen (todas por ciudad).</li><li><strong>Hechos</strong> (<code>FACTS</code>): columnas numericas crudas a nivel de fila.</li><li><strong>Dimensiones</strong> (<code>DIMENSIONS</code>): por donde agrupar o filtrar (fecha, marca, tipo de menu, pais...).</li><li><strong>Metricas</strong> (<code>METRICS</code>): agregaciones con nombre de negocio (ventas totales, ticket promedio...).</li><li><strong>Sinonimos</strong> (<code>WITH SYNONYMS</code>): \"revenue\", \"ingresos\" y \"facturacion\" significan lo mismo.</li><li><strong>Instrucciones</strong> (<code>AI_SQL_GENERATION</code>): reglas como \"si no se indica el anio usa 2022\".</li><li><strong>Verified queries</strong> (<code>AI_VERIFIED_QUERIES</code>): preguntas con su SQL correcto, que ademas aparecen como sugerencias iniciales.</li></ul><p>En el quickstart esto se arma con el asistente de UI (elegir tablas, columnas, relaciones y sinonimos); aqui lo declaramos todo en una sola sentencia.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Crear la Semantic View",
+          "code": "-- Crea la Semantic View: tablas, relaciones, metricas\nCREATE OR REPLACE SEMANTIC VIEW analytics.sv_tasty_bytes\n  TABLES (\n    ventas AS analytics.ventas_diarias\n      PRIMARY KEY (fecha, truck_id)\n      WITH SYNONYMS = ('ventas diarias', 'ordenes', 'transacciones')\n      COMMENT = 'Ventas diarias por food truck. Usar para ventas, ordenes y ticket promedio por marca, ciudad, pais o fecha',\n    items AS analytics.ventas_items_mes\n      PRIMARY KEY (mes, truck_id, item_menu)\n      WITH SYNONYMS = ('productos', 'menu', 'platos')\n      COMMENT = 'Ventas mensuales por item del menu. Usar SOLO para preguntas por producto o item del menu',\n    ciudades AS analytics.ciudades\n      PRIMARY KEY (ciudad)\n      COMMENT = 'Ciudades donde opera Tasty Bytes con coordenadas y poblacion',\n    clima AS analytics.daily_sales_by_weather_v\n      PRIMARY KEY (fecha, ciudad)\n      COMMENT = 'Clima diario por ciudad desde Weather Source (Marketplace), junto con las ventas del dia'\n  )\n  RELATIONSHIPS (\n    ventas_a_ciudad AS ventas (ciudad) REFERENCES ciudades,\n    items_a_ciudad  AS items (ciudad) REFERENCES ciudades,\n    clima_a_ciudad  AS clima (ciudad) REFERENCES ciudades\n  )\n  FACTS (\n    ventas.f_ventas   AS ventas,\n    ventas.f_unidades AS unidades,\n    ventas.f_ordenes  AS ordenes,\n    items.f_ventas_item   AS ventas,\n    items.f_unidades_item AS unidades,\n    clima.f_ventas_clima  AS ventas_diarias,\n    clima.f_temp      AS temp_promedio_f,\n    clima.f_lluvia    AS precipitacion_in,\n    clima.f_viento    AS viento_max_mph\n  )\n  DIMENSIONS (\n    ventas.fecha      AS fecha WITH SYNONYMS = ('dia', 'date') COMMENT = 'Fecha de la venta',\n    ventas.anio       AS YEAR(fecha) WITH SYNONYMS = ('year') COMMENT = 'Anio de la venta',\n    ventas.mes        AS DATE_TRUNC('month', fecha) WITH SYNONYMS = ('month') COMMENT = 'Mes de la venta',\n    ventas.marca      AS marca WITH SYNONYMS = ('brand', 'food truck', 'truck brand') COMMENT = 'Marca del food truck, ej. Freezing Point, Kitakata Ramen Bar',\n    ventas.tipo_menu  AS tipo_menu WITH SYNONYMS = ('tipo de comida', 'cuisine', 'menu type') COMMENT = 'Tipo de comida, ej. Ramen, Tacos, BBQ, Ice Cream',\n    ventas.truck_id   AS truck_id WITH SYNONYMS = ('camion', 'truck') COMMENT = 'Identificador del camion',\n    ventas.es_franquicia AS es_franquicia COMMENT = 'TRUE si el camion es de un franquiciado',\n    ventas.pais_venta AS pais COMMENT = 'Pais de la venta',\n    items.mes_item    AS mes COMMENT = 'Mes de la venta del item',\n    items.marca_item  AS marca COMMENT = 'Marca del food truck que vende el item',\n    items.item_menu   AS item_menu WITH SYNONYMS = ('producto', 'plato', 'menu item') COMMENT = 'Nombre del item del menu',\n    items.categoria_item AS categoria_item WITH SYNONYMS = ('categoria') COMMENT = 'Categoria del item: Main, Beverage, Dessert, Snack',\n    ciudades.ciudad   AS ciudad WITH SYNONYMS = ('city') COMMENT = 'Ciudad',\n    ciudades.pais     AS pais WITH SYNONYMS = ('country') COMMENT = 'Pais',\n    ciudades.latitud  AS latitud COMMENT = 'Latitud de la ciudad',\n    ciudades.longitud AS longitud COMMENT = 'Longitud de la ciudad',\n    clima.fecha_clima AS fecha COMMENT = 'Fecha de la observacion del clima'\n  )\n  METRICS (\n    ventas.ventas_totales    AS SUM(ventas.f_ventas) WITH SYNONYMS = ('revenue', 'ingresos', 'facturacion', 'sales') COMMENT = 'Ventas totales en USD',\n    ventas.unidades_vendidas AS SUM(ventas.f_unidades) WITH SYNONYMS = ('cantidad') COMMENT = 'Unidades vendidas',\n    ventas.numero_ordenes    AS SUM(ventas.f_ordenes) WITH SYNONYMS = ('pedidos', 'orders') COMMENT = 'Numero de ordenes',\n    ventas.ticket_promedio   AS SUM(ventas.f_ventas) / NULLIF(SUM(ventas.f_ordenes), 0) WITH SYNONYMS = ('average order value', 'AOV') COMMENT = 'Venta promedio por orden en USD',\n    ventas.camiones_activos  AS COUNT(DISTINCT ventas.truck_id) COMMENT = 'Camiones con ventas',\n    items.ventas_item        AS SUM(items.f_ventas_item) COMMENT = 'Ventas en USD del item del menu',\n    items.unidades_item      AS SUM(items.f_unidades_item) COMMENT = 'Unidades vendidas del item del menu',\n    clima.ventas_dia_clima   AS SUM(clima.f_ventas_clima) COMMENT = 'Ventas del dia, para analizar contra el clima',\n    clima.temperatura_promedio AS AVG(clima.f_temp) COMMENT = 'Temperatura promedio en Fahrenheit',\n    clima.lluvia_promedio    AS AVG(clima.f_lluvia) COMMENT = 'Precipitacion promedio diaria en pulgadas',\n    clima.viento_promedio    AS AVG(clima.f_viento) COMMENT = 'Velocidad maxima de viento promedio en mph'\n  )\n  COMMENT = 'Modelo de negocio de Tasty Bytes: ventas, productos, ciudades y clima'\n  AI_SQL_GENERATION 'Las ventas estan en USD. Los datos van de 2019 a 2022; si no se indica el anio usa 2022. Para preguntas por producto usa la tabla items; para todo lo demas usa ventas. Redondea montos a 2 decimales.'\n  AI_VERIFIED_QUERIES (\n    top_marcas AS (\n      QUESTION 'Cuales son las 5 marcas con mas ventas en 2022?'\n      ONBOARDING_QUESTION TRUE\n      SQL 'SELECT marca, SUM(ventas) AS ventas_totales FROM tb_101.analytics.ventas_diarias WHERE YEAR(fecha) = 2022 GROUP BY marca ORDER BY ventas_totales DESC LIMIT 5'\n    ),\n    ventas_pais_mes AS (\n      QUESTION 'Como evolucionaron las ventas por mes en 2022 por pais?'\n      ONBOARDING_QUESTION TRUE\n      SQL 'SELECT pais, DATE_TRUNC(''month'', fecha) AS mes, SUM(ventas) AS ventas_totales FROM tb_101.analytics.ventas_diarias WHERE YEAR(fecha) = 2022 GROUP BY pais, mes ORDER BY pais, mes'\n    )\n  );"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Semantic view SV_TASTY_BYTES successfully created.</code>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-analyst-table-relationship.png",
+          "caption": "Relaciones entre tablas logicas, como se ven en el editor de Semantic Views"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-analyst-synonyms.gif",
+          "caption": "Sinonimos en dimensiones y metricas (editor de Semantic Views)"
+        }
+      ]
+    },
+    {
+      "title": "Consultar la SV con SQL y otorgar permisos",
+      "nav": "SEMANTIC_VIEW() y permisos",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Consultamos la Semantic View con nombres de negocio y damos acceso al rol analista que usara el agente.",
+      "criterio": "<code>SHOW SEMANTIC VIEWS</code> lista <code>SV_TASTY_BYTES</code> y <code>SEMANTIC_VIEW(...)</code> devuelve ventas por pais con India primero.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Revisamos la SV creada y su definicion, y la consultamos con SQL usando nombres de negocio: pides dimensiones y metricas y Snowflake escribe los JOIN y las agregaciones por ti.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Inspeccionar y consultar",
+          "code": "-- Lista las Semantic Views del esquema\nSHOW SEMANTIC VIEWS IN SCHEMA analytics;\n\n-- Muestra la definicion completa de la SV\nDESCRIBE SEMANTIC VIEW analytics.sv_tasty_bytes;\n\n-- Consultar la Semantic View con SQL: metricas y dimensiones por nombre de negocio\nSELECT * FROM SEMANTIC_VIEW(\n    analytics.sv_tasty_bytes\n    DIMENSIONS ciudades.pais\n    METRICS ventas.ventas_totales, ventas.numero_ordenes, ventas.ticket_promedio\n) ORDER BY ventas_totales DESC;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>SHOW</code> lista <code>SV_TASTY_BYTES</code>; <code>DESCRIBE</code> muestra sus tablas, dimensiones y metricas. La consulta devuelve una fila por pais: <strong>India</strong> primero con <strong>$1,093,355,250</strong> (2019-2022)."
+        },
+        {
+          "type": "text",
+          "html": "<p>Por ultimo, damos acceso al rol <code>tb_analyst</code>, que es el que usara el agente: lectura de las tablas, de la Semantic View y uso del servicio de busqueda.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Permisos para tb_analyst",
+          "code": "-- Permisos para el rol analista (el que usa el agente)\nGRANT SELECT ON ALL TABLES IN SCHEMA analytics TO ROLE tb_analyst;\n\n-- Permite al analista consultar la Semantic View\nGRANT SELECT ON SEMANTIC VIEW analytics.sv_tasty_bytes TO ROLE tb_analyst;\n\n-- Permite al analista usar el servicio de busqueda\nGRANT USAGE ON CORTEX SEARCH SERVICE analytics.tasty_bytes_review_search TO ROLE tb_analyst;"
+        },
+        {
+          "type": "expected",
+          "html": "Tres veces <code>Statement executed successfully.</code>"
+        }
+      ]
+    },
+    {
+      "title": "Probar la Semantic View en Cortex Analyst",
+      "nav": "Cortex Analyst",
+      "minutes": 1,
+      "badge": "UI",
+      "resumen": "Hacemos preguntas en espanol en Cortex Analyst y comprobamos que la IA escribe el SQL correcto usando el diccionario.",
+      "criterio": "Cortex Analyst responde en lenguaje natural y muestra el SQL generado sobre <code>SV_TASTY_BYTES</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>La prueba de fuego: preguntar en espanol y ver que SQL escribe la IA usando tu diccionario.</p><ol><li>Ve a <strong>AI &amp; ML &gt; Cortex Analyst</strong>.</li><li>Selecciona la Semantic View <code>SV_TASTY_BYTES</code> (en <code>TB_101.ANALYTICS</code>).</li><li>Abre el <strong>Playground</strong>.</li><li>Pregunta: <em>\"Que tipo de menu vende mas en Tokyo?\"</em></li><li>Revisa el <strong>SQL generado</strong>: deberia usar la dimension <code>tipo_menu</code>, la metrica <code>ventas_totales</code> y filtrar por la ciudad Tokyo.</li><li>Prueba tambien una de las verified queries sugeridas (por ejemplo, las 5 marcas con mas ventas en 2022).</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-analyst-nav.png",
+          "caption": "Navegar a Cortex Analyst en Snowsight"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-analyst-interface.png",
+          "caption": "Interfaz de Cortex Analyst con la Semantic View seleccionada"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-analyst-prompt1.png",
+          "caption": "Pregunta en lenguaje natural y SQL generado"
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "La IA habla tu idioma de negocio",
+          "html": "No escribiste un JOIN ni dijiste que columna es \"tipo de menu\": la Semantic View lo resolvio. Esa misma SV sera la herramienta <strong>VentasTastyBytes</strong> del agente en el LAB 8."
+        }
+      ]
+    }
+  ]
+}

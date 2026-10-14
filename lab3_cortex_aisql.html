@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAB 3: Cortex AISQL: IA generativa con SQL | Zero to Snowflake HOL</title>
+<style>
+
+:root {
+    --sf-accent: #29B5E8;
+    --sf-headers: #11567F;
+    --sf-headers-dark: #0c3f5c;
+    --sf-green: #2fb380;
+    --sf-red: #e5484d;
+    --sf-orange: #ff922b;
+    --sf-yellow: #ffb703;
+
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+
+    --font-head: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+    --font-body: 'Lato', 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', 'Consolas', 'Menlo', monospace;
+
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 10px -2px rgba(17,86,127,0.15);
+    --shadow-lg: 0 10px 20px -4px rgba(17,86,127,0.20);
+
+    --header-height: 64px;
+    --sidebar-width: 270px;
+    --content-max-width: 880px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-height) + var(--space-lg)); }
+body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--gray-800);
+    background-color: var(--gray-50);
+    -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 {
+    font-family: var(--font-head);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-900);
+}
+a { color: var(--sf-accent); text-decoration: none; }
+a:hover { color: var(--sf-headers); }
+code { font-family: var(--font-mono); }
+
+/* Header */
+.hol-header {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+    background: white; border-bottom: 1px solid var(--gray-200); z-index: 100; box-shadow: var(--shadow-sm);
+}
+.header-container {
+    max-width: 1400px; margin: 0 auto; height: 100%;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-xl);
+}
+.logo-section { display: flex; align-items: center; gap: var(--space-md); }
+.sf-logo-mark { width: 32px; height: 32px; }
+.brand-name { font-family: var(--font-head); font-weight: 700; font-size: 1rem; color: var(--sf-headers); letter-spacing: 0.5px; }
+.logo-divider { width: 1px; height: 24px; background: var(--gray-300); }
+.hol-badge {
+    background: linear-gradient(135deg, var(--sf-accent), var(--sf-headers));
+    color: white; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.header-nav { display: flex; gap: var(--space-lg); }
+.header-nav a { color: var(--gray-600); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Hero */
+.hero-section {
+    margin-top: var(--header-height);
+    background: linear-gradient(135deg, var(--sf-headers-dark) 0%, var(--sf-headers) 100%);
+    padding: var(--space-3xl) 0; color: white;
+}
+.hero-container {
+    max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl);
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--space-3xl); align-items: center;
+}
+.industry-tag {
+    display: inline-block; background: rgba(41,181,232,0.25); color: #bfe9f9;
+    padding: var(--space-xs) var(--space-md); border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: var(--space-md);
+}
+.hero-title { font-family: var(--font-head); font-size: 2.3rem; font-weight: 800; line-height: 1.25; margin-bottom: var(--space-md); text-transform: none; color: white; }
+.hero-subtitle { font-family: var(--font-body); font-size: 1.05rem; color: #dceefa; margin-bottom: var(--space-xl); line-height: 1.7; text-transform: none; }
+.hero-meta { display: flex; gap: var(--space-xl); margin-bottom: var(--space-xl); flex-wrap: wrap; }
+.meta-item { display: flex; align-items: center; gap: var(--space-sm); color: #cfe6f2; font-size: 0.875rem; }
+.meta-icon { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+.hero-cta {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    background: var(--sf-accent); color: white; padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md); font-family: var(--font-head); font-weight: 700; letter-spacing: 0.5px;
+    box-shadow: var(--shadow-lg);
+}
+.hero-cta:hover { background: white; color: var(--sf-headers); }
+.architecture-preview {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-lg); padding: var(--space-xl); backdrop-filter: blur(6px);
+    font-family: var(--font-mono); font-size: 0.8rem; color: #cfe6f2; line-height: 1.9;
+}
+.arch-line { display: block; }
+.arch-arrow { color: var(--sf-accent); }
+
+/* Content sections */
+.content-section { padding: var(--space-2xl) 0; }
+.content-section.alt-bg { background: white; }
+.section-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); }
+.section-title {
+    font-size: 1.5rem; font-weight: 800; color: var(--gray-900);
+    margin-bottom: var(--space-xl); position: relative; padding-bottom: var(--space-md);
+}
+.section-title::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 56px; height: 4px;
+    background: linear-gradient(90deg, var(--sf-accent), var(--sf-headers)); border-radius: var(--radius-full);
+}
+
+.overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.overview-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: var(--space-xl); }
+.overview-card.highlight { background: linear-gradient(135deg, #eaf7fd, white); border-color: var(--sf-accent); }
+.overview-card h3 { font-size: 0.95rem; color: var(--gray-700); margin-bottom: var(--space-md); }
+.overview-card p { text-transform: none; font-family: var(--font-body); color: var(--gray-600); }
+.learning-list { list-style: none; }
+.learning-list li { position: relative; padding-left: var(--space-lg); margin-bottom: var(--space-sm); color: var(--gray-600); text-transform: none; font-family: var(--font-body); }
+.learning-list li::before { content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px; background: var(--sf-accent); border-radius: 50%; }
+.tech-tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.tech-tag {
+    display: inline-flex; align-items: center; background: var(--gray-100);
+    padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-size: 0.78rem; color: var(--gray-700); font-family: var(--font-mono); text-transform: none;
+}
+
+.prerequisites-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.prereq-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: var(--space-lg); display: flex; gap: var(--space-md); align-items: flex-start; }
+.prereq-icon { width: 28px; height: 28px; flex-shrink: 0; color: var(--sf-accent); }
+.prereq-info h4 { font-size: 0.9rem; color: var(--gray-800); margin-bottom: var(--space-xs); }
+.prereq-info p { font-family: var(--font-body); font-size: 0.85rem; color: var(--gray-500); text-transform: none; }
+
+/* Progress tracker */
+.progress-tracker {
+    position: fixed; left: 0; top: var(--header-height); bottom: 0; width: var(--sidebar-width);
+    background: white; border-right: 1px solid var(--gray-200); padding: var(--space-xl); overflow-y: auto; z-index: 50;
+}
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); font-family: var(--font-head); font-weight: 700; font-size: 0.8rem; color: var(--gray-700); }
+.progress-percent { color: var(--sf-accent); }
+.progress-bar { height: 6px; background: var(--gray-200); border-radius: var(--radius-full); margin-bottom: var(--space-xl); overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--sf-accent), var(--sf-green)); border-radius: var(--radius-full); width: 0%; transition: width 250ms ease; }
+.steps-nav { display: flex; flex-direction: column; gap: var(--space-xs); }
+.step-nav-item {
+    display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md); color: var(--gray-600); font-size: 0.82rem; text-decoration: none;
+}
+.step-nav-item:hover { background: var(--gray-100); }
+.step-nav-item.active { background: #eaf7fd; color: var(--sf-headers); font-weight: 700; }
+.step-nav-item.completed { color: var(--sf-green); }
+.step-nav-item .step-indicator {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid currentColor;
+    display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+.step-nav-item.completed .step-indicator { background: var(--sf-green); border-color: var(--sf-green); color: white; }
+
+/* Steps container */
+.steps-container { margin-left: var(--sidebar-width); padding: var(--space-2xl); max-width: calc(var(--content-max-width) + var(--sidebar-width) + var(--space-3xl) * 2); }
+
+.callout { display: flex; gap: var(--space-md); padding: var(--space-lg); border-radius: var(--radius-md); margin: 0 0 var(--space-xl) 0; }
+.callout-icon { flex-shrink: 0; width: 24px; height: 24px; }
+.callout-icon svg { width: 100%; height: 100%; }
+.callout-content { flex: 1; }
+.callout-title { display: block; margin-bottom: var(--space-xs); font-family: var(--font-head); font-size: 0.85rem; letter-spacing: 0.5px; }
+.callout-content p { margin: 0; font-size: 0.92rem; font-family: var(--font-body); text-transform: none; color: var(--gray-700); }
+.callout-warning { background: #fff4e6; border-left: 4px solid var(--sf-orange); }
+.callout-warning .callout-icon { color: var(--sf-orange); }
+.callout-info { background: #eaf7fd; border-left: 4px solid var(--sf-accent); }
+.callout-info .callout-icon { color: var(--sf-accent); }
+.callout-tip { background: #eafaf3; border-left: 4px solid var(--sf-green); }
+.callout-tip .callout-icon { color: var(--sf-green); }
+
+.step-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); margin-bottom: var(--space-xl); overflow: hidden; scroll-margin-top: calc(var(--header-height) + var(--space-lg)); }
+.step-card.completed { border-color: var(--sf-green); }
+.step-card.completed .step-number { background: var(--sf-green); }
+.step-header { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-lg); background: var(--gray-50); border-bottom: 1px solid var(--gray-200); cursor: pointer; }
+.step-number {
+    width: 40px; height: 40px; background: var(--sf-headers); color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; font-size: 1.05rem; flex-shrink: 0;
+}
+.step-info { flex: 1; }
+.step-title { font-size: 1.05rem; font-weight: 800; color: var(--gray-800); margin: 0; text-transform: none; }
+.step-duration { font-family: var(--font-body); font-size: 0.78rem; color: var(--gray-500); text-transform: none; }
+.step-toggle { background: none; border: none; padding: var(--space-sm); cursor: pointer; color: var(--gray-400); transition: transform 150ms ease; }
+.step-toggle[aria-expanded="false"] { transform: rotate(-90deg); }
+.step-toggle svg { width: 22px; height: 22px; fill: currentColor; }
+.step-content { padding: var(--space-xl); }
+.step-content.collapsed { display: none; }
+.step-description { color: var(--gray-600); margin-bottom: var(--space-lg); line-height: 1.75; text-transform: none; font-family: var(--font-body); }
+.step-description strong { color: var(--gray-800); }
+.step-description code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.85rem; }
+.step-actions { display: flex; justify-content: flex-end; padding-top: var(--space-lg); border-top: 1px solid var(--gray-200); margin-top: var(--space-xl); }
+.btn-check {
+    display: inline-flex; align-items: center; gap: var(--space-sm); background: var(--gray-100); color: var(--gray-700);
+    border: none; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); font-family: var(--font-head);
+    font-weight: 700; font-size: 0.78rem; letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer;
+}
+.btn-check:hover { background: var(--sf-green); color: white; }
+.btn-check svg { width: 16px; height: 16px; fill: currentColor; }
+.btn-check:disabled { cursor: default; }
+
+.sub-heading { font-family: var(--font-head); font-size: 0.85rem; color: var(--sf-headers); letter-spacing: 0.5px; margin: var(--space-lg) 0 var(--space-sm) 0; }
+
+/* Code blocks */
+.code-block { background: var(--gray-900); border-radius: var(--radius-md); margin: var(--space-md) 0 var(--space-lg) 0; overflow: hidden; }
+.code-header { display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) var(--space-md); background: var(--gray-800); border-bottom: 1px solid var(--gray-700); }
+.code-language { color: var(--gray-400); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font-head); }
+.code-actions { display: flex; gap: var(--space-xs); }
+.code-actions button { background: transparent; border: none; padding: var(--space-xs) var(--space-sm); cursor: pointer; color: var(--gray-400); border-radius: var(--radius-sm); font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; }
+.code-actions button:hover { background: var(--gray-700); color: var(--sf-accent); }
+.code-block pre { margin: 0; padding: var(--space-lg); overflow-x: auto; max-height: 480px; }
+.code-block code { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; color: var(--gray-100); white-space: pre; }
+
+/* Tables */
+.table-wrapper { overflow-x: auto; margin: var(--space-lg) 0; border-radius: var(--radius-md); border: 1px solid var(--gray-200); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.data-table th { background: var(--gray-100); padding: var(--space-sm) var(--space-md); text-align: left; font-family: var(--font-head); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px; text-transform: uppercase; color: var(--gray-700); border-bottom: 2px solid var(--gray-300); white-space: nowrap; }
+.data-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--gray-200); color: var(--gray-600); }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.78rem; }
+
+/* Completion */
+.completion-section { display: none; background: linear-gradient(135deg, var(--sf-green), #1f8a5f); color: white; padding: var(--space-3xl) 0; text-align: center; margin-left: var(--sidebar-width); }
+.completion-section.visible { display: block; }
+.completion-container { max-width: 600px; margin: 0 auto; padding: 0 var(--space-xl); }
+.completion-icon { width: 72px; height: 72px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-xl); }
+.completion-icon svg { width: 42px; height: 42px; fill: var(--sf-green); }
+.completion-section h2 { font-size: 1.7rem; margin-bottom: var(--space-md); color: white; }
+.completion-section p { text-transform: none; font-family: var(--font-body); }
+.completion-summary { display: flex; justify-content: center; gap: var(--space-2xl); margin: var(--space-xl) 0; }
+.summary-item { text-align: center; }
+.summary-label { display: block; font-size: 0.8rem; opacity: 0.9; margin-bottom: var(--space-xs); text-transform: none; font-family: var(--font-body); }
+.summary-value { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; }
+.next-actions { background: rgba(255,255,255,0.12); border-radius: var(--radius-lg); padding: var(--space-xl); margin-top: var(--space-xl); text-align: left; }
+.next-actions h3 { font-size: 0.9rem; margin-bottom: var(--space-md); }
+.next-actions ul { list-style: none; text-transform: none; font-family: var(--font-body); }
+.next-actions li { padding: var(--space-xs) 0; }
+
+/* Footer */
+.hol-footer { background: var(--gray-900); color: var(--gray-400); padding: var(--space-xl) 0; margin-left: var(--sidebar-width); }
+.footer-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md); }
+.footer-brand { display: flex; align-items: center; gap: var(--space-md); }
+.footer-brand .sf-logo-mark { filter: brightness(0) invert(1); }
+.footer-meta { text-align: right; font-size: 0.78rem; }
+
+@media (max-width: 992px) {
+    .progress-tracker { display: none; }
+    .steps-container, .hol-footer, .completion-section { margin-left: 0; }
+    .hero-container, .overview-grid, .prerequisites-grid { grid-template-columns: 1fr; }
+    .header-nav { display: none; }
+}
+
+
+/* ============================================================
+   EXTENSIONES SEMANTICAS DEL HOL
+   Traduce el vocabulario del HOL real (paso-criterio, modalidad-badge,
+   bug-real, wow, evidencia, prompt de CoCo, ubicate, arquitectura)
+   al lenguaje visual del skill (paleta #29B5E8 / #11567F).
+   ============================================================ */
+
+/* --- Criterio de exito por paso (franja verde) --- */
+.step-criterio {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    background: rgba(47,179,128,0.08);
+    border-left: 3px solid var(--sf-green);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+    font-size: 0.9375rem;
+    color: var(--gray-700);
+}
+.step-criterio strong { color: #1c7a56; }
+.step-criterio.hard {
+    background: rgba(229,72,77,0.07);
+    border-left-color: var(--sf-red);
+}
+.step-criterio.hard strong { color: #b3282c; }
+
+/* --- Badge de modalidad de ejecucion (SQL / Snowsight / CoCo / CLI) --- */
+.modalidad-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-sm);
+}
+.modalidad-badge.sql   { background: rgba(41,181,232,0.14); color: #14708f; border: 1px solid rgba(41,181,232,0.35); }
+.modalidad-badge.ui    { background: rgba(17,86,127,0.10);  color: var(--sf-headers); border: 1px solid rgba(17,86,127,0.28); }
+.modalidad-badge.coco  { background: rgba(139,92,246,0.12); color: #6d3fd4; border: 1px solid rgba(139,92,246,0.32); }
+.modalidad-badge.cli   { background: rgba(100,116,139,0.12); color: var(--gray-600); border: 1px solid rgba(100,116,139,0.30); }
+
+/* --- Bug real encontrado en la validacion (borde rojo punteado) --- */
+.bug-real {
+    border: 2px dashed var(--sf-red);
+    border-radius: var(--radius-md);
+    background: rgba(229,72,77,0.04);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.bug-titulo {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: #b3282c;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.bug-real p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.bug-real p:last-child { margin-bottom: 0; }
+
+/* --- Momento WOW: construye algo que impresiona (borde morado) --- */
+.wow {
+    border: 2px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(41,181,232,0.05) 100%);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.wow-titulo {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1rem;
+    color: #6d3fd4;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.wow p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.wow p:last-child { margin-bottom: 0; }
+
+/* --- Evidencia verificada (borde verde punteado) --- */
+.evidencia {
+    border: 1px dashed var(--sf-green);
+    border-radius: var(--radius-md);
+    background: rgba(47,179,128,0.05);
+    padding: var(--space-md) var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+}
+.evidencia code { background: rgba(47,179,128,0.12); color: #1c7a56; }
+
+/* --- Prompt para CoCo (estilo burbuja de chat) --- */
+.prompt-label {
+    font-family: var(--font-head);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6d3fd4;
+    margin: var(--space-md) 0 var(--space-xs);
+}
+.prompt-coco {
+    position: relative;
+    background: #f5f3ff;
+    border: 1px solid rgba(139,92,246,0.30);
+    border-left: 4px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-md);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-style: italic;
+    color: var(--gray-800);
+    line-height: 1.65;
+}
+
+/* --- "Ubicate": donde pararse antes de ejecutar el paso --- */
+.ubicate {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--sf-headers);
+    background: rgba(41,181,232,0.10);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    margin-right: 6px;
+}
+
+/* --- Detalle colapsable: "ver el SQL que corre por debajo" --- */
+details.underlying {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    background: var(--gray-50);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+}
+details.underlying > summary {
+    cursor: pointer;
+    font-family: var(--font-head);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--sf-headers);
+    list-style: none;
+}
+details.underlying > summary::before { content: '▸ '; color: var(--sf-accent); }
+details.underlying[open] > summary::before { content: '▾ '; }
+details.underlying[open] > summary { margin-bottom: var(--space-md); }
+
+/* --- Diagrama de arquitectura en texto (sin dependencias externas) --- */
+.arch-diagram {
+    background: var(--gray-900);
+    color: #cbd5e1;
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+}
+.arch-diagram .n { color: var(--sf-accent); font-weight: 700; }
+.arch-diagram .g { color: var(--sf-green); }
+
+/* --- Badges de estado de track (PASA / conectas-no-construyes) --- */
+.track-badge {
+    display: inline-block;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    margin-left: var(--space-sm);
+    vertical-align: middle;
+}
+.track-badge.pasa    { background: rgba(47,179,128,0.15); color: #1c7a56; }
+.track-badge.connect { background: rgba(41,181,232,0.15); color: #14708f; }
+.track-badge.excep   { background: rgba(255,146,43,0.15); color: #b35f00; }
+
+/* Sobre fondo oscuro (hero) los badges necesitan fondo solido para tener contraste */
+.hero-section .track-badge.pasa,
+.hero-section .track-badge.connect,
+.hero-section .track-badge.excep {
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+
+/* --- Rol del proveedor (nota de gobernanza del Anexo 11) --- */
+.rol-proveedor {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+    font-style: italic;
+}
+
+
+/* figures + expected (generated by _build/build_labs.py) */
+.step-figure { margin: var(--space-md) 0 var(--space-lg); text-align: center; }
+.step-figure img { max-width: 100%; border-radius: 10px; border: 1px solid #dbe6f0; box-shadow: 0 6px 22px rgba(17,86,127,0.12); }
+.step-figure figcaption { margin-top: 6px; font-size: 0.8rem; color: var(--gray-500, #6b7280); font-style: italic; }
+.step-text { margin: var(--space-md) 0; line-height: 1.65; }
+.step-text p { margin: 0 0 0.6em; }
+.code-label { font-weight: 600; margin-left: 8px; color: #9fd8f0; text-transform: none; }
+.step-resumen { margin: 10px 0 12px; padding: 10px 14px; border-radius: 10px; background: linear-gradient(90deg, rgba(41,181,232,0.12), rgba(41,181,232,0.02)); border: 1px solid rgba(41,181,232,0.25); font-size: 0.95rem; line-height: 1.55; }
+.step-resumen strong { color: #11567F; }
+.callout-expected { background: #f2f7ff; border-left: 4px solid #11567F; }
+
+.hol-footer{margin-left:0!important}
+/* ===== visual layer v2 (generated by _build/build_labs.py) ===== */
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+.progress-tracker {
+  top: calc(var(--header-height) + 18px); left: 18px; bottom: auto; max-height: calc(100vh - var(--header-height) - 36px);
+  width: calc(var(--sidebar-width) - 36px); border: 1px solid rgba(41,181,232,0.22); border-radius: 18px;
+  background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 48px rgba(17,86,127,0.16); padding: 18px 14px;
+  opacity: 0; transform: translateX(-16px); pointer-events: none; transition: opacity .35s ease, transform .35s ease;
+}
+body.in-steps .progress-tracker { opacity: 1; transform: none; pointer-events: auto; }
+.step-nav-item { align-items: flex-start; line-height: 1.3; padding: 7px 10px; font-size: 0.8rem; transition: background .2s, color .2s; }
+.step-nav-item .nav-label { flex: 1; }
+.step-nav-item .nav-min { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: #11567F; background: rgba(41,181,232,0.12); border-radius: 999px; padding: 2px 7px; margin-top: 1px; }
+.step-nav-item.active { box-shadow: inset 3px 0 0 var(--sf-accent); }
+.steps-container { max-width: calc(980px + var(--sidebar-width)); margin-left: var(--sidebar-width); margin-right: auto; }
+@media (min-width: 1500px) { .steps-container { margin-left: calc(var(--sidebar-width) + (100vw - var(--sidebar-width) - 1060px) / 2 - 40px); } }
+
+.step-card { border: 1px solid #e3edf5; border-radius: 20px; box-shadow: 0 2px 4px rgba(17,86,127,0.04), 0 14px 36px rgba(17,86,127,0.08); overflow: hidden; transition: box-shadow .25s, transform .25s; }
+.step-card:hover { box-shadow: 0 2px 4px rgba(17,86,127,0.05), 0 22px 54px rgba(17,86,127,0.14); }
+.step-card.active-card { border-color: rgba(41,181,232,0.55); }
+.step-header { background: linear-gradient(100deg, #f5fbff 0%, #ffffff 70%); border-bottom: 1px solid #eef4f9; }
+.step-number { background: linear-gradient(135deg, #29B5E8, #11567F) !important; color: #fff !important; border: none !important; box-shadow: 0 6px 16px rgba(41,181,232,0.45); }
+.step-duration { display: inline-block; background: rgba(41,181,232,0.12); color: #11567F; font-weight: 700; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
+.step-content { padding-top: 18px; }
+.modalidad-badge { letter-spacing: .6px; }
+.modalidad-badge.ui { background: rgba(255,146,43,0.14); color: #b45309; border: 1px solid rgba(255,146,43,0.4); }
+.modalidad-badge.cli, .modalidad-badge.python { background: rgba(125,68,207,0.12); color: #6d28d9; border: 1px solid rgba(125,68,207,0.35); }
+.modalidad-badge.ia { background: rgba(212,91,144,0.12); color: #be185d; border: 1px solid rgba(212,91,144,0.35); }
+.step-resumen { position: relative; padding-left: 44px; }
+.step-resumen::before { content: "→"; position: absolute; left: 14px; top: 8px; width: 20px; height: 20px; border-radius: 50%; background: #29B5E8; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.step-text { font-size: 0.97rem; color: #1f2937; }
+.step-text p:first-child { margin-top: 0; }
+.step-text table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.88rem; }
+.step-text th, .step-text td { border-bottom: 1px solid #e5edf4; padding: 7px 10px; text-align: left; vertical-align: top; }
+.step-text th { background: #f2f8fc; color: #11567F; }
+
+.code-block { background: #0b1220; border: 1px solid #1c2a44; border-radius: 14px; box-shadow: 0 10px 30px rgba(2,8,23,0.28); }
+.code-header { background: linear-gradient(180deg, #131d33, #0f1829); border-bottom: 1px solid #1c2a44; padding: 9px 14px !important; display: flex; align-items: center; }
+.code-header::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; box-shadow: 16px 0 0 #febc2e, 32px 0 0 #28c840; margin-right: 46px; flex-shrink: 0; }
+.code-language { color: #7dd3fc !important; font-size: 0.7rem !important; letter-spacing: 1px; }
+.code-label { color: #cbd5e1 !important; font-weight: 500 !important; letter-spacing: 0; }
+.code-actions { margin-left: auto; }
+.btn-copy { background: rgba(41,181,232,0.16) !important; color: #e0f2fe !important; border: 1px solid rgba(41,181,232,0.45) !important; border-radius: 8px !important; padding: 4px 12px !important; font-weight: 700; cursor: pointer; transition: background .2s, transform .1s; }
+.btn-copy:hover { background: #29B5E8 !important; color: #fff !important; }
+.btn-copy:active { transform: scale(.96); }
+.code-block pre { max-height: 560px; }
+.code-block code { color: #e2e8f0; font-size: 0.83rem; }
+.code-block .tk-c { color: #64748b; font-style: italic; }
+.code-block .tk-k { color: #7dd3fc; font-weight: 600; }
+.code-block .tk-s { color: #fcd34d; }
+.code-block .tk-n { color: #f0abfc; }
+.code-block .tk-f { color: #86efac; }
+
+.step-figure { margin: 18px 0 24px; }
+.step-figure img { max-height: 460px; width: auto; max-width: 100%; object-fit: contain; background: #fff; border-radius: 14px; cursor: zoom-in; transition: transform .25s, box-shadow .25s; }
+.step-figure img:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(17,86,127,0.22); }
+.step-figure figcaption::before { content: "🔍 "; font-style: normal; }
+.lightbox { position: fixed; inset: 0; z-index: 999; background: rgba(5,11,24,0.88); display: none; align-items: center; justify-content: center; padding: 32px; cursor: zoom-out; backdrop-filter: blur(6px); }
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 96vw; max-height: 92vh; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); background: #fff; }
+
+.callout { border-radius: 14px; }
+.callout-expected { background: linear-gradient(100deg, #eef6ff, #f8fbff); border-left-color: #11567F; }
+.btn-check { border-radius: 10px !important; transition: transform .1s, box-shadow .2s; }
+.btn-check:hover { box-shadow: 0 8px 22px rgba(47,179,128,0.35); }
+@media (max-width: 992px) { .steps-container { margin-left: 0 !important; } .code-header::before { display: none; } }
+</style>
+</head>
+<body data-hol-id="z2s-lab3-cortex-aisql">
+<header class="hol-header">
+    <div class="header-container">
+        <div class="logo-section"><svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="var(--sf-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="var(--sf-accent)" stroke="none"/></svg><span class="brand-name">Snowflake</span><span class="logo-divider"></span><span class="hol-badge">Hands-On Lab</span></div>
+        <nav class="header-nav">
+            <a href="#overview">Vision General</a>
+            <a href="#prerequisites">Requisitos</a>
+            <a href="#steps">Pasos</a>
+            <a href="#resources">Recursos</a>
+            <a href="index.html">Indice</a>
+        </nav>
+    </div>
+</header>
+<section class="hero-section">
+    <div class="hero-container">
+        <div class="hero-content">
+            <span class="industry-tag">TASTY BYTES · FOOD TRUCKS GLOBALES</span>
+            <h1 class="hero-title">LAB 3: Cortex AISQL: IA generativa con SQL</h1>
+            <p class="hero-subtitle"><strong>Objetivo:</strong> usar IA generativa directamente en SQL sobre las reviews de Tasty Bytes —sentimiento, clasificacion, extraccion y resumenes— sin APIs y sin mover los datos.</p>
+            <div class="hero-meta">
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/></svg><span>9 minutos</span></div>
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6z"/></svg><span>Nivel Intermedio</span></div>
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><span>7 pasos</span></div>
+            </div>
+            <a href="#step-1" class="hero-cta">Comenzar Lab 3</a>
+        </div>
+        <div class="hero-visual">
+            <div class="architecture-preview arch-diagram">
+                <span class="arch-line">REVIEWS (TRUCK_REVIEWS_V)</span>
+                <span class="arch-line">   <span class="arch-arrow">│</span></span>
+                <span class="arch-line">   <span class="arch-arrow">├──▶</span> AI_SENTIMENT   (como se sienten)</span>
+                <span class="arch-line">   <span class="arch-arrow">├──▶</span> AI_CLASSIFY    (de que hablan)</span>
+                <span class="arch-line">   <span class="arch-arrow">├──▶</span> AI_EXTRACT     (queja, plato)</span>
+                <span class="arch-line">   <span class="arch-arrow">└──▶</span> AI_SUMMARIZE_AGG + AI_TRANSLATE</span>
+                <span class="arch-line">                 (resumen ejecutivo ES)</span>
+            </div>
+        </div>
+    </div>
+</section>
+<section id="overview" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Vision General</h2>
+        <div class="overview-grid">
+            <div class="overview-card"><h3>Lo que vas a construir</h3><ul class="learning-list"><li>Una comparacion de modelos en Cortex Playground</li><li>Sentimiento por marca y por aspecto del negocio</li><li>Clasificacion de reviews en temas de negocio</li><li>Extraccion de campos desde texto libre</li><li>Un resumen ejecutivo en espanol por marca</li><li>Un analisis sentimiento vs ventas con Cortex Code</li></ul></div>
+            <div class="overview-card"><h3>Tecnologias utilizadas</h3><div class="tech-tags"><span class="tech-tag">Cortex Playground</span><span class="tech-tag">AI_COMPLETE</span><span class="tech-tag">AI_SENTIMENT</span><span class="tech-tag">AI_CLASSIFY</span><span class="tech-tag">AI_EXTRACT</span><span class="tech-tag">AI_SUMMARIZE_AGG</span><span class="tech-tag">AI_TRANSLATE</span><span class="tech-tag">Cortex Code (CoCo)</span></div></div>
+        </div>
+    </div>
+</section>
+<section id="prerequisites" class="content-section alt-bg">
+    <div class="section-container">
+        <h2 class="section-title">Requisitos Previos</h2>
+        <div class="prerequisites-grid">
+            <div class="prereq-card"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><div class="prereq-info"><h4>LAB 0 completado</h4><p>Completaste el LAB 0 (setup) (base <code>TB_101</code>, roles <code>tb_admin</code>/<code>tb_analyst</code>/<code>tb_data_engineer</code>, warehouses y datos de Tasty Bytes) y subiste los 7 archivos al stage <code>@tb_101.public.archivos</code>.</p></div></div>
+            <div class="prereq-card"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><div class="prereq-info"><h4>Rol y warehouse</h4><p>Este lab corre como <code>tb_analyst</code> con el warehouse <code>tb_analyst_wh</code>; el setup ya le otorgo <code>SNOWFLAKE.CORTEX_USER</code>.</p></div></div>
+            <div class="prereq-card"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><div class="prereq-info"><h4>Workspaces</h4><p>Crea un nuevo SQL File en Workspaces para pegar cada bloque.</p></div></div>
+        </div>
+    </div>
+</section>
+<aside class="progress-tracker" id="progressTracker">
+    <div class="progress-header"><span>PROGRESO</span><span class="progress-percent">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <nav class="steps-nav" id="stepsNav">
+        <a href="#step-1" class="step-nav-item" data-step="1"><span class="step-indicator">1</span><span class="nav-label">Cortex Playground</span><span class="nav-min">2'</span></a>
+        <a href="#step-2" class="step-nav-item" data-step="2"><span class="step-indicator">2</span><span class="nav-label">AI_COMPLETE</span><span class="nav-min">1'</span></a>
+        <a href="#step-3" class="step-nav-item" data-step="3"><span class="step-indicator">3</span><span class="nav-label">AI_SENTIMENT</span><span class="nav-min">2'</span></a>
+        <a href="#step-4" class="step-nav-item" data-step="4"><span class="step-indicator">4</span><span class="nav-label">AI_CLASSIFY</span><span class="nav-min">1'</span></a>
+        <a href="#step-5" class="step-nav-item" data-step="5"><span class="step-indicator">5</span><span class="nav-label">AI_EXTRACT</span><span class="nav-min">1'</span></a>
+        <a href="#step-6" class="step-nav-item" data-step="6"><span class="step-indicator">6</span><span class="nav-label">Resumen ejecutivo</span><span class="nav-min">1'</span></a>
+        <a href="#step-7" class="step-nav-item" data-step="7"><span class="step-indicator">7</span><span class="nav-label">Bonus Cortex Code</span><span class="nav-min">1'</span></a>
+    </nav>
+</aside>
+<main class="steps-container" id="steps">
+<figure class="step-figure"><img src="img/quickstart/cortex_playground_header.png" alt="Snowflake Cortex AI (quickstart Zero to Snowflake)" loading="lazy"><figcaption>Snowflake Cortex AI (quickstart Zero to Snowflake)</figcaption></figure>
+<div class="callout callout-info"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#29B5E8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="callout-content"><strong class="callout-title">Como trabajar este lab</strong><p>Empiezas en la UI (Cortex Playground) y luego pasas a SQL. Para la parte SQL abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab3_cortex_aisql</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>.</p></div></div>
+
+    <article class="step-card" id="step-1" data-step="1">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-info">
+                <h2 class="step-title">Comparar modelos en Cortex Playground</h2>
+                <span class="step-duration">~2 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge ui">UI</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Comparamos modelos de lenguaje lado a lado en el Playground para elegir el mas adecuado a cada caso.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Ves dos respuestas lado a lado, de dos LLM distintos, sobre la misma review de un food truck.</div>
+<div class="step-text"><p>Antes de escribir SQL, prueba la IA generativa sin codigo. <strong>Cortex Playground</strong> te deja comparar LLM (Large Language Model) de distintos proveedores sobre los datos de tu cuenta, sin que salgan de Snowflake, para elegir el modelo adecuado para cada tarea de Tasty Bytes.</p><ol><li>En Snowsight ve a <strong>AI &amp; ML &gt; Studio &gt; Cortex Playground</strong>.</li><li>Haz clic en <strong>+ Connect your data</strong> y elige <strong>TB_101 &gt; HARMONIZED &gt; TRUCK_REVIEWS_V</strong>; pulsa <strong>Let's go</strong>.</li><li>Columna de texto: <strong>REVIEW</strong>; columna de filtro: <strong>TRUCK_BRAND_NAME</strong>; pulsa <strong>Done</strong>.</li><li>Filtra por una marca (por ejemplo <em>Better Off Bread</em>) para elegir una review.</li></ol></div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-playground-connect.gif" alt="Conectar TRUCK_REVIEWS_V en Cortex Playground" loading="lazy"><figcaption>Conectar TRUCK_REVIEWS_V en Cortex Playground</figcaption></figure>
+<div class="step-text"><ol start="5"><li>Haz clic en <strong>Compare</strong> y elige un modelo distinto en cada panel (por ejemplo <code>claude-sonnet-4-5</code> y un modelo <code>llama</code>).</li><li>Pide a ambos: <em>"Resume esta review en una frase y di si el cliente volveria"</em>.</li><li>Compara estilo, precision y largo de las dos respuestas.</li></ol></div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-playground-compare-two-model.png" alt="Comparacion lado a lado de dos modelos" loading="lazy"><figcaption>Comparacion lado a lado de dos modelos</figcaption></figure>
+<div class="step-text"><p>Cada respuesta del Playground esta respaldada por SQL: haz clic en <strong>View Code</strong> y veras la llamada a <code>AI_COMPLETE</code> con tus parametros (modelo, temperature), lista para un SQL File.</p></div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-playground-view-code.png" alt="View Code: el SQL detras del Playground" loading="lazy"><figcaption>View Code: el SQL detras del Playground</figcaption></figure>
+<div class="callout callout-tip"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#10b981"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg></div><div class="callout-content"><strong class="callout-title">Tip</strong><p>Lo que pruebes aqui se traduce directo a <code>AI_COMPLETE('&lt;modelo&gt;', ...)</code> en SQL, que es lo que haras en los siguientes pasos.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(1)">Marcar paso 1 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-2" data-step="2">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-info">
+                <h2 class="step-title">Preguntas libres a un LLM con AI_COMPLETE</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Hacemos una pregunta de negocio a un LLM directamente desde SQL con AI_COMPLETE.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> La consulta devuelve una columna <code>RESPUESTA</code> con 3 bullets generados por <code>claude-sonnet-4-5</code>.</div>
+<div class="step-text"><p>Pasamos a SQL como <code>tb_analyst</code> (el setup ya le otorgo <code>SNOWFLAKE.CORTEX_USER</code>). <code>AI_COMPLETE</code> es la funcion detras del Playground: llama a un LLM desde SQL, sin APIs, sin llaves y sin mover los datos fuera de Snowflake.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Contexto y AI_COMPLETE</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Cambia al rol de trabajo</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> tb_analyst;
+<span class="tk-k">USE</span> <span class="tk-k">DATABASE</span> tb_101;
+<span class="tk-k">USE</span> <span class="tk-k">WAREHOUSE</span> tb_analyst_wh;
+
+<span class="tk-c">-- Consulta al LLM directamente desde SQL</span>
+<span class="tk-k">SELECT</span> <span class="tk-f">AI_COMPLETE</span>(<span class="tk-s">&#x27;claude-sonnet-4-5&#x27;</span>,
+  <span class="tk-s">&#x27;En 3 bullets: que debe medir una cadena de food trucks para crecer?&#x27;</span>) <span class="tk-k">AS</span> respuesta;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Una fila con la columna <code>RESPUESTA</code>: 3 bullets en espanol (por ejemplo ticket promedio, ventas por ubicacion, satisfaccion del cliente).</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(2)">Marcar paso 2 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-3" data-step="3">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-info">
+                <h2 class="step-title">AI_SENTIMENT por marca y por aspecto</h2>
+                <span class="step-duration">~2 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Medimos el sentimiento de las resenas por marca y por aspecto para ver donde estan las fortalezas y los problemas.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Una tabla por marca con <code>positivas</code>, <code>negativas</code>, <code>neutras_mixtas</code> y <code>pct_positivas</code>; y 5 reviews con sentimiento por aspecto.</div>
+<div class="step-text"><p>Como se sienten los clientes con cada marca? <code>AI_SENTIMENT</code> devuelve un OBJECT; <code>categories[0]:sentiment</code> trae el sentimiento global (<code>positive</code>, <code>negative</code>, <code>neutral</code> o <code>mixed</code>). Contamos cada clase por marca sobre una muestra de 50 reviews en ingles.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Sentimiento por marca</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Analiza una muestra de resenas con funciones de IA</span>
+<span class="tk-k">WITH</span> muestra <span class="tk-k">AS</span> (
+    <span class="tk-k">SELECT</span> truck_brand_name, review
+    <span class="tk-k">FROM</span> harmonized.truck_reviews_v
+    <span class="tk-k">WHERE</span> <span class="tk-k">language</span> ILIKE <span class="tk-s">&#x27;%en%&#x27;</span> <span class="tk-k">AND</span> review <span class="tk-k">IS</span> <span class="tk-k">NOT</span> <span class="tk-k">NULL</span>
+    <span class="tk-k">LIMIT</span> <span class="tk-n">50</span>   <span class="tk-c">-- muestra para el lab (~25 s); en produccion se corre sobre todo</span>
+)
+<span class="tk-k">SELECT</span>
+    truck_brand_name,
+    <span class="tk-f">COUNT</span>(*) <span class="tk-k">AS</span> reviews,
+    <span class="tk-f">COUNT_IF</span>(s = <span class="tk-s">&#x27;positive&#x27;</span>) <span class="tk-k">AS</span> positivas,
+    <span class="tk-f">COUNT_IF</span>(s = <span class="tk-s">&#x27;negative&#x27;</span>) <span class="tk-k">AS</span> negativas,
+    <span class="tk-f">COUNT_IF</span>(s <span class="tk-k">IN</span> (<span class="tk-s">&#x27;neutral&#x27;</span>,<span class="tk-s">&#x27;mixed&#x27;</span>)) <span class="tk-k">AS</span> neutras_mixtas,
+    <span class="tk-f">ROUND</span>(<span class="tk-n">100</span> * positivas / reviews, <span class="tk-n">1</span>) <span class="tk-k">AS</span> pct_positivas
+<span class="tk-k">FROM</span> (
+    <span class="tk-k">SELECT</span> truck_brand_name,
+           <span class="tk-f">AI_SENTIMENT</span>(review):categories[<span class="tk-n">0</span>]:sentiment::STRING <span class="tk-k">AS</span> s
+    <span class="tk-k">FROM</span> muestra
+)
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> truck_brand_name
+<span class="tk-k">ORDER</span> <span class="tk-k">BY</span> pct_positivas <span class="tk-k">DESC</span>;</code></pre>
+</div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/sentiment.png" alt="Analisis de sentimiento de reviews (quickstart)" loading="lazy"><figcaption>Analisis de sentimiento de reviews (quickstart)</figcaption></figure>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Una fila por marca con <code>REVIEWS</code>, <code>POSITIVAS</code>, <code>NEGATIVAS</code>, <code>NEUTRAS_MIXTAS</code> y <code>PCT_POSITIVAS</code>, ordenada de mayor a menor. Tarda unos ~25 s.</p></div></div>
+<div class="callout callout-warning"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#b45309"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><div class="callout-content"><strong class="callout-title">Bug real: la IA en el WHERE junto a un LIMIT tardo 303 s</strong><p>En la validacion, poner <code>AI_SENTIMENT(...)</code> en el <code>WHERE</code> junto a un <code>LIMIT</code> hizo que la IA se evaluara sobre muchas filas (303 s). La solucion es tomar la muestra en un CTE primero (<code>WITH muestra AS (... LIMIT 50)</code>) y aplicar la IA solo sobre esa muestra. Por eso este lab muestrea siempre en un CTE: el LIMIT va ANTES de llamar a la IA.</p></div></div>
+<div class="step-text"><p>Si le pasas una lista de <strong>aspectos</strong>, <code>AI_SENTIMENT</code> mide cada dimension del negocio por separado: una review puede ser positiva en comida y negativa en tiempo de espera.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Sentimiento por aspecto</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Sentimiento por ASPECTO del negocio</span>
+<span class="tk-k">SELECT</span>
+    review,
+    <span class="tk-f">AI_SENTIMENT</span>(review, [<span class="tk-s">&#x27;comida&#x27;</span>, <span class="tk-s">&#x27;precio&#x27;</span>, <span class="tk-s">&#x27;servicio&#x27;</span>, <span class="tk-s">&#x27;tiempo de espera&#x27;</span>]) <span class="tk-k">AS</span> sentimiento_por_aspecto
+<span class="tk-k">FROM</span> harmonized.truck_reviews_v
+<span class="tk-k">WHERE</span> <span class="tk-k">language</span> ILIKE <span class="tk-s">&#x27;%en%&#x27;</span> <span class="tk-k">AND</span> review <span class="tk-k">IS</span> <span class="tk-k">NOT</span> <span class="tk-k">NULL</span>
+<span class="tk-k">LIMIT</span> <span class="tk-n">5</span>;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>5 reviews; <code>SENTIMIENTO_POR_ASPECTO</code> es un JSON con <code>categories</code>: el <code>overall</code> mas una entrada por <code>comida</code>, <code>precio</code>, <code>servicio</code> y <code>tiempo de espera</code>, cada una con su sentimiento.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(3)">Marcar paso 3 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-4" data-step="4">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-info">
+                <h2 class="step-title">AI_CLASSIFY: de que hablan los clientes</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Clasificamos automaticamente las resenas por tema para saber de que hablan los clientes sin leerlas una a una.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Conteos de reviews por marca y categoria (Calidad de comida, Precio, Experiencia de servicio, Actitud del personal).</div>
+<div class="step-text"><p>Clasificar texto libre en categorias de negocio sin entrenar ningun modelo: le das las etiquetas y <code>AI_CLASSIFY</code> elige la mejor para cada review (<code>labels[0]</code>). Asi sabes que tema domina en cada marca.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Clasificar reviews</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Analiza una muestra de resenas con funciones de IA</span>
+<span class="tk-k">WITH</span> clasificadas <span class="tk-k">AS</span> (
+    <span class="tk-k">SELECT</span>
+        truck_brand_name,
+        <span class="tk-f">AI_CLASSIFY</span>(review, [<span class="tk-s">&#x27;Calidad de comida&#x27;</span>, <span class="tk-s">&#x27;Precio&#x27;</span>, <span class="tk-s">&#x27;Experiencia de servicio&#x27;</span>, <span class="tk-s">&#x27;Actitud del personal&#x27;</span>]):labels[<span class="tk-n">0</span>]::STRING <span class="tk-k">AS</span> categoria
+    <span class="tk-k">FROM</span> harmonized.truck_reviews_v
+    <span class="tk-k">WHERE</span> <span class="tk-k">language</span> ILIKE <span class="tk-s">&#x27;%en%&#x27;</span> <span class="tk-k">AND</span> review <span class="tk-k">IS</span> <span class="tk-k">NOT</span> <span class="tk-k">NULL</span> <span class="tk-k">AND</span> <span class="tk-f">LENGTH</span>(review) &gt; <span class="tk-n">30</span>
+    <span class="tk-k">LIMIT</span> <span class="tk-n">150</span>
+)
+<span class="tk-k">SELECT</span> truck_brand_name, categoria, <span class="tk-f">COUNT</span>(*) <span class="tk-k">AS</span> reviews
+<span class="tk-k">FROM</span> clasificadas
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> <span class="tk-k">ALL</span>
+<span class="tk-k">ORDER</span> <span class="tk-k">BY</span> truck_brand_name, reviews <span class="tk-k">DESC</span>;</code></pre>
+</div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/classify.png" alt="Clasificacion de reviews en categorias (quickstart)" loading="lazy"><figcaption>Clasificacion de reviews en categorias (quickstart)</figcaption></figure>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Filas <code>TRUCK_BRAND_NAME</code> / <code>CATEGORIA</code> / <code>REVIEWS</code>, con la categoria mas frecuente primero dentro de cada marca.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(4)">Marcar paso 4 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-5" data-step="5">
+        <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-info">
+                <h2 class="step-title">AI_EXTRACT: datos puntuales desde texto libre</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Extraemos datos puntuales desde texto libre de las resenas y los dejamos como columnas estructuradas.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Cada una de las 8 reviews trae una columna <code>EXTRACCION</code> con <code>queja_principal</code>, <code>plato_mencionado</code> y <code>volveria</code>.</div>
+<div class="step-text"><p><code>AI_EXTRACT</code> convierte texto en campos estructurados: en <code>responseFormat</code> defines cada campo con una pregunta en lenguaje natural. Elegimos reviews que hablan de comida fria, esperas o decepcion. De nuevo, la muestra se toma <strong>antes</strong> de llamar a la IA.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Extraer campos</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Analiza una muestra de resenas con funciones de IA</span>
+<span class="tk-k">WITH</span> muestra <span class="tk-k">AS</span> (
+    <span class="tk-k">SELECT</span> truck_brand_name, review
+    <span class="tk-k">FROM</span> harmonized.truck_reviews_v
+    <span class="tk-k">WHERE</span> <span class="tk-k">language</span> ILIKE <span class="tk-s">&#x27;%en%&#x27;</span> <span class="tk-k">AND</span> review <span class="tk-k">IS</span> <span class="tk-k">NOT</span> <span class="tk-k">NULL</span>
+      <span class="tk-k">AND</span> (review ILIKE <span class="tk-s">&#x27;%cold%&#x27;</span> <span class="tk-k">OR</span> review ILIKE <span class="tk-s">&#x27;%wait%&#x27;</span> <span class="tk-k">OR</span> review ILIKE <span class="tk-s">&#x27;%disappoint%&#x27;</span>)
+    <span class="tk-k">LIMIT</span> <span class="tk-n">8</span>
+)
+<span class="tk-k">SELECT</span>
+    truck_brand_name,
+    review,
+    <span class="tk-f">AI_EXTRACT</span>(
+        text =&gt; review,
+        responseFormat =&gt; {
+            <span class="tk-s">&#x27;queja_principal&#x27;</span>: <span class="tk-s">&#x27;Cual es la queja principal del cliente? Responde en espanol&#x27;</span>,
+            <span class="tk-s">&#x27;plato_mencionado&#x27;</span>: <span class="tk-s">&#x27;Que plato o producto menciona?&#x27;</span>,
+            <span class="tk-s">&#x27;volveria&#x27;</span>: <span class="tk-s">&#x27;El cliente volveria? (SI / NO / NO SE)&#x27;</span>
+        }
+    ):response <span class="tk-k">AS</span> extraccion
+<span class="tk-k">FROM</span> muestra;</code></pre>
+</div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/extract.png" alt="Extraccion de informacion desde reviews (quickstart)" loading="lazy"><figcaption>Extraccion de informacion desde reviews (quickstart)</figcaption></figure>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>8 filas; <code>EXTRACCION</code> es un JSON con <code>queja_principal</code> (en espanol), <code>plato_mencionado</code> y <code>volveria</code>.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(5)">Marcar paso 5 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-6" data-step="6">
+        <div class="step-header">
+            <div class="step-number">6</div>
+            <div class="step-info">
+                <h2 class="step-title">Resumen ejecutivo con AI_SUMMARIZE_AGG + AI_TRANSLATE</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Resumimos todas las resenas de cada marca y las traducimos al espanol para entregar un resumen ejecutivo.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Una fila por marca (Freezing Point, Better Off Bread, Kitakata Ramen Bar) con un resumen ejecutivo en espanol.</div>
+<div class="step-text"><p><code>AI_SUMMARIZE_AGG</code> es una funcion de <strong>agregacion</strong>: igual que <code>SUM</code>, resume muchas filas, pero produce un solo texto por grupo. <code>AI_TRANSLATE</code> lo lleva del ingles al espanol para el comite directivo.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Resumen por marca</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Resume las resenas por marca y las traduce</span>
+<span class="tk-k">SELECT</span>
+    truck_brand_name,
+    <span class="tk-f">AI_TRANSLATE</span>(<span class="tk-f">AI_SUMMARIZE_AGG</span>(review), <span class="tk-s">&#x27;en&#x27;</span>, <span class="tk-s">&#x27;es&#x27;</span>) <span class="tk-k">AS</span> resumen_ejecutivo
+<span class="tk-k">FROM</span> (
+    <span class="tk-k">SELECT</span> truck_brand_name, review
+    <span class="tk-k">FROM</span> harmonized.truck_reviews_v
+    <span class="tk-k">WHERE</span> truck_brand_name <span class="tk-k">IN</span> (<span class="tk-s">&#x27;Freezing Point&#x27;</span>, <span class="tk-s">&#x27;Better Off Bread&#x27;</span>, <span class="tk-s">&#x27;Kitakata Ramen Bar&#x27;</span>)
+      <span class="tk-k">AND</span> <span class="tk-k">language</span> ILIKE <span class="tk-s">&#x27;%en%&#x27;</span> <span class="tk-k">AND</span> review <span class="tk-k">IS</span> <span class="tk-k">NOT</span> <span class="tk-k">NULL</span>
+    <span class="tk-k">LIMIT</span> <span class="tk-n">90</span>
+)
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> truck_brand_name;</code></pre>
+</div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/summarize.png" alt="Resumen de reviews por marca (quickstart)" loading="lazy"><figcaption>Resumen de reviews por marca (quickstart)</figcaption></figure>
+<div class="callout callout-tip"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#10b981"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg></div><div class="callout-content"><strong class="callout-title">Momento wow</strong><p>Decenas de reviews en ingles convertidas en un resumen ejecutivo en espanol por marca, con una sola consulta SQL y un <code>GROUP BY</code>.</p></div></div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>3 filas, una por marca, con <code>RESUMEN_EJECUTIVO</code> en espanol (fortalezas y quejas recurrentes).</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(6)">Marcar paso 6 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-7" data-step="7">
+        <div class="step-header">
+            <div class="step-number">7</div>
+            <div class="step-info">
+                <h2 class="step-title">Bonus: Cortex Code cruza sentimiento y ventas</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge ui">UI</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Usamos Cortex Code para cruzar el sentimiento de los clientes con las ventas mediante lenguaje natural.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Cortex Code genera y ejecuta el SQL que relaciona sentimiento con ventas por marca y te muestra una grafica.</div>
+<div class="step-text"><p><strong>Cortex Code (CoCo)</strong> es el asistente agentico de Snowflake: escribe, ejecuta y explica SQL por ti sobre tus propios datos.</p><ol><li>Abre <strong>Cortex Code</strong> en el panel derecho de Snowsight.</li><li>Pega el prompt de abajo.</li><li>Revisa el SQL que propone, apruebalo y mira la grafica.</li></ol></div>
+<div class="callout callout-info"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#29B5E8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="callout-content"><strong class="callout-title">Prompt para Cortex Code</strong><p><em>Analiza si el sentimiento de las reviews se relaciona con las ventas por marca en TB_101 y muestrame una grafica</em></p></div></div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>CoCo une las reviews (<code>TRUCK_REVIEWS_V</code>) con las ventas por marca, muestra una tabla con sentimiento y ventas, y una grafica comparativa.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(7)">Marcar paso 7 como completado</button></div>
+        </div>
+    </article>
+</main>
+<section id="resources" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Recursos Adicionales</h2>
+        <div class="prerequisites-grid">
+            <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/aisql" class="prereq-card" target="_blank" style="text-decoration:none;"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><div class="prereq-info"><h4>Documentacion: Cortex AISQL</h4><p>Funciones AI_* para texto, documentos, imagenes y audio.</p></div></a>
+            <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-playground" class="prereq-card" target="_blank" style="text-decoration:none;"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><div class="prereq-info"><h4>Documentacion: Cortex Playground</h4><p>Comparar modelos sin escribir codigo.</p></div></a>
+            <a href="https://docs.snowflake.com/en/user-guide/cortex-code/cortex-code" class="prereq-card" target="_blank" style="text-decoration:none;"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg><div class="prereq-info"><h4>Documentacion: Cortex Code</h4><p>El asistente agentico de Snowflake.</p></div></a>
+        </div>
+    </div>
+</section>
+<section class="completion-section" id="completionSection">
+    <div class="completion-container">
+        <div class="completion-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div>
+        <h2>IA generativa en SQL completa!</h2>
+        <p>Comparaste modelos, mediste sentimiento, clasificaste, extrajiste y resumiste reviews reales de Tasty Bytes sin salir de SQL.</p>
+        <div class="completion-summary">
+            <div class="summary-item"><span class="summary-label">Tiempo total</span><span class="summary-value" id="totalTime">--</span></div>
+            <div class="summary-item"><span class="summary-label">Pasos completados</span><span class="summary-value">7/7</span></div>
+            <div class="summary-item"><span class="summary-label">Funciones AI usadas</span><span class="summary-value">6</span></div>
+        </div>
+        <div class="next-actions">
+            <h3>Siguiente laboratorio</h3>
+            <ul><li><strong><a href="lab4_multimodal.html" style="color:white;text-decoration:underline;">LAB 4: IA multimodal &rarr;</a></strong> — de texto a audio, documentos e imagenes con las mismas funciones AI_*.</li>
+                <li><a href="index.html" style="color:white;text-decoration:underline;">Volver al indice del HOL</a></li></ul>
+        </div>
+    </div>
+</section>
+<footer class="hol-footer">
+    <div class="footer-container">
+        <div class="footer-brand"><svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg><p>Snowflake Hands-On Labs · Zero to Snowflake</p></div>
+        <div class="footer-meta"><p>LAB 3 · Cortex AISQL: IA generativa con SQL</p><p>&copy; 2026 Snowflake Inc. All Rights Reserved.</p></div>
+    </div>
+</footer>
+<script>
+
+const HOLState = {
+    totalSteps: 0,
+    completedSteps: new Set(),
+    startTime: null,
+    currentStep: 1
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeHOL();
+});
+
+function initializeHOL() {
+    HOLState.totalSteps = document.querySelectorAll('.step-card').length;
+    HOLState.startTime = new Date();
+    loadProgress();
+    initStepToggles();
+    initScrollSpy();
+    initKeyboardShortcuts();
+    updateProgressUI();
+}
+
+function markStepComplete(stepNumber) {
+    HOLState.completedSteps.add(stepNumber);
+
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) {
+        stepCard.classList.add('completed');
+        const btn = stepCard.querySelector('.btn-check');
+        if (btn) {
+            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> Completado`;
+            btn.disabled = true;
+            btn.style.background = 'var(--sf-green)';
+            btn.style.color = 'white';
+        }
+    }
+
+    const navItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (navItem) { navItem.classList.add('completed'); }
+
+    saveProgress();
+    updateProgressUI();
+
+    if (HOLState.completedSteps.size === HOLState.totalSteps) {
+        showCompletion();
+    } else if (stepNumber < HOLState.totalSteps) {
+        setTimeout(() => { scrollToStep(stepNumber + 1); }, 500);
+    }
+}
+
+function updateProgressUI() {
+    const progress = (HOLState.completedSteps.size / HOLState.totalSteps) * 100;
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) { progressFill.style.width = `${progress}%`; }
+    const progressPercent = document.querySelector('.progress-percent');
+    if (progressPercent) { progressPercent.textContent = `${Math.round(progress)}%`; }
+}
+
+function saveProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const data = {
+        completedSteps: Array.from(HOLState.completedSteps),
+        startTime: HOLState.startTime.toISOString(),
+        lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem(`hol-progress-${holId}`, JSON.stringify(data));
+}
+
+function loadProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const saved = localStorage.getItem(`hol-progress-${holId}`);
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            data.completedSteps.forEach(step => {
+                HOLState.completedSteps.add(step);
+                const stepCard = document.getElementById(`step-${step}`);
+                if (stepCard) { stepCard.classList.add('completed'); }
+                const navItem = document.querySelector(`.step-nav-item[data-step="${step}"]`);
+                if (navItem) { navItem.classList.add('completed'); }
+            });
+            if (data.startTime) { HOLState.startTime = new Date(data.startTime); }
+        } catch (e) { console.error('Error loading progress:', e); }
+    }
+}
+
+function initStepToggles() {
+    document.querySelectorAll('.step-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const stepCard = this.closest('.step-card');
+            const content = stepCard.querySelector('.step-content');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed', isExpanded);
+        });
+    });
+    document.querySelectorAll('.step-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const toggle = this.querySelector('.step-toggle');
+            if (toggle) { toggle.click(); }
+        });
+    });
+}
+
+function copyCode(button) {
+    const codeBlock = button.closest('.code-block');
+    const code = codeBlock.querySelector('code');
+    const text = code.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copiado ✓';
+        setTimeout(() => { button.textContent = originalText; }, 2000);
+    }).catch(err => {
+        console.error('Error copying:', err);
+        alert('Error al copiar el código');
+    });
+}
+
+function initScrollSpy() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const stepNumber = entry.target.dataset.step;
+                updateActiveNavItem(stepNumber);
+                HOLState.currentStep = parseInt(stepNumber);
+            }
+        });
+    }, { rootMargin: '-100px 0px -50% 0px' });
+
+    document.querySelectorAll('.step-card').forEach(card => { observer.observe(card); });
+}
+
+function updateActiveNavItem(stepNumber) {
+    document.querySelectorAll('.step-nav-item').forEach(item => { item.classList.remove('active'); });
+    const activeItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (activeItem) { activeItem.classList.add('active'); }
+}
+
+function scrollToStep(stepNumber) {
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) { stepCard.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && e.key >= '1' && e.key <= '9') {
+            const stepNumber = parseInt(e.key);
+            if (stepNumber <= HOLState.totalSteps) { scrollToStep(stepNumber); e.preventDefault(); }
+        }
+        if (e.altKey && e.key === 'c') {
+            if (!HOLState.completedSteps.has(HOLState.currentStep)) { markStepComplete(HOLState.currentStep); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'n') {
+            if (HOLState.currentStep < HOLState.totalSteps) { scrollToStep(HOLState.currentStep + 1); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'p') {
+            if (HOLState.currentStep > 1) { scrollToStep(HOLState.currentStep - 1); }
+            e.preventDefault();
+        }
+    });
+}
+
+function showCompletion() {
+    const completionSection = document.getElementById('completionSection');
+    if (completionSection) {
+        completionSection.classList.add('visible');
+        completionSection.scrollIntoView({ behavior: 'smooth' });
+        const endTime = new Date();
+        const duration = endTime - HOLState.startTime;
+        const minutes = Math.floor(duration / 60000);
+        const seconds = Math.floor((duration % 60000) / 1000);
+        const totalTimeEl = document.getElementById('totalTime');
+        if (totalTimeEl) { totalTimeEl.textContent = `${minutes}m ${seconds}s`; }
+    }
+}
+
+</script>
+
+<script id="visual-layer">
+(function () {
+  // Tracker only after the hero: avoids covering the title / overview
+  var steps = document.getElementById('steps');
+  if (steps && 'IntersectionObserver' in window) {
+    var toggle = function () { document.body.classList.toggle('in-steps', steps.getBoundingClientRect().top < window.innerHeight * 0.6 && steps.getBoundingClientRect().bottom > 120); };
+    window.addEventListener('scroll', toggle, { passive: true }); toggle();
+  }
+  // Click-to-zoom figures
+  var lb = document.createElement('div'); lb.className = 'lightbox'; lb.innerHTML = '<img alt="">';
+  document.body.appendChild(lb);
+  lb.addEventListener('click', function () { lb.classList.remove('open'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') lb.classList.remove('open'); });
+  document.querySelectorAll('.step-figure img').forEach(function (img) {
+    img.addEventListener('click', function () { lb.querySelector('img').src = img.src; lb.classList.add('open'); });
+  });
+})();
+</script>
+</body>
+</html>

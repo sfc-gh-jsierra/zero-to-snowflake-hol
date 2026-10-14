@@ -1,0 +1,241 @@
+{
+  "lab": "lab2_pipeline.html",
+  "intro": [
+    {
+      "type": "image",
+      "src": "img/quickstart/data_pipeline_header.png",
+      "caption": "Simple Data Pipeline (quickstart Zero to Snowflake)"
+    },
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab2_pipeline</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>."
+    }
+  ],
+  "steps": [
+    {
+      "title": "Ingesta desde S3 con un stage y COPY INTO",
+      "nav": "Ingesta desde S3",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Traemos el menu de Tasty Bytes desde S3 a una tabla con un stage y COPY INTO, la base de todo pipeline.",
+      "criterio": "<code>COPY INTO</code> carga 100 filas en <code>raw_pos.menu_staging</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Tasty Bytes recibe su menu como archivos CSV en un bucket de S3. Trabajamos como <code>tb_data_engineer</code>, el rol que construye pipelines, con su warehouse <code>tb_de_wh</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Contexto",
+          "code": "-- Cambia al rol de trabajo\nUSE ROLE tb_data_engineer;\nUSE DATABASE tb_101;\nUSE WAREHOUSE tb_de_wh;"
+        },
+        {
+          "type": "expected",
+          "html": "Tres mensajes <code>Statement executed successfully.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Un <strong>stage</strong> es un puntero a una ubicacion de archivos (aqui un bucket publico de S3) junto con el <em>file format</em> que indica como leerlos. <code>LIST</code> muestra los archivos que Snowflake ve en esa ubicacion, sin cargarlos todavia.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Stage externo",
+          "code": "-- Crea el stage externo apuntando a S3\nCREATE OR REPLACE STAGE raw_pos.menu_stage\n    COMMENT = 'Stage del menu de Tasty Bytes'\n    URL = 's3://sfquickstarts/frostbyte_tastybytes/raw_pos/menu/'\n    FILE_FORMAT = public.csv_ff;\n\n-- Lista los archivos del stage\nLIST @raw_pos.menu_stage;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Stage area MENU_STAGE successfully created.</code> y luego el listado con el archivo <code>menu.csv.gz</code> (nombre, tamano, md5, fecha)."
+        },
+        {
+          "type": "text",
+          "html": "<p>Creamos la tabla de staging. Fijate en la ultima columna: <code>menu_item_health_metrics_obj</code> es de tipo <strong>VARIANT</strong>, el tipo nativo de Snowflake para datos semi-estructurados (JSON). Luego <code>COPY INTO</code> carga en paralelo todos los archivos del stage.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Tabla de staging y carga",
+          "code": "-- Crea la tabla\nCREATE OR REPLACE TABLE raw_pos.menu_staging\n(\n    menu_id NUMBER(19,0),\n    menu_type_id NUMBER(38,0),\n    menu_type VARCHAR,\n    truck_brand_name VARCHAR,\n    menu_item_id NUMBER(38,0),\n    menu_item_name VARCHAR,\n    item_category VARCHAR,\n    item_subcategory VARCHAR,\n    cost_of_goods_usd NUMBER(38,4),\n    sale_price_usd NUMBER(38,4),\n    menu_item_health_metrics_obj VARIANT\n);\n\n-- Carga los datos desde el stage a la tabla\nCOPY INTO raw_pos.menu_staging FROM @raw_pos.menu_stage;\n\n-- Revisa los datos resultantes\nSELECT * FROM raw_pos.menu_staging LIMIT 10;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>COPY INTO</code> reporta el archivo <code>menu.csv.gz</code> con estado <code>LOADED</code> y <strong>100 filas</strong> cargadas. El SELECT muestra 10 items del menu con su JSON de metricas de salud en la ultima columna."
+        }
+      ]
+    },
+    {
+      "title": "JSON nativo con VARIANT y LATERAL FLATTEN",
+      "nav": "VARIANT y FLATTEN",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Leemos JSON como VARIANT y lo aplanamos con FLATTEN para convertir datos semi-estructurados en columnas utilizables.",
+      "criterio": "El ultimo query devuelve una fila por ingrediente de cada item del menu.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Las metricas de salud llegan como JSON. Con VARIANT no necesitas definir un esquema antes: navegas el documento con <code>:</code> (campo), <code>[ ]</code> (posicion en un arreglo) y <code>::</code> (cast a un tipo SQL). Primero miramos el JSON crudo y luego extraemos el id y el arreglo de ingredientes.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Navegar el JSON",
+          "code": "-- Consulta los datos\nSELECT menu_item_health_metrics_obj FROM raw_pos.menu_staging LIMIT 5;\n\n-- Aplana el JSON en columnas\nSELECT\n    menu_item_name,\n    menu_item_health_metrics_obj:menu_item_id::INTEGER                       AS menu_item_id,\n    menu_item_health_metrics_obj:menu_item_health_metrics[0]:ingredients::ARRAY AS ingredientes\nFROM raw_pos.menu_staging;"
+        },
+        {
+          "type": "expected",
+          "html": "5 documentos JSON con <code>menu_item_id</code> y <code>menu_item_health_metrics</code>; luego 100 filas con <code>MENU_ITEM_NAME</code>, <code>MENU_ITEM_ID</code> e <code>INGREDIENTES</code> como arreglo."
+        },
+        {
+          "type": "text",
+          "html": "<p><code>LATERAL FLATTEN</code> explota un arreglo en filas: cada ingrediente pasa a ser una fila propia, unida a su item del menu. Es la pieza clave para transformar JSON en tablas relacionales.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "FLATTEN",
+          "code": "-- FLATTEN: una fila por cada ingrediente\nSELECT\n    m.menu_item_name,\n    i.value::STRING AS ingrediente\nFROM raw_pos.menu_staging m,\n     LATERAL FLATTEN(INPUT => m.menu_item_health_metrics_obj:menu_item_health_metrics[0]:ingredients::ARRAY) i\nLIMIT 20;"
+        },
+        {
+          "type": "expected",
+          "html": "20 filas: el mismo <code>MENU_ITEM_NAME</code> se repite una vez por cada <code>INGREDIENTE</code>."
+        }
+      ]
+    },
+    {
+      "title": "Dynamic Table de ingredientes que se refresca sola",
+      "nav": "DT de ingredientes",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Creamos una Dynamic Table que se mantiene actualizada sola, sin programar tareas ni orquestadores.",
+      "criterio": "Tras el REFRESH aparecen <code>French Baguette</code> y <code>Pickled Daikon</code> con <code>menu_ids [157]</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Una <strong>Dynamic Table (DT)</strong> es un pipeline declarativo: escribes el <code>SELECT</code> con el resultado que quieres y Snowflake mantiene la tabla actualizada de forma automatica e incremental. <code>TARGET_LAG = '1 minute'</code> indica que tan frescos deben estar los datos respecto a la fuente. Esta DT agrupa los ingredientes unicos con la lista de items que los usan.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "DT harmonized.ingredient",
+          "code": "-- Crea la Dynamic Table que se refresca sola\nCREATE OR REPLACE DYNAMIC TABLE harmonized.ingredient\n    TARGET_LAG = '1 minute'\n    WAREHOUSE = tb_de_wh\nAS\nSELECT\n    i.value::STRING          AS ingredient_name,\n    ARRAY_AGG(m.menu_item_id) AS menu_ids\nFROM raw_pos.menu_staging m,\n     LATERAL FLATTEN(INPUT => m.menu_item_health_metrics_obj:menu_item_health_metrics[0]:ingredients::ARRAY) i\nGROUP BY i.value::STRING;\n\n-- Revisa los datos resultantes\nSELECT * FROM harmonized.ingredient LIMIT 20;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Dynamic table INGREDIENT successfully created.</code> y 20 filas con <code>INGREDIENT_NAME</code> y <code>MENU_IDS</code> (arreglo de ids)."
+        },
+        {
+          "type": "text",
+          "html": "<p>Ahora el negocio cambia: la marca <strong>Better Off Bread</strong> lanza un <em>Banh Mi</em> con ingredientes nuevos. Insertamos el item en la tabla fuente. La DT lo incorporaria sola dentro de su <code>TARGET_LAG</code>; para no esperar el minuto, forzamos el refresco y buscamos los ingredientes nuevos.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Nuevo item y refresco",
+          "code": "-- Better Off Bread lanza un Banh Mi con ingredientes nuevos\nINSERT INTO raw_pos.menu_staging\nSELECT 10101, 15, 'Sandwiches', 'Better Off Bread', 157, 'Banh Mi', 'Main', 'Cold Option', 9.0, 12.0,\nPARSE_JSON('{\n  \"menu_item_health_metrics\": [{\n      \"ingredients\": [\"French Baguette\",\"Mayonnaise\",\"Pickled Daikon\",\"Cucumber\",\"Pork Belly\"],\n      \"is_dairy_free_flag\": \"N\", \"is_gluten_free_flag\": \"N\",\n      \"is_healthy_flag\": \"Y\", \"is_nut_free_flag\": \"Y\"\n  }],\n  \"menu_item_id\": 157\n}');\n\n-- Esperar ~1 minuto (TARGET_LAG) o forzar el refresco:\nALTER DYNAMIC TABLE harmonized.ingredient REFRESH;\n\n-- Revisa los datos resultantes\nSELECT * FROM harmonized.ingredient\nWHERE ingredient_name IN ('French Baguette', 'Pickled Daikon');"
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Momento wow: la Dynamic Table se refresca sola",
+          "html": "No hay tareas ni orquestador: defines el resultado y Snowflake mantiene la tabla al dia dentro del <code>TARGET_LAG</code>."
+        },
+        {
+          "type": "expected",
+          "html": "<code>number of rows inserted: 1</code>. El <code>REFRESH</code> reporta <code>insertedRows: 5</code> y el SELECT devuelve <code>French Baguette</code> y <code>Pickled Daikon</code> con <code>MENU_IDS [157]</code>."
+        }
+      ]
+    },
+    {
+      "title": "DTs encadenadas: consumo de ingredientes por camion",
+      "nav": "DTs encadenadas",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Encadenamos Dynamic Tables para calcular el consumo de ingredientes por camion y vemos como se propagan los cambios.",
+      "criterio": "El query final muestra los ingredientes del camion 15 en enero, incluido el Banh Mi.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Las DTs pueden leer de otras DTs y formar una cadena (un DAG): los cambios fluyen solos desde la fuente hasta el resultado final. Esta segunda DT relaciona cada ingrediente con cada item del menu y <strong>depende</strong> de <code>harmonized.ingredient</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "DT de lookup",
+          "code": "-- Segunda DT: ingrediente -> item del menu (depende de la anterior)\nCREATE OR REPLACE DYNAMIC TABLE harmonized.ingredient_to_menu_lookup\n    TARGET_LAG = '1 minute'\n    WAREHOUSE = tb_de_wh\nAS\nSELECT\n    i.ingredient_name,\n    m.menu_item_health_metrics_obj:menu_item_id::INTEGER AS menu_item_id\nFROM raw_pos.menu_staging m,\n     LATERAL FLATTEN(INPUT => m.menu_item_health_metrics_obj:menu_item_health_metrics[0]:ingredients) f\nJOIN harmonized.ingredient i ON f.value::STRING = i.ingredient_name;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Dynamic table INGREDIENT_TO_MENU_LOOKUP successfully created.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Simulamos una venta: una orden de <strong>2 Banh Mi</strong> en el camion 15, con su cabecera (<code>order_header</code>) y su detalle (<code>order_detail</code>).</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Orden simulada",
+          "code": "-- Simulamos una orden de 2 Banh Mi en el camion 15\nINSERT INTO raw_pos.order_header\nSELECT 459520441, 15, 1030, 101565, NULL, 200322900,\n       TO_TIMESTAMP_NTZ('08:00:00','hh:mi:ss'), TO_TIMESTAMP_NTZ('14:00:00','hh:mi:ss'),\n       NULL, TO_TIMESTAMP_NTZ('2022-01-27 08:21:08.000'), NULL, 'USD', 14.00, NULL, NULL, 14.00;\n\n-- Inserta una orden de prueba\nINSERT INTO raw_pos.order_detail\nSELECT 904745311, 459520441, 157, NULL, 0, 2, 14.00, 28.00, NULL;"
+        },
+        {
+          "type": "expected",
+          "html": "Dos veces <code>number of rows inserted: 1</code>."
+        },
+        {
+          "type": "text",
+          "html": "<p>La tercera DT calcula el consumo mensual de ingredientes por camion en Estados Unidos y une unas <strong>~670M lineas</strong> de ordenes. Le damos musculo temporal al warehouse (<code>LARGE</code>), creamos la DT y lo devolvemos a <code>XSMALL</code>: el computo es elastico y solo pagas lo que usas.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "DT final con warehouse LARGE",
+          "code": "-- Tercera DT: consumo mensual de ingredientes por camion (US).\n-- Une ~670M lineas: le damos musculo temporalmente al warehouse\nALTER WAREHOUSE tb_de_wh SET WAREHOUSE_SIZE = 'large';\n\n-- Crea la Dynamic Table que se refresca sola\nCREATE OR REPLACE DYNAMIC TABLE harmonized.ingredient_usage_by_truck\n    TARGET_LAG = '2 minutes'\n    WAREHOUSE = tb_de_wh\nAS\nSELECT\n    oh.truck_id,\n    EXTRACT(YEAR FROM oh.order_ts) AS order_year,\n    MONTH(oh.order_ts)             AS order_month,\n    i.ingredient_name,\n    SUM(od.quantity)               AS total_ingredients_used\nFROM raw_pos.order_detail od\nJOIN raw_pos.order_header oh               ON od.order_id = oh.order_id\nJOIN harmonized.ingredient_to_menu_lookup iml ON od.menu_item_id = iml.menu_item_id\nJOIN harmonized.ingredient i               ON iml.ingredient_name = i.ingredient_name\nJOIN raw_pos.location l                    ON l.location_id = oh.location_id\nWHERE l.country = 'United States'\nGROUP BY oh.truck_id, order_year, order_month, i.ingredient_name;\n\n-- Devuelve el warehouse a XSmall\nALTER WAREHOUSE tb_de_wh SET WAREHOUSE_SIZE = 'xsmall';"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Dynamic table INGREDIENT_USAGE_BY_TRUCK successfully created.</code> en ~9 s con el warehouse en LARGE; luego <code>Statement executed successfully.</code> al volver a XSMALL."
+        },
+        {
+          "type": "text",
+          "html": "<p>Operaciones ya puede responder: que ingredientes necesita comprar el camion 15 para enero?</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Ingredientes del camion 15",
+          "code": "-- Ingredientes que necesita el camion 15 en enero (incluye el Banh Mi)\nSELECT truck_id, order_year, ingredient_name, SUM(total_ingredients_used) AS total_usado\nFROM harmonized.ingredient_usage_by_truck\nWHERE order_month = 1 AND truck_id = 15\nGROUP BY ALL\nORDER BY total_usado DESC;"
+        },
+        {
+          "type": "expected",
+          "html": "Camion 15, enero: <code>Hoagie Roll</code> 5,835 y <code>Lettuce</code> 5,835 (2022) en la parte alta; los ingredientes del Banh Mi (<code>French Baguette</code>, <code>Pickled Daikon</code>...) aparecen con 2 unidades."
+        }
+      ]
+    },
+    {
+      "title": "Visualizar el DAG del pipeline",
+      "nav": "DAG del pipeline",
+      "minutes": 1,
+      "badge": "UI",
+      "resumen": "Visualizamos en la interfaz el grafo del pipeline y el estado de refresco de cada tabla.",
+      "criterio": "Ves el grafo con las tablas fuente fluyendo hacia las tres Dynamic Tables.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>El <strong>DAG</strong> (grafo aciclico dirigido) muestra como fluyen los datos entre tablas y sirve para monitorear la salud y el lag del pipeline.</p><ol><li>En Snowsight ve a <strong>Catalog &gt; Database Explorer</strong>.</li><li>Expande <strong>TB_101</strong> y luego el schema <strong>HARMONIZED</strong>.</li><li>Abre <strong>Dynamic Tables</strong> y selecciona <code>INGREDIENT_USAGE_BY_TRUCK</code>.</li><li>Haz clic en la pestana <strong>Graph</strong>.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-2/dag.png",
+          "caption": "Grafo (DAG) del pipeline de Dynamic Tables en Snowsight"
+        },
+        {
+          "type": "expected",
+          "html": "Las tablas fuente (<code>MENU_STAGING</code>, <code>ORDER_HEADER</code>, <code>ORDER_DETAIL</code>, <code>LOCATION</code>) alimentan <code>INGREDIENT</code> &rarr; <code>INGREDIENT_TO_MENU_LOOKUP</code> &rarr; <code>INGREDIENT_USAGE_BY_TRUCK</code>."
+        }
+      ]
+    }
+  ]
+}

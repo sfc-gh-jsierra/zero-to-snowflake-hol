@@ -1,0 +1,365 @@
+{
+  "lab": "lab1_fundamentos.html",
+  "intro": [
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab1_fundamentos</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>."
+    },
+    {
+      "type": "image",
+      "src": "img/quickstart/create_a_worksheet.gif",
+      "caption": "Crear un SQL File en Workspaces (quickstart Zero to Snowflake)"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Contexto y tu primer warehouse",
+      "nav": "Contexto y warehouse",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Fijamos el contexto de trabajo y creamos nuestro primer warehouse para ver como se configura el computo en Snowflake.",
+      "criterio": "<code>my_wh</code> aparece en el listado, suspendido.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Todo comando en Snowflake corre con un <strong>rol</strong> (que permisos tienes), una <strong>base de datos</strong> (donde estan los datos) y un <strong>warehouse</strong> (el computo que ejecuta el query). Primero fijamos el contexto y listamos los warehouses que creo el setup.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Contexto",
+          "code": "-- Cambia al rol de trabajo\nUSE ROLE accountadmin;\nUSE DATABASE tb_101;\n\n-- Lista los warehouses de la cuenta\nSHOW WAREHOUSES;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Un <strong>Virtual Warehouse</strong> es computo puro, separado del almacenamiento: lo enciendes, lo apagas o lo cambias de tamano sin mover datos. Creamos el nuestro <em>suspendido</em> y <em>sin auto resume</em>, a proposito, para ver que pasa cuando no hay computo encendido.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Crear my_wh",
+          "code": "-- Creamos nuestro propio warehouse (suspendido y SIN auto resume a proposito)\nCREATE OR REPLACE WAREHOUSE my_wh\n    COMMENT = 'Mi warehouse de Tasty Bytes'\n    WAREHOUSE_TYPE = 'standard'\n    WAREHOUSE_SIZE = 'xsmall'\n    MIN_CLUSTER_COUNT = 1\n    MAX_CLUSTER_COUNT = 2\n    SCALING_POLICY = 'standard'\n    AUTO_SUSPEND = 60\n    INITIALLY_SUSPENDED = TRUE\n    AUTO_RESUME = FALSE;"
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Que significa cada parametro",
+          "html": "<code>WAREHOUSE_SIZE</code>: tamano (XS a 6XL; cada talla duplica computo y costo por segundo). <code>MIN/MAX_CLUSTER_COUNT</code>: multi-cluster para concurrencia. <code>AUTO_SUSPEND = 60</code>: se apaga solo tras 60 s sin uso. <code>AUTO_RESUME</code>: se enciende solo al llegar un query."
+        },
+        {
+          "type": "expected",
+          "html": "<code>Warehouse MY_WH successfully created.</code> En <code>SHOW WAREHOUSES</code> veras <code>MY_WH</code> con estado <code>SUSPENDED</code> junto a <code>TB_DE_WH</code>, <code>TB_DEV_WH</code> y <code>TB_ANALYST_WH</code>."
+        }
+      ]
+    },
+    {
+      "title": "Sin computo no hay query: RESUME y AUTO_RESUME",
+      "nav": "RESUME y AUTO_RESUME",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Encendemos computo propio y comprobamos que en Snowflake el almacenamiento y el computo son independientes.",
+      "criterio": "El primer SELECT falla y, tras el RESUME, devuelve los camiones.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Activamos <code>my_wh</code> en la sesion e intentamos consultar la tabla de camiones. Como esta suspendido y sin auto resume, <strong>el query debe fallar</strong>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Error esperado",
+          "code": "-- Selecciona el warehouse de computo\nUSE WAREHOUSE my_wh;\n\n-- Este query falla: el warehouse esta suspendido  (error esperado)\nSELECT * FROM raw_pos.truck_details;"
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Error esperado",
+          "html": "<code>No active warehouse selected</code> o <code>Warehouse 'MY_WH' is suspended</code>. Es didactico: el almacenamiento esta ahi, pero no hay computo encendido para leerlo."
+        },
+        {
+          "type": "text",
+          "html": "<p>Lo encendemos y activamos <code>AUTO_RESUME</code> para que a partir de ahora se encienda solo cuando llegue un query. Repetimos el SELECT.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Encender y reintentar",
+          "code": "-- Lo encendemos y activamos auto resume\nALTER WAREHOUSE my_wh RESUME;\nALTER WAREHOUSE my_wh SET AUTO_RESUME = TRUE;\n\n-- Este query falla: el warehouse esta suspendido  (error esperado)\nSELECT * FROM raw_pos.truck_details;"
+        },
+        {
+          "type": "expected",
+          "html": "450 filas, una por food truck, con columnas como <code>truck_id</code>, <code>primary_city</code> y <code>truck_build</code> (un JSON)."
+        }
+      ]
+    },
+    {
+      "title": "Escalar en segundos y el Result Cache",
+      "nav": "Escalamiento y cache",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Escalamos el warehouse en segundos y vemos como el Result Cache devuelve resultados repetidos sin gastar computo.",
+      "criterio": "La segunda ejecucion del mismo query responde en milisegundos.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Vamos a sumar ventas sobre <strong>~670 millones de lineas</strong>. Subimos a <code>XLarge</code> con un solo comando: no hay que mover datos ni reiniciar nada.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Escalar a XLarge",
+          "code": "-- Escala el warehouse a XLarge\nALTER WAREHOUSE my_wh SET WAREHOUSE_SIZE = 'XLarge';"
+        },
+        {
+          "type": "text",
+          "html": "<p>Ejecuta el query y <strong>anota el tiempo</strong> que muestra Snowsight debajo de los resultados.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Ventas por marca",
+          "code": "-- Ventas por marca sobre ~670 millones de lineas de detalle (anota el tiempo)\nSELECT\n    o.truck_brand_name,\n    COUNT(DISTINCT o.order_id) AS ordenes,\n    SUM(o.price)               AS ventas_totales\nFROM analytics.orders_v o\nGROUP BY o.truck_brand_name\nORDER BY ventas_totales DESC;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Ahora ejecuta <strong>exactamente el mismo query otra vez</strong>. Snowflake guarda el resultado 24 h en el <strong>Result Cache</strong>: si los datos no cambiaron, lo devuelve sin usar el warehouse (costo cero).</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Mismo query, otra vez",
+          "code": "-- Ventas por marca sobre ~670 millones de lineas de detalle (anota el tiempo)\nSELECT\n    o.truck_brand_name,\n    COUNT(DISTINCT o.order_id) AS ordenes,\n    SUM(o.price)               AS ventas_totales\nFROM analytics.orders_v o\nGROUP BY o.truck_brand_name\nORDER BY ventas_totales DESC;"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-1/query_result_cache.png",
+          "caption": "En Query Profile la segunda ejecucion muestra QUERY RESULT REUSE"
+        },
+        {
+          "type": "text",
+          "html": "<p>Terminamos el calculo pesado: bajamos a <code>XSmall</code>. Pagas por segundo solo lo que usaste.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Volver a XSmall",
+          "code": "-- Volvemos a XSmall: pagas por segundo solo lo que usas\nALTER WAREHOUSE my_wh SET WAREHOUSE_SIZE = 'XSmall';"
+        },
+        {
+          "type": "expected",
+          "html": "15 marcas ordenadas por ventas. La 1a ejecucion tarda unos segundos; la 2a, milisegundos. En el Query Profile (clic en el ID del query) la 2a muestra <code>QUERY RESULT REUSE</code>."
+        }
+      ]
+    },
+    {
+      "title": "Zero Copy Cloning y datos semi-estructurados",
+      "nav": "Clonacion y VARIANT",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Clonamos una tabla sin duplicar datos y consultamos campos JSON para enriquecer el catalogo de camiones.",
+      "criterio": "<code>truck_dev</code> creado con columnas year, make y model pobladas.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>La columna <code>truck_build</code> es un <strong>OBJECT</strong> (JSON) con anio, marca y modelo. Snowflake lo guarda nativo en <code>VARIANT</code>: no hay que definir esquema antes de cargar.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Ver el JSON",
+          "code": "-- Consulta los datos\nSELECT truck_build FROM raw_pos.truck_details LIMIT 10;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Queremos aplanar ese JSON sin tocar produccion. Creamos un <strong>clon de desarrollo</strong>: es instantaneo y <em>no duplica almacenamiento</em>, porque comparte los micro-particiones con el original hasta que alguno cambie.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Clonar y agregar columnas",
+          "code": "-- Clon de desarrollo instantaneo, sin duplicar almacenamiento\nCREATE OR REPLACE TABLE raw_pos.truck_dev CLONE raw_pos.truck_details;\n\n-- Agrega una columna a la tabla\nALTER TABLE raw_pos.truck_dev ADD COLUMN IF NOT EXISTS year  NUMBER;\nALTER TABLE raw_pos.truck_dev ADD COLUMN IF NOT EXISTS make  VARCHAR(255);\nALTER TABLE raw_pos.truck_dev ADD COLUMN IF NOT EXISTS model VARCHAR(255);"
+        },
+        {
+          "type": "text",
+          "html": "<p>Con la notacion <code>columna:campo::TIPO</code> leemos el JSON y lo convertimos en columnas tipadas.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Aplanar el JSON",
+          "code": "-- Notacion \":\" para leer el JSON\nUPDATE raw_pos.truck_dev\nSET year  = truck_build:year::NUMBER,\n    make  = truck_build:make::VARCHAR,\n    model = truck_build:model::VARCHAR;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>number of rows updated: 450</code>."
+        }
+      ]
+    },
+    {
+      "title": "Calidad de datos y SWAP atomico a produccion",
+      "nav": "Limpieza y SWAP",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Corregimos datos en el clon y lo promovemos a produccion con un SWAP atomico, sin afectar a los usuarios.",
+      "criterio": "En <code>truck_details</code> solo existe <code>Ford</code> (sin <code>Ford_</code>).",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Contamos camiones por marca. Mira bien: hay un problema de calidad.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Detectar el problema",
+          "code": "-- Problema de calidad: 'Ford' y 'Ford_'\nSELECT make, COUNT(*) AS camiones\nFROM raw_pos.truck_dev\nGROUP BY make\nORDER BY make;"
+        },
+        {
+          "type": "expected",
+          "html": "Aparecen <code>Ford</code> y <code>Ford_</code> como si fueran marcas distintas."
+        },
+        {
+          "type": "text",
+          "html": "<p>Lo corregimos en el clon y luego <strong>intercambiamos</strong> dev y produccion con <code>SWAP</code>: es un cambio de metadatos atomico, los usuarios nunca ven un estado intermedio.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Corregir y promover",
+          "code": "-- Corrige los valores mal escritos\nUPDATE raw_pos.truck_dev SET make = 'Ford' WHERE make = 'Ford_';\n\n-- Promovemos dev a produccion de forma atomica\nALTER TABLE raw_pos.truck_details SWAP WITH raw_pos.truck_dev;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Verificamos produccion y quitamos la columna JSON que ya no necesitamos.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Verificar produccion",
+          "code": "-- Cuenta registros por categoria\nSELECT make, COUNT(*) AS camiones\nFROM raw_pos.truck_details\nGROUP BY make\nORDER BY camiones DESC;\n\n-- Elimina la columna JSON ya extraida\nALTER TABLE raw_pos.truck_details DROP COLUMN truck_build;"
+        },
+        {
+          "type": "expected",
+          "html": "Una sola fila <code>Ford</code> con el total combinado, y el mensaje <code>Statement executed successfully</code> del DROP COLUMN."
+        }
+      ]
+    },
+    {
+      "title": "Time Travel: recuperar una tabla borrada",
+      "nav": "UNDROP",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Borramos una tabla por error y la recuperamos con Time Travel, sin backups ni restauraciones manuales.",
+      "criterio": "<code>truck_details</code> vuelve a existir tras el UNDROP.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Simulamos el peor dia: alguien borra la tabla de <strong>produccion</strong>. Ejecuta el DROP y luego intenta describirla.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Ups...",
+          "code": "-- Borra la tabla\nDROP TABLE raw_pos.truck_details;\n\n-- No existe  (error esperado)\nDESCRIBE TABLE raw_pos.truck_details;"
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Error esperado",
+          "html": "<code>Table 'TRUCK_DETAILS' does not exist or not authorized.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Con <strong>Time Travel</strong> no llamamos al DBA ni restauramos backups: <code>UNDROP</code> la trae de vuelta con todos sus datos. Luego borramos el clon que ya no usamos.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "UNDROP",
+          "code": "-- Sin llamar al DBA ni restaurar backups\nUNDROP TABLE raw_pos.truck_details;\n\n-- Revisa los datos resultantes\nSELECT * FROM raw_pos.truck_details LIMIT 10;\n\n-- Borra la tabla\nDROP TABLE raw_pos.truck_dev;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Bonus: Time Travel tambien consulta el estado de una tabla en el pasado.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "La tabla hace 1 minuto",
+          "code": "-- Bonus: Time Travel por tiempo (estado de la tabla hace 1 minuto)\nSELECT COUNT(*) FROM raw_pos.truck AT(OFFSET => -60);"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Table TRUCK_DETAILS successfully restored.</code>, 10 camiones y un conteo de 450."
+        }
+      ]
+    },
+    {
+      "title": "Control de costos: Resource Monitor",
+      "nav": "Resource Monitor",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Ponemos un tope de creditos al warehouse con un Resource Monitor para controlar el gasto.",
+      "criterio": "<code>MY_RESOURCE_MONITOR</code> creado y asignado a <code>my_wh</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Un <strong>Resource Monitor</strong> pone un techo de creditos: avisa al 75%, suspende al 90% (dejando terminar lo que corre) y corta todo al 100%.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Crear y asignar",
+          "code": "-- Crea el Resource Monitor con tope de creditos\nCREATE OR REPLACE RESOURCE MONITOR my_resource_monitor\n    WITH CREDIT_QUOTA = 100\n    FREQUENCY = MONTHLY\n    START_TIMESTAMP = IMMEDIATELY\n    TRIGGERS ON 75 PERCENT DO NOTIFY\n             ON 90 PERCENT DO SUSPEND\n             ON 100 PERCENT DO SUSPEND_IMMEDIATE;\n\n-- Asocia el Resource Monitor al warehouse\nALTER WAREHOUSE my_wh SET RESOURCE_MONITOR = my_resource_monitor;\n\n-- Verifica el Resource Monitor creado\nSHOW RESOURCE MONITORS LIKE 'MY_RESOURCE_MONITOR';"
+        },
+        {
+          "type": "expected",
+          "html": "Una fila con <code>credit_quota = 100</code>, <code>frequency = MONTHLY</code> y <code>used_credits</code> cercano a 0."
+        }
+      ]
+    },
+    {
+      "title": "Budgets y Universal Search (UI)",
+      "nav": "Budgets y Universal Search",
+      "minutes": 1,
+      "badge": "UI",
+      "resumen": "Revisamos desde la interfaz los Budgets de costos y la busqueda universal para encontrar objetos y datos.",
+      "criterio": "Encontraste la tabla <code>TRUCK_DETAILS</code> desde la barra de busqueda.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Los Resource Monitors controlan warehouses; los <strong>Budgets</strong> controlan el gasto de toda la cuenta (incluido serverless). En el menu izquierdo ve a <strong>Admin &gt; Cost Management &gt; Budgets</strong> y explora el presupuesto de la cuenta.</p>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-1/budget_page.png",
+          "caption": "Admin > Cost Management > Budgets"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-1/edit_budget.png",
+          "caption": "Editar el monto mensual y los avisos del budget"
+        },
+        {
+          "type": "text",
+          "html": "<p>Ahora usa la barra superior <strong>Search</strong> (Universal Search): escribe <code>truck</code>. Encuentra tablas, vistas, worksheets y documentacion. Prueba tambien en lenguaje natural: <em>¿que tablas tienen informacion de clientes?</em></p>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-1/universal_search_truck.png",
+          "caption": "Universal Search: buscar 'truck'"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-1/universal_search_natural_language_query.png",
+          "caption": "Busqueda en lenguaje natural"
+        },
+        {
+          "type": "expected",
+          "html": "Resultados con <code>TRUCK_DETAILS</code>, <code>TRUCK</code> y las vistas de <code>ANALYTICS</code>."
+        }
+      ]
+    }
+  ]
+}

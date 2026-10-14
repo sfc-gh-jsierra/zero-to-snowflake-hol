@@ -1,0 +1,185 @@
+{
+  "lab": "lab4_multimodal.html",
+  "intro": [
+    {
+      "type": "image",
+      "src": "img/quickstart/cortex_ai_functions_header.png",
+      "caption": "Cortex AI Functions (quickstart Zero to Snowflake)"
+    },
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab4_multimodal</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>."
+    },
+    {
+      "type": "image",
+      "src": "img/quickstart/create_a_worksheet.gif",
+      "caption": "Crear un SQL File en Workspaces (quickstart Zero to Snowflake)"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Contexto y archivos del stage",
+      "nav": "Contexto y stage",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Preparamos el contexto y confirmamos que audios, documentos e imagenes ya estan en Snowflake, listos para analizarlos con IA.",
+      "criterio": "Ves los 7 archivos del stage <code>ARCHIVOS</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Las funciones de IA de Snowflake (<code>AI_*</code>) trabajan sobre archivos que viven en un <strong>stage</strong>, sin sacarlos de Snowflake. Fijamos el contexto: rol <code>accountadmin</code>, base <code>tb_101</code>, esquema <code>public</code> y el warehouse <code>tb_analyst_wh</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Contexto",
+          "code": "-- Contexto: rol, base, esquema y warehouse del lab\nUSE ROLE accountadmin;\nUSE DATABASE tb_101;\nUSE SCHEMA public;\nUSE WAREHOUSE tb_analyst_wh;"
+        },
+        {
+          "type": "expected",
+          "html": "Cuatro mensajes <code>Statement executed successfully.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Los archivos los subiste en el LAB 0. Una <strong>directory table</strong> es un catalogo de los archivos del stage; <code>REFRESH</code> la sincroniza y <code>DIRECTORY(@archivos)</code> la consulta como una tabla.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Listar archivos",
+          "code": "-- Sincroniza el catalogo de archivos del stage\nALTER STAGE archivos REFRESH;\n-- Lista los archivos disponibles y su tamano\nSELECT relative_path, size FROM DIRECTORY(@archivos);"
+        },
+        {
+          "type": "expected",
+          "html": "7 filas: 2 contratos <code>.docx</code>, <code>TELCO.png</code>, <code>cedula.jpg</code>, <code>choque.png</code> y 2 <code>.mp3</code>."
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Si faltan archivos",
+          "html": "Subelos en <strong>Catalog &gt; TB_101 &gt; PUBLIC &gt; Stages &gt; ARCHIVOS &gt; + Files</strong> y vuelve a ejecutar el bloque."
+        }
+      ]
+    },
+    {
+      "title": "Audio: transcribir llamadas con SQL",
+      "nav": "Audio",
+      "minutes": 2,
+      "badge": "IA",
+      "resumen": "Convertimos llamadas de servicio en texto, medimos su sentimiento y obtenemos recomendaciones de mejora, todo con una consulta SQL.",
+      "criterio": "Ves la transcripcion de <code>problema-servicio.mp3</code> con SPEAKER_00/SPEAKER_01 y una fila por cada .mp3 con texto, sentimiento y recomendacion.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p><code>AI_TRANSCRIBE</code> convierte audio en texto. <code>TO_FILE</code> apunta a un archivo del stage y la opcion <code>timestamp_granularity: 'speaker'</code> separa lo que dice cada hablante: ideal para una llamada de call center.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Una llamada",
+          "code": "-- Transcribe una llamada separando a cada hablante\nSELECT AI_TRANSCRIBE(TO_FILE('@archivos', 'problema-servicio.mp3'),\n                     {'timestamp_granularity': 'speaker'}) AS transcripcion;"
+        },
+        {
+          "type": "expected",
+          "html": "Un JSON con ~71.8 s de audio y segmentos etiquetados <code>SPEAKER_00</code> / <code>SPEAKER_01</code>."
+        },
+        {
+          "type": "text",
+          "html": "<p>Ahora encadenamos funciones en un solo query: un CTE transcribe todos los <code>.mp3</code>, <code>AI_SENTIMENT</code> mide el sentimiento por aspecto (profesionalismo, resolucion, tiempo de espera) y <code>AI_COMPLETE</code> pide a un LLM recomendaciones para el agente.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Todas las llamadas",
+          "code": "-- Todas las llamadas: transcribir, medir y recomendar en un solo query\nWITH audios AS (\n    SELECT relative_path,\n           AI_TRANSCRIBE(TO_FILE('@archivos', relative_path)):text::STRING AS texto\n    FROM DIRECTORY(@archivos)\n    WHERE relative_path ILIKE '%.mp3'\n)\nSELECT\n    relative_path,\n    texto,\n    AI_SENTIMENT(texto, ['profesionalismo', 'resolucion', 'tiempo de espera']) AS sentimiento,\n    AI_COMPLETE('claude-sonnet-4-5',\n        'Como podria mejorar el agente esta atencion? Maximo 3 bullets de 10 palabras: ' || texto) AS recomendacion\nFROM audios;"
+        },
+        {
+          "type": "expected",
+          "html": "2 filas (una por <code>.mp3</code>) con <code>TEXTO</code>, <code>SENTIMIENTO</code> (JSON por aspecto) y <code>RECOMENDACION</code> (3 bullets)."
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Momento wow: transcribir audio con SQL",
+          "html": "Una llamada de servicio pasa de archivo .mp3 a texto, sentimiento y recomendaciones para el agente en una sola consulta, sin pipelines de voz ni servicios externos."
+        }
+      ]
+    },
+    {
+      "title": "Documentos: extraer datos de contratos .docx",
+      "nav": "Documentos",
+      "minutes": 2,
+      "badge": "IA",
+      "resumen": "Extraemos automaticamente las partes, fechas y valores de contratos Word, sin leerlos a mano ni sacar los archivos de Snowflake.",
+      "criterio": "Una fila por contrato con arrendatario, arrendador, fecha_inicio, valor_contrato, inmueble_direccion y terminacion_anticipada.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p><code>AI_EXTRACT</code> lee un documento (aqui contratos de arrendamiento en Word) y responde preguntas en lenguaje natural. En <code>responseFormat</code> defines cada campo como <em>[nombre, pregunta]</em> y obtienes un JSON con esas llaves.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "AI_EXTRACT",
+          "code": "-- Extrae datos clave de cada contrato Word\nSELECT\n    relative_path,\n    AI_EXTRACT(\n        file => TO_FILE('@archivos', relative_path),\n        responseFormat => [\n            ['arrendatario',          'Quien es el arrendatario?'],\n            ['arrendador',            'Quien es el arrendador?'],\n            ['fecha_inicio',          'Fecha de inicio del contrato (YYYY-MM-DD)?'],\n            ['valor_contrato',        'Valor del contrato en numeros?'],\n            ['inmueble_direccion',    'Direccion del inmueble?'],\n            ['terminacion_anticipada','Tiene clausula de terminacion anticipada (SI/NO)?']\n        ]\n    ):response AS datos_contrato\nFROM DIRECTORY(@archivos)\nWHERE relative_path ILIKE '%.docx';"
+        },
+        {
+          "type": "expected",
+          "html": "2 filas. Contrato 01: arrendador <code>MARIA ELENA RODRIGUEZ CASTILLO</code>, arrendatario <code>CARLOS ANDRES MORENO LOPEZ</code>."
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Momento wow: contratos a datos",
+          "html": "De un .docx sin estructura a columnas consultables, listas para cruzar con tablas del negocio."
+        }
+      ]
+    },
+    {
+      "title": "Imagenes: cedula, seguridad industrial y peritaje",
+      "nav": "Imagenes",
+      "minutes": 2,
+      "badge": "IA",
+      "resumen": "Usamos IA de vision para leer una cedula, revisar seguridad industrial en una foto y peritar un choque para seguros.",
+      "criterio": "Obtienes el JSON de la cedula, una inspeccion de <code>TELCO.png</code> y un peritaje de <code>choque.png</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Los LLM multimodales leen imagenes. Con <code>PROMPT('... {0}', TO_FILE(...))</code> insertas la imagen en el lugar <code>{0}</code> del prompt. Primero, verificacion de identidad: una foto de una cedula a JSON.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Cedula a JSON",
+          "code": "-- Lee la cedula y devuelve sus datos en JSON\nSELECT AI_COMPLETE('claude-sonnet-4-5',\n    PROMPT('Extrae de esta cedula en JSON: numero, nombres, apellidos, fecha_nacimiento, lugar_nacimiento, es_mayor_de_edad (SI/NO). Solo el JSON. {0}',\n           TO_FILE('@archivos', 'cedula.jpg'))) AS cedula;"
+        },
+        {
+          "type": "expected",
+          "html": "Un JSON con nombres <code>GERONIMO</code>, apellidos <code>VELEZ RUIZ</code>, fecha y lugar de nacimiento y mayoria de edad."
+        },
+        {
+          "type": "text",
+          "html": "<p>Puedes elegir el modelo. Para seguridad industrial usamos <code>pixtral-large</code> (Mistral) y para el peritaje de seguros volvemos a <code>claude-sonnet-4-5</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Inspeccion y peritaje",
+          "code": "-- Seguridad industrial en una foto de campo (otro modelo: pixtral-large de Mistral)\nSELECT AI_COMPLETE('pixtral-large',\n    PROMPT('Describe la imagen en espanol con: cantidad_personas, usan_elementos_seguridad, tipo_elementos, zona_senalizada, tipo_trabajo (suelo/altura), riesgos. {0}',\n           TO_FILE('@archivos', 'TELCO.png'))) AS inspeccion;\n\n-- Peritaje de un choque para seguros\nSELECT AI_COMPLETE('claude-sonnet-4-5',\n    PROMPT('Eres perito de seguros. Describe danos visibles, severidad (baja/media/alta) y partes a reparar. {0}',\n           TO_FILE('@archivos', 'choque.png'))) AS peritaje;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>TELCO.png</code>: 2 personas trabajando en una torre con casco y arnes. <code>choque.png</code>: Renault Twingo vs motocicleta, con danos, severidad y partes a reparar."
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Bug real: TELCO.png devolvia NULL",
+          "html": "En la validacion, TELCO.png devolvia NULL con <code>claude-sonnet-4-5</code>. Con <code>pixtral-large</code> (Mistral) describe correctamente la escena. Leccion: si un modelo no responde con una imagen, prueba otro modelo multimodal."
+        }
+      ]
+    }
+  ]
+}

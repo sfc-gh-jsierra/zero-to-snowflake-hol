@@ -1,0 +1,1935 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAB 0: Setup del ambiente Tasty Bytes | Zero to Snowflake HOL</title>
+<style>
+
+:root {
+    --sf-accent: #29B5E8;
+    --sf-headers: #11567F;
+    --sf-headers-dark: #0c3f5c;
+    --sf-green: #2fb380;
+    --sf-red: #e5484d;
+    --sf-orange: #ff922b;
+    --sf-yellow: #ffb703;
+
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+
+    --font-head: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+    --font-body: 'Lato', 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', 'Consolas', 'Menlo', monospace;
+
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 10px -2px rgba(17,86,127,0.15);
+    --shadow-lg: 0 10px 20px -4px rgba(17,86,127,0.20);
+
+    --header-height: 64px;
+    --sidebar-width: 270px;
+    --content-max-width: 880px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-height) + var(--space-lg)); }
+body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--gray-800);
+    background-color: var(--gray-50);
+    -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 {
+    font-family: var(--font-head);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-900);
+}
+a { color: var(--sf-accent); text-decoration: none; }
+a:hover { color: var(--sf-headers); }
+code { font-family: var(--font-mono); }
+
+/* Header */
+.hol-header {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+    background: white; border-bottom: 1px solid var(--gray-200); z-index: 100; box-shadow: var(--shadow-sm);
+}
+.header-container {
+    max-width: 1400px; margin: 0 auto; height: 100%;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-xl);
+}
+.logo-section { display: flex; align-items: center; gap: var(--space-md); }
+.sf-logo-mark { width: 32px; height: 32px; }
+.brand-name { font-family: var(--font-head); font-weight: 700; font-size: 1rem; color: var(--sf-headers); letter-spacing: 0.5px; }
+.logo-divider { width: 1px; height: 24px; background: var(--gray-300); }
+.hol-badge {
+    background: linear-gradient(135deg, var(--sf-accent), var(--sf-headers));
+    color: white; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.header-nav { display: flex; gap: var(--space-lg); }
+.header-nav a { color: var(--gray-600); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Hero */
+.hero-section {
+    margin-top: var(--header-height);
+    background: linear-gradient(135deg, var(--sf-headers-dark) 0%, var(--sf-headers) 100%);
+    padding: var(--space-3xl) 0; color: white;
+}
+.hero-container {
+    max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl);
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--space-3xl); align-items: center;
+}
+.industry-tag {
+    display: inline-block; background: rgba(41,181,232,0.25); color: #bfe9f9;
+    padding: var(--space-xs) var(--space-md); border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: var(--space-md);
+}
+.hero-title { font-family: var(--font-head); font-size: 2.3rem; font-weight: 800; line-height: 1.25; margin-bottom: var(--space-md); text-transform: none; color: white; }
+.hero-subtitle { font-family: var(--font-body); font-size: 1.05rem; color: #dceefa; margin-bottom: var(--space-xl); line-height: 1.7; text-transform: none; }
+.hero-meta { display: flex; gap: var(--space-xl); margin-bottom: var(--space-xl); flex-wrap: wrap; }
+.meta-item { display: flex; align-items: center; gap: var(--space-sm); color: #cfe6f2; font-size: 0.875rem; }
+.meta-icon { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+.hero-cta {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    background: var(--sf-accent); color: white; padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md); font-family: var(--font-head); font-weight: 700; letter-spacing: 0.5px;
+    box-shadow: var(--shadow-lg);
+}
+.hero-cta:hover { background: white; color: var(--sf-headers); }
+.architecture-preview {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-lg); padding: var(--space-xl); backdrop-filter: blur(6px);
+    font-family: var(--font-mono); font-size: 0.8rem; color: #cfe6f2; line-height: 1.9;
+}
+.arch-line { display: block; }
+.arch-arrow { color: var(--sf-accent); }
+
+/* Content sections */
+.content-section { padding: var(--space-2xl) 0; }
+.content-section.alt-bg { background: white; }
+.section-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); }
+.section-title {
+    font-size: 1.5rem; font-weight: 800; color: var(--gray-900);
+    margin-bottom: var(--space-xl); position: relative; padding-bottom: var(--space-md);
+}
+.section-title::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 56px; height: 4px;
+    background: linear-gradient(90deg, var(--sf-accent), var(--sf-headers)); border-radius: var(--radius-full);
+}
+
+.overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.overview-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: var(--space-xl); }
+.overview-card.highlight { background: linear-gradient(135deg, #eaf7fd, white); border-color: var(--sf-accent); }
+.overview-card h3 { font-size: 0.95rem; color: var(--gray-700); margin-bottom: var(--space-md); }
+.overview-card p { text-transform: none; font-family: var(--font-body); color: var(--gray-600); }
+.learning-list { list-style: none; }
+.learning-list li { position: relative; padding-left: var(--space-lg); margin-bottom: var(--space-sm); color: var(--gray-600); text-transform: none; font-family: var(--font-body); }
+.learning-list li::before { content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px; background: var(--sf-accent); border-radius: 50%; }
+.tech-tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.tech-tag {
+    display: inline-flex; align-items: center; background: var(--gray-100);
+    padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-size: 0.78rem; color: var(--gray-700); font-family: var(--font-mono); text-transform: none;
+}
+
+.prerequisites-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.prereq-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: var(--space-lg); display: flex; gap: var(--space-md); align-items: flex-start; }
+.prereq-icon { width: 28px; height: 28px; flex-shrink: 0; color: var(--sf-accent); }
+.prereq-info h4 { font-size: 0.9rem; color: var(--gray-800); margin-bottom: var(--space-xs); }
+.prereq-info p { font-family: var(--font-body); font-size: 0.85rem; color: var(--gray-500); text-transform: none; }
+
+/* Progress tracker */
+.progress-tracker {
+    position: fixed; left: 0; top: var(--header-height); bottom: 0; width: var(--sidebar-width);
+    background: white; border-right: 1px solid var(--gray-200); padding: var(--space-xl); overflow-y: auto; z-index: 50;
+}
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); font-family: var(--font-head); font-weight: 700; font-size: 0.8rem; color: var(--gray-700); }
+.progress-percent { color: var(--sf-accent); }
+.progress-bar { height: 6px; background: var(--gray-200); border-radius: var(--radius-full); margin-bottom: var(--space-xl); overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--sf-accent), var(--sf-green)); border-radius: var(--radius-full); width: 0%; transition: width 250ms ease; }
+.steps-nav { display: flex; flex-direction: column; gap: var(--space-xs); }
+.step-nav-item {
+    display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md); color: var(--gray-600); font-size: 0.82rem; text-decoration: none;
+}
+.step-nav-item:hover { background: var(--gray-100); }
+.step-nav-item.active { background: #eaf7fd; color: var(--sf-headers); font-weight: 700; }
+.step-nav-item.completed { color: var(--sf-green); }
+.step-nav-item .step-indicator {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid currentColor;
+    display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+.step-nav-item.completed .step-indicator { background: var(--sf-green); border-color: var(--sf-green); color: white; }
+
+/* Steps container */
+.steps-container { margin-left: var(--sidebar-width); padding: var(--space-2xl); max-width: calc(var(--content-max-width) + var(--sidebar-width) + var(--space-3xl) * 2); }
+
+.callout { display: flex; gap: var(--space-md); padding: var(--space-lg); border-radius: var(--radius-md); margin: 0 0 var(--space-xl) 0; }
+.callout-icon { flex-shrink: 0; width: 24px; height: 24px; }
+.callout-icon svg { width: 100%; height: 100%; }
+.callout-content { flex: 1; }
+.callout-title { display: block; margin-bottom: var(--space-xs); font-family: var(--font-head); font-size: 0.85rem; letter-spacing: 0.5px; }
+.callout-content p { margin: 0; font-size: 0.92rem; font-family: var(--font-body); text-transform: none; color: var(--gray-700); }
+.callout-warning { background: #fff4e6; border-left: 4px solid var(--sf-orange); }
+.callout-warning .callout-icon { color: var(--sf-orange); }
+.callout-info { background: #eaf7fd; border-left: 4px solid var(--sf-accent); }
+.callout-info .callout-icon { color: var(--sf-accent); }
+.callout-tip { background: #eafaf3; border-left: 4px solid var(--sf-green); }
+.callout-tip .callout-icon { color: var(--sf-green); }
+
+.step-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); margin-bottom: var(--space-xl); overflow: hidden; scroll-margin-top: calc(var(--header-height) + var(--space-lg)); }
+.step-card.completed { border-color: var(--sf-green); }
+.step-card.completed .step-number { background: var(--sf-green); }
+.step-header { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-lg); background: var(--gray-50); border-bottom: 1px solid var(--gray-200); cursor: pointer; }
+.step-number {
+    width: 40px; height: 40px; background: var(--sf-headers); color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; font-size: 1.05rem; flex-shrink: 0;
+}
+.step-info { flex: 1; }
+.step-title { font-size: 1.05rem; font-weight: 800; color: var(--gray-800); margin: 0; text-transform: none; }
+.step-duration { font-family: var(--font-body); font-size: 0.78rem; color: var(--gray-500); text-transform: none; }
+.step-toggle { background: none; border: none; padding: var(--space-sm); cursor: pointer; color: var(--gray-400); transition: transform 150ms ease; }
+.step-toggle[aria-expanded="false"] { transform: rotate(-90deg); }
+.step-toggle svg { width: 22px; height: 22px; fill: currentColor; }
+.step-content { padding: var(--space-xl); }
+.step-content.collapsed { display: none; }
+.step-description { color: var(--gray-600); margin-bottom: var(--space-lg); line-height: 1.75; text-transform: none; font-family: var(--font-body); }
+.step-description strong { color: var(--gray-800); }
+.step-description code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.85rem; }
+.step-actions { display: flex; justify-content: flex-end; padding-top: var(--space-lg); border-top: 1px solid var(--gray-200); margin-top: var(--space-xl); }
+.btn-check {
+    display: inline-flex; align-items: center; gap: var(--space-sm); background: var(--gray-100); color: var(--gray-700);
+    border: none; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); font-family: var(--font-head);
+    font-weight: 700; font-size: 0.78rem; letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer;
+}
+.btn-check:hover { background: var(--sf-green); color: white; }
+.btn-check svg { width: 16px; height: 16px; fill: currentColor; }
+.btn-check:disabled { cursor: default; }
+
+.sub-heading { font-family: var(--font-head); font-size: 0.85rem; color: var(--sf-headers); letter-spacing: 0.5px; margin: var(--space-lg) 0 var(--space-sm) 0; }
+
+/* Code blocks */
+.code-block { background: var(--gray-900); border-radius: var(--radius-md); margin: var(--space-md) 0 var(--space-lg) 0; overflow: hidden; }
+.code-header { display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) var(--space-md); background: var(--gray-800); border-bottom: 1px solid var(--gray-700); }
+.code-language { color: var(--gray-400); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font-head); }
+.code-actions { display: flex; gap: var(--space-xs); }
+.code-actions button { background: transparent; border: none; padding: var(--space-xs) var(--space-sm); cursor: pointer; color: var(--gray-400); border-radius: var(--radius-sm); font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; }
+.code-actions button:hover { background: var(--gray-700); color: var(--sf-accent); }
+.code-block pre { margin: 0; padding: var(--space-lg); overflow-x: auto; max-height: 480px; }
+.code-block code { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; color: var(--gray-100); white-space: pre; }
+
+/* Tables */
+.table-wrapper { overflow-x: auto; margin: var(--space-lg) 0; border-radius: var(--radius-md); border: 1px solid var(--gray-200); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.data-table th { background: var(--gray-100); padding: var(--space-sm) var(--space-md); text-align: left; font-family: var(--font-head); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px; text-transform: uppercase; color: var(--gray-700); border-bottom: 2px solid var(--gray-300); white-space: nowrap; }
+.data-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--gray-200); color: var(--gray-600); }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.78rem; }
+
+/* Completion */
+.completion-section { display: none; background: linear-gradient(135deg, var(--sf-green), #1f8a5f); color: white; padding: var(--space-3xl) 0; text-align: center; margin-left: var(--sidebar-width); }
+.completion-section.visible { display: block; }
+.completion-container { max-width: 600px; margin: 0 auto; padding: 0 var(--space-xl); }
+.completion-icon { width: 72px; height: 72px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-xl); }
+.completion-icon svg { width: 42px; height: 42px; fill: var(--sf-green); }
+.completion-section h2 { font-size: 1.7rem; margin-bottom: var(--space-md); color: white; }
+.completion-section p { text-transform: none; font-family: var(--font-body); }
+.completion-summary { display: flex; justify-content: center; gap: var(--space-2xl); margin: var(--space-xl) 0; }
+.summary-item { text-align: center; }
+.summary-label { display: block; font-size: 0.8rem; opacity: 0.9; margin-bottom: var(--space-xs); text-transform: none; font-family: var(--font-body); }
+.summary-value { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; }
+.next-actions { background: rgba(255,255,255,0.12); border-radius: var(--radius-lg); padding: var(--space-xl); margin-top: var(--space-xl); text-align: left; }
+.next-actions h3 { font-size: 0.9rem; margin-bottom: var(--space-md); }
+.next-actions ul { list-style: none; text-transform: none; font-family: var(--font-body); }
+.next-actions li { padding: var(--space-xs) 0; }
+
+/* Footer */
+.hol-footer { background: var(--gray-900); color: var(--gray-400); padding: var(--space-xl) 0; margin-left: var(--sidebar-width); }
+.footer-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md); }
+.footer-brand { display: flex; align-items: center; gap: var(--space-md); }
+.footer-brand .sf-logo-mark { filter: brightness(0) invert(1); }
+.footer-meta { text-align: right; font-size: 0.78rem; }
+
+@media (max-width: 992px) {
+    .progress-tracker { display: none; }
+    .steps-container, .hol-footer, .completion-section { margin-left: 0; }
+    .hero-container, .overview-grid, .prerequisites-grid { grid-template-columns: 1fr; }
+    .header-nav { display: none; }
+}
+
+
+/* ============================================================
+   EXTENSIONES SEMANTICAS DEL HOL
+   Traduce el vocabulario del HOL real (paso-criterio, modalidad-badge,
+   bug-real, wow, evidencia, prompt de CoCo, ubicate, arquitectura)
+   al lenguaje visual del skill (paleta #29B5E8 / #11567F).
+   ============================================================ */
+
+/* --- Criterio de exito por paso (franja verde) --- */
+.step-criterio {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    background: rgba(47,179,128,0.08);
+    border-left: 3px solid var(--sf-green);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+    font-size: 0.9375rem;
+    color: var(--gray-700);
+}
+.step-criterio strong { color: #1c7a56; }
+.step-criterio.hard {
+    background: rgba(229,72,77,0.07);
+    border-left-color: var(--sf-red);
+}
+.step-criterio.hard strong { color: #b3282c; }
+
+/* --- Badge de modalidad de ejecucion (SQL / Snowsight / CoCo / CLI) --- */
+.modalidad-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-sm);
+}
+.modalidad-badge.sql   { background: rgba(41,181,232,0.14); color: #14708f; border: 1px solid rgba(41,181,232,0.35); }
+.modalidad-badge.ui    { background: rgba(17,86,127,0.10);  color: var(--sf-headers); border: 1px solid rgba(17,86,127,0.28); }
+.modalidad-badge.coco  { background: rgba(139,92,246,0.12); color: #6d3fd4; border: 1px solid rgba(139,92,246,0.32); }
+.modalidad-badge.cli   { background: rgba(100,116,139,0.12); color: var(--gray-600); border: 1px solid rgba(100,116,139,0.30); }
+
+/* --- Bug real encontrado en la validacion (borde rojo punteado) --- */
+.bug-real {
+    border: 2px dashed var(--sf-red);
+    border-radius: var(--radius-md);
+    background: rgba(229,72,77,0.04);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.bug-titulo {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: #b3282c;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.bug-real p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.bug-real p:last-child { margin-bottom: 0; }
+
+/* --- Momento WOW: construye algo que impresiona (borde morado) --- */
+.wow {
+    border: 2px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(41,181,232,0.05) 100%);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.wow-titulo {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1rem;
+    color: #6d3fd4;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.wow p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.wow p:last-child { margin-bottom: 0; }
+
+/* --- Evidencia verificada (borde verde punteado) --- */
+.evidencia {
+    border: 1px dashed var(--sf-green);
+    border-radius: var(--radius-md);
+    background: rgba(47,179,128,0.05);
+    padding: var(--space-md) var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+}
+.evidencia code { background: rgba(47,179,128,0.12); color: #1c7a56; }
+
+/* --- Prompt para CoCo (estilo burbuja de chat) --- */
+.prompt-label {
+    font-family: var(--font-head);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6d3fd4;
+    margin: var(--space-md) 0 var(--space-xs);
+}
+.prompt-coco {
+    position: relative;
+    background: #f5f3ff;
+    border: 1px solid rgba(139,92,246,0.30);
+    border-left: 4px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-md);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-style: italic;
+    color: var(--gray-800);
+    line-height: 1.65;
+}
+
+/* --- "Ubicate": donde pararse antes de ejecutar el paso --- */
+.ubicate {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--sf-headers);
+    background: rgba(41,181,232,0.10);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    margin-right: 6px;
+}
+
+/* --- Detalle colapsable: "ver el SQL que corre por debajo" --- */
+details.underlying {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    background: var(--gray-50);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+}
+details.underlying > summary {
+    cursor: pointer;
+    font-family: var(--font-head);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--sf-headers);
+    list-style: none;
+}
+details.underlying > summary::before { content: '▸ '; color: var(--sf-accent); }
+details.underlying[open] > summary::before { content: '▾ '; }
+details.underlying[open] > summary { margin-bottom: var(--space-md); }
+
+/* --- Diagrama de arquitectura en texto (sin dependencias externas) --- */
+.arch-diagram {
+    background: var(--gray-900);
+    color: #cbd5e1;
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+}
+.arch-diagram .n { color: var(--sf-accent); font-weight: 700; }
+.arch-diagram .g { color: var(--sf-green); }
+
+/* --- Badges de estado de track (PASA / conectas-no-construyes) --- */
+.track-badge {
+    display: inline-block;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    margin-left: var(--space-sm);
+    vertical-align: middle;
+}
+.track-badge.pasa    { background: rgba(47,179,128,0.15); color: #1c7a56; }
+.track-badge.connect { background: rgba(41,181,232,0.15); color: #14708f; }
+.track-badge.excep   { background: rgba(255,146,43,0.15); color: #b35f00; }
+
+/* Sobre fondo oscuro (hero) los badges necesitan fondo solido para tener contraste */
+.hero-section .track-badge.pasa,
+.hero-section .track-badge.connect,
+.hero-section .track-badge.excep {
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+
+/* --- Rol del proveedor (nota de gobernanza del Anexo 11) --- */
+.rol-proveedor {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+    font-style: italic;
+}
+
+
+/* figures + expected (generated by _build/build_labs.py) */
+.step-figure { margin: var(--space-md) 0 var(--space-lg); text-align: center; }
+.step-figure img { max-width: 100%; border-radius: 10px; border: 1px solid #dbe6f0; box-shadow: 0 6px 22px rgba(17,86,127,0.12); }
+.step-figure figcaption { margin-top: 6px; font-size: 0.8rem; color: var(--gray-500, #6b7280); font-style: italic; }
+.step-text { margin: var(--space-md) 0; line-height: 1.65; }
+.step-text p { margin: 0 0 0.6em; }
+.code-label { font-weight: 600; margin-left: 8px; color: #9fd8f0; text-transform: none; }
+.step-resumen { margin: 10px 0 12px; padding: 10px 14px; border-radius: 10px; background: linear-gradient(90deg, rgba(41,181,232,0.12), rgba(41,181,232,0.02)); border: 1px solid rgba(41,181,232,0.25); font-size: 0.95rem; line-height: 1.55; }
+.step-resumen strong { color: #11567F; }
+.callout-expected { background: #f2f7ff; border-left: 4px solid #11567F; }
+
+.hol-footer{margin-left:0!important}
+/* ===== visual layer v2 (generated by _build/build_labs.py) ===== */
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+.progress-tracker {
+  top: calc(var(--header-height) + 18px); left: 18px; bottom: auto; max-height: calc(100vh - var(--header-height) - 36px);
+  width: calc(var(--sidebar-width) - 36px); border: 1px solid rgba(41,181,232,0.22); border-radius: 18px;
+  background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 48px rgba(17,86,127,0.16); padding: 18px 14px;
+  opacity: 0; transform: translateX(-16px); pointer-events: none; transition: opacity .35s ease, transform .35s ease;
+}
+body.in-steps .progress-tracker { opacity: 1; transform: none; pointer-events: auto; }
+.step-nav-item { align-items: flex-start; line-height: 1.3; padding: 7px 10px; font-size: 0.8rem; transition: background .2s, color .2s; }
+.step-nav-item .nav-label { flex: 1; }
+.step-nav-item .nav-min { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: #11567F; background: rgba(41,181,232,0.12); border-radius: 999px; padding: 2px 7px; margin-top: 1px; }
+.step-nav-item.active { box-shadow: inset 3px 0 0 var(--sf-accent); }
+.steps-container { max-width: calc(980px + var(--sidebar-width)); margin-left: var(--sidebar-width); margin-right: auto; }
+@media (min-width: 1500px) { .steps-container { margin-left: calc(var(--sidebar-width) + (100vw - var(--sidebar-width) - 1060px) / 2 - 40px); } }
+
+.step-card { border: 1px solid #e3edf5; border-radius: 20px; box-shadow: 0 2px 4px rgba(17,86,127,0.04), 0 14px 36px rgba(17,86,127,0.08); overflow: hidden; transition: box-shadow .25s, transform .25s; }
+.step-card:hover { box-shadow: 0 2px 4px rgba(17,86,127,0.05), 0 22px 54px rgba(17,86,127,0.14); }
+.step-card.active-card { border-color: rgba(41,181,232,0.55); }
+.step-header { background: linear-gradient(100deg, #f5fbff 0%, #ffffff 70%); border-bottom: 1px solid #eef4f9; }
+.step-number { background: linear-gradient(135deg, #29B5E8, #11567F) !important; color: #fff !important; border: none !important; box-shadow: 0 6px 16px rgba(41,181,232,0.45); }
+.step-duration { display: inline-block; background: rgba(41,181,232,0.12); color: #11567F; font-weight: 700; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
+.step-content { padding-top: 18px; }
+.modalidad-badge { letter-spacing: .6px; }
+.modalidad-badge.ui { background: rgba(255,146,43,0.14); color: #b45309; border: 1px solid rgba(255,146,43,0.4); }
+.modalidad-badge.cli, .modalidad-badge.python { background: rgba(125,68,207,0.12); color: #6d28d9; border: 1px solid rgba(125,68,207,0.35); }
+.modalidad-badge.ia { background: rgba(212,91,144,0.12); color: #be185d; border: 1px solid rgba(212,91,144,0.35); }
+.step-resumen { position: relative; padding-left: 44px; }
+.step-resumen::before { content: "→"; position: absolute; left: 14px; top: 8px; width: 20px; height: 20px; border-radius: 50%; background: #29B5E8; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.step-text { font-size: 0.97rem; color: #1f2937; }
+.step-text p:first-child { margin-top: 0; }
+.step-text table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.88rem; }
+.step-text th, .step-text td { border-bottom: 1px solid #e5edf4; padding: 7px 10px; text-align: left; vertical-align: top; }
+.step-text th { background: #f2f8fc; color: #11567F; }
+
+.code-block { background: #0b1220; border: 1px solid #1c2a44; border-radius: 14px; box-shadow: 0 10px 30px rgba(2,8,23,0.28); }
+.code-header { background: linear-gradient(180deg, #131d33, #0f1829); border-bottom: 1px solid #1c2a44; padding: 9px 14px !important; display: flex; align-items: center; }
+.code-header::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; box-shadow: 16px 0 0 #febc2e, 32px 0 0 #28c840; margin-right: 46px; flex-shrink: 0; }
+.code-language { color: #7dd3fc !important; font-size: 0.7rem !important; letter-spacing: 1px; }
+.code-label { color: #cbd5e1 !important; font-weight: 500 !important; letter-spacing: 0; }
+.code-actions { margin-left: auto; }
+.btn-copy { background: rgba(41,181,232,0.16) !important; color: #e0f2fe !important; border: 1px solid rgba(41,181,232,0.45) !important; border-radius: 8px !important; padding: 4px 12px !important; font-weight: 700; cursor: pointer; transition: background .2s, transform .1s; }
+.btn-copy:hover { background: #29B5E8 !important; color: #fff !important; }
+.btn-copy:active { transform: scale(.96); }
+.code-block pre { max-height: 560px; }
+.code-block code { color: #e2e8f0; font-size: 0.83rem; }
+.code-block .tk-c { color: #64748b; font-style: italic; }
+.code-block .tk-k { color: #7dd3fc; font-weight: 600; }
+.code-block .tk-s { color: #fcd34d; }
+.code-block .tk-n { color: #f0abfc; }
+.code-block .tk-f { color: #86efac; }
+
+.step-figure { margin: 18px 0 24px; }
+.step-figure img { max-height: 460px; width: auto; max-width: 100%; object-fit: contain; background: #fff; border-radius: 14px; cursor: zoom-in; transition: transform .25s, box-shadow .25s; }
+.step-figure img:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(17,86,127,0.22); }
+.step-figure figcaption::before { content: "🔍 "; font-style: normal; }
+.lightbox { position: fixed; inset: 0; z-index: 999; background: rgba(5,11,24,0.88); display: none; align-items: center; justify-content: center; padding: 32px; cursor: zoom-out; backdrop-filter: blur(6px); }
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 96vw; max-height: 92vh; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); background: #fff; }
+
+.callout { border-radius: 14px; }
+.callout-expected { background: linear-gradient(100deg, #eef6ff, #f8fbff); border-left-color: #11567F; }
+.btn-check { border-radius: 10px !important; transition: transform .1s, box-shadow .2s; }
+.btn-check:hover { box-shadow: 0 8px 22px rgba(47,179,128,0.35); }
+@media (max-width: 992px) { .steps-container { margin-left: 0 !important; } .code-header::before { display: none; } }
+</style>
+</head>
+<body data-hol-id="z2s-lab0-setup">
+
+<!-- Header -->
+<header class="hol-header">
+    <div class="header-container">
+        <div class="logo-section">
+            <svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="var(--sf-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="var(--sf-accent)" stroke="none"/></svg>
+            <span class="brand-name">Snowflake</span>
+            <span class="logo-divider"></span>
+            <span class="hol-badge">Hands-On Lab</span>
+        </div>
+        <nav class="header-nav">
+            <a href="#overview">Vision General</a>
+            <a href="#prerequisites">Requisitos</a>
+            <a href="#steps">Pasos</a>
+            <a href="#resources">Recursos</a>
+            <a href="index.html">Indice</a>
+        </nav>
+    </div>
+</header>
+
+<!-- Hero -->
+<section class="hero-section">
+    <div class="hero-container">
+        <div class="hero-content">
+            <span class="industry-tag">TASTY BYTES · FOOD TRUCKS GLOBALES</span>
+            <h1 class="hero-title">LAB 0: Setup del ambiente Tasty Bytes</h1>
+            <p class="hero-subtitle"><strong>Objetivo:</strong> dejar lista la base TB_101 con mas de 900 millones de filas de Tasty Bytes, los roles del workshop y los archivos multimodales, paso a paso.</p>
+            <div class="hero-meta">
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/></svg><span>7 minutos</span></div>
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6z"/></svg><span>Nivel Introductorio</span></div>
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><span>7 pasos</span></div>
+            </div>
+            <a href="#step-1" class="hero-cta">Comenzar Lab 0</a>
+        </div>
+        <div class="hero-visual">
+            <div class="arch-diagram"><span class="n">S3</span> s3://sfquickstarts/frostbyte_tastybytes
+   <span class="g">│</span>  COPY INTO (tb_de_wh XLARGE)
+   <span class="g">▼</span>
+<span class="n">TB_101</span>  raw_pos · raw_customer · raw_support
+   <span class="g">│</span>
+   <span class="g">├──▶</span> harmonized
+   <span class="g">└──▶</span> analytics  ventas_diarias · ventas_items_mes
+<span class="n">@ARCHIVOS</span>  7 archivos multimodales</div>
+        </div>
+    </div>
+</section>
+
+<section id="overview" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Vision General</h2>
+        <div class="overview-grid">
+            <div class="overview-card">
+                <h3>Lo que vas a construir</h3>
+                <ul class="learning-list">
+                    <li>Base <code>TB_101</code> con capas raw, harmonized y analytics</li>
+                    <li>Roles <code>tb_admin</code>, <code>tb_data_engineer</code>, <code>tb_analyst</code> y sus warehouses</li>
+                    <li>Carga de ventas, clientes y reviews desde S3</li>
+                    <li>Capa de negocio agregada para la Semantic View y el agente</li>
+                    <li>Stage <code>ARCHIVOS</code> con audio, documentos e imagenes</li>
+                </ul>
+            </div>
+            <div class="overview-card">
+                <h3>Tecnologias utilizadas</h3>
+                <div class="tech-tags">
+                    <span class="tech-tag">Workspaces</span>
+                    <span class="tech-tag">Warehouses Gen2</span>
+                    <span class="tech-tag">COPY INTO</span>
+                    <span class="tech-tag">Stages</span>
+                    <span class="tech-tag">RBAC (Role-Based Access Control)</span>
+                    <span class="tech-tag">CORTEX_USER</span>
+                </div>
+            </div>
+            <div class="overview-card highlight">
+                <h3>Por que importa</h3>
+                <p>Todo lo que viene despues (fundamentos, pipelines, IA, gobierno y el agente de Snowflake CoWork) se apoya en este ambiente. Siete pasos guiados, ~7 minutos, y la cuenta queda lista.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="prerequisites" class="content-section alt-bg">
+    <div class="section-container">
+        <h2 class="section-title">Requisitos Previos</h2>
+        <div class="prerequisites-grid">
+            <div class="prereq-card">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>Cuenta Snowflake</h4><p>Entregada por el instructor, con Cortex Code (CoCo) y Snowflake CoWork habilitados, y acceso a ACCOUNTADMIN.</p></div>
+            </div>
+            <div class="prereq-card">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>Carpeta archivos/</h4><p>Los 7 archivos multimodales del workshop descargados en tu equipo.</p></div>
+            </div>
+            <div class="prereq-card">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>Navegador</h4><p>Chrome, Edge o Firefox actualizado.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Progress tracker -->
+<aside class="progress-tracker" id="progressTracker">
+    <div class="progress-header"><span>PROGRESO</span><span class="progress-percent">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <nav class="steps-nav" id="stepsNav">
+        <a href="#step-1" class="step-nav-item" data-step="1"><span class="step-indicator">1</span><span class="nav-label">SQL File y base TB_101</span><span class="nav-min">1'</span></a>
+        <a href="#step-2" class="step-nav-item" data-step="2"><span class="step-indicator">2</span><span class="nav-label">Warehouses y roles</span><span class="nav-min">1'</span></a>
+        <a href="#step-3" class="step-nav-item" data-step="3"><span class="step-indicator">3</span><span class="nav-label">Stages y tablas raw</span><span class="nav-min">1'</span></a>
+        <a href="#step-4" class="step-nav-item" data-step="4"><span class="step-indicator">4</span><span class="nav-label">Vistas</span><span class="nav-min">1'</span></a>
+        <a href="#step-5" class="step-nav-item" data-step="5"><span class="step-indicator">5</span><span class="nav-label">COPY INTO y config IA</span><span class="nav-min">1'</span></a>
+        <a href="#step-6" class="step-nav-item" data-step="6"><span class="step-indicator">6</span><span class="nav-label">Subir archivos</span><span class="nav-min">1'</span></a>
+        <a href="#step-7" class="step-nav-item" data-step="7"><span class="step-indicator">7</span><span class="nav-label">Capa de negocio y verificacion</span><span class="nav-min">1'</span></a>
+    </nav>
+</aside>
+
+<main class="steps-container" id="steps">
+<figure class="step-figure"><img src="img/quickstart/whoistb.png" alt="Tasty Bytes: la empresa ficticia de food trucks de este workshop" loading="lazy"><figcaption>Tasty Bytes: la empresa ficticia de food trucks de este workshop</figcaption></figure>
+<div class="callout callout-info"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#29B5E8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="callout-content"><strong class="callout-title">Como trabajar este lab</strong><p>Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab0_setup</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Ejecuta los bloques en orden: cada uno depende del anterior.</p></div></div>
+<div class="callout callout-tip"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#10b981"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg></div><div class="callout-content"><strong class="callout-title">Datos de ejemplo</strong><p>Tasty Bytes es una empresa ficticia de Snowflake; los datos son sinteticos y publicos (<code>s3://sfquickstarts/frostbyte_tastybytes/</code>).</p></div></div>
+
+    <article class="step-card" id="step-1" data-step="1">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-info">
+                <h2 class="step-title">Crear tu SQL File y crear la base TB_101</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Creamos la base TB_101, los roles y los warehouses de la demo con sus permisos para que cada rol vea solo lo suyo.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Tienes el SQL File <code>lab0_setup</code> abierto y la base <code>TB_101</code> con sus 7 esquemas.</div>
+<div class="step-text"><ol><li>Inicia sesion en la cuenta Snowflake que te entrego el instructor.</li><li>Ubicate en <strong>Projects &gt; Workspaces</strong>.</li><li>Haz clic en <strong>+ Add new &gt; SQL File</strong> y nombralo <code>lab0_setup</code>.</li><li>Verifica en el selector de contexto que el rol activo sea <strong>ACCOUNTADMIN</strong> (el script cambia de rol cuando lo necesita).</li></ol></div>
+<figure class="step-figure"><img src="img/quickstart/create_a_worksheet.gif" alt="Crear un SQL File en Workspaces (quickstart Zero to Snowflake)" loading="lazy"><figcaption>Crear un SQL File en Workspaces (quickstart Zero to Snowflake)</figcaption></figure>
+<div class="step-text"><p>Empezamos con el rol <strong>SYSADMIN</strong>, el rol pensado para crear objetos (bases, warehouses). El <em>query tag</em> etiqueta cada query de esta sesion para poder rastrearla luego en el historial.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Rol y query tag</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- raw_pos table build</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> sysadmin;
+
+<span class="tk-c">-- assign Query Tag to Session</span>
+<span class="tk-k">ALTER</span> SESSION <span class="tk-k">SET</span> query_tag = <span class="tk-s">&#x27;{&quot;origin&quot;:&quot;sf_sit-is&quot;,&quot;name&quot;:&quot;tb_zts&quot;,&quot;version&quot;:{&quot;major&quot;:1, &quot;minor&quot;:1},&quot;attributes&quot;:{&quot;is_quickstart&quot;:1, &quot;source&quot;:&quot;sql&quot;, &quot;vignette&quot;: &quot;setup&quot;}}&#x27;</span>;</code></pre>
+</div>
+<div class="step-text"><p>Una <strong>base de datos</strong> agrupa <strong>esquemas</strong>, y cada esquema agrupa tablas y vistas. Organizamos Tasty Bytes por capas: <code>raw_*</code> (datos crudos tal como llegan), <code>harmonized</code> (datos unidos y limpios), <code>analytics</code> (listos para consumo), mas <code>governance</code> y <code>semantic_layer</code> para los labs de gobierno y semantica.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Base y esquemas</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Crea la base de datos TB_101</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">DATABASE</span> tb_101;
+
+<span class="tk-c">-- create raw_pos schema</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">SCHEMA</span> tb_101.raw_pos;
+
+<span class="tk-c">-- create raw_customer schema</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">SCHEMA</span> tb_101.raw_customer;
+
+<span class="tk-c">-- create harmonized schema</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">SCHEMA</span> tb_101.harmonized;
+
+<span class="tk-c">-- create analytics schema</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">SCHEMA</span> tb_101.analytics;
+
+<span class="tk-c">-- create governance schema</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">SCHEMA</span> tb_101.governance;
+
+<span class="tk-c">-- create raw_support</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">SCHEMA</span> tb_101.raw_support;
+
+<span class="tk-c">-- Create schema for the Semantic Layer</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">SCHEMA</span> tb_101.semantic_layer
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Schema for the business-friendly semantic layer, optimized for analytical consumption.&#x27;</span>;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>Database TB_101 successfully created.</code> y un mensaje <code>Schema ... successfully created.</code> por cada uno de los 7 esquemas.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(1)">Marcar paso 1 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-2" data-step="2">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-info">
+                <h2 class="step-title">Warehouses, roles y privilegios</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Creamos los warehouses, los roles y los privilegios que separan las funciones de administrador, ingeniero, desarrollador y analista.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Existen los 4 warehouses <code>TB_*_WH</code> y los 4 roles <code>TB_*</code> con sus grants.</div>
+<div class="step-text"><p>Un <strong>virtual warehouse</strong> es computo independiente del almacenamiento. Creamos uno por tipo de carga: <code>tb_de_wh</code> para ingenieria de datos (en <strong>XLARGE</strong> solo para la carga inicial; al final lo bajamos a XSMALL), <code>tb_dev_wh</code> para desarrollo, <code>tb_analyst_wh</code> multi-cluster para analistas y <code>tb_cortex_wh</code> para cargas de IA. Todos nacen suspendidos y se apagan solos tras 60 s sin uso: solo pagas por segundo de uso.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Warehouses</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- create warehouses</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh
+    WAREHOUSE_SIZE = <span class="tk-s">&#x27;xlarge&#x27;</span> <span class="tk-c">-- XLarge para la carga inicial; se reduce a XSmall al final</span>
+    WAREHOUSE_TYPE = <span class="tk-s">&#x27;standard&#x27;</span>
+    AUTO_SUSPEND = <span class="tk-n">60</span>
+    AUTO_RESUME = <span class="tk-k">TRUE</span>
+    INITIALLY_SUSPENDED = <span class="tk-k">TRUE</span>
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;data engineering warehouse for tasty bytes&#x27;</span>;
+
+<span class="tk-c">-- Crea el warehouse de la demo</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">WAREHOUSE</span> tb_dev_wh
+    WAREHOUSE_SIZE = <span class="tk-s">&#x27;xsmall&#x27;</span>
+    WAREHOUSE_TYPE = <span class="tk-s">&#x27;standard&#x27;</span>
+    AUTO_SUSPEND = <span class="tk-n">60</span>
+    AUTO_RESUME = <span class="tk-k">TRUE</span>
+    INITIALLY_SUSPENDED = <span class="tk-k">TRUE</span>
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;developer warehouse for tasty bytes&#x27;</span>;
+
+<span class="tk-c">-- create analyst warehouse</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">WAREHOUSE</span> tb_analyst_wh
+    <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;TastyBytes Analyst Warehouse&#x27;</span>
+    WAREHOUSE_TYPE = <span class="tk-s">&#x27;standard&#x27;</span>
+    WAREHOUSE_SIZE = <span class="tk-s">&#x27;large&#x27;</span>
+    MIN_CLUSTER_COUNT = <span class="tk-n">1</span>
+    MAX_CLUSTER_COUNT = <span class="tk-n">2</span>
+    SCALING_POLICY = <span class="tk-s">&#x27;standard&#x27;</span>
+    AUTO_SUSPEND = <span class="tk-n">60</span>
+    INITIALLY_SUSPENDED = <span class="tk-k">true</span>,
+    AUTO_RESUME = <span class="tk-k">true</span>;
+
+<span class="tk-c">-- Create a dedicated large warehouse for analytical workloads</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">WAREHOUSE</span> tb_cortex_wh
+    WAREHOUSE_SIZE = <span class="tk-s">&#x27;LARGE&#x27;</span>
+    WAREHOUSE_TYPE = <span class="tk-s">&#x27;STANDARD&#x27;</span>
+    AUTO_SUSPEND = <span class="tk-n">60</span>
+    AUTO_RESUME = <span class="tk-k">TRUE</span>
+    INITIALLY_SUSPENDED = <span class="tk-k">TRUE</span>
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Dedicated large warehouse for Cortex Analyst and other analytical tools.&#x27;</span>;</code></pre>
+</div>
+<div class="step-text"><p>Snowflake usa <strong>control de acceso basado en roles (RBAC)</strong>: los privilegios se dan a roles y los roles a usuarios. Con <strong>SECURITYADMIN</strong> creamos 4 roles funcionales y los encadenamos en una jerarquia: <code>tb_analyst</code> y <code>tb_dev</code> heredan hacia <code>tb_data_engineer</code>, este hacia <code>tb_admin</code> y este hacia <code>sysadmin</code>.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Roles y jerarquia</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- create roles</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> securityadmin;
+
+<span class="tk-c">-- functional roles</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">ROLE</span> <span class="tk-k">IF</span> <span class="tk-k">NOT</span> <span class="tk-k">EXISTS</span> tb_admin
+    <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;admin for tasty bytes&#x27;</span>;
+    
+<span class="tk-c">-- Crea el rol</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">ROLE</span> <span class="tk-k">IF</span> <span class="tk-k">NOT</span> <span class="tk-k">EXISTS</span> tb_data_engineer
+    <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;data engineer for tasty bytes&#x27;</span>;
+    
+<span class="tk-c">-- Crea el rol</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">ROLE</span> <span class="tk-k">IF</span> <span class="tk-k">NOT</span> <span class="tk-k">EXISTS</span> tb_dev
+    <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;developer for tasty bytes&#x27;</span>;
+    
+<span class="tk-c">-- Crea el rol</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">ROLE</span> <span class="tk-k">IF</span> <span class="tk-k">NOT</span> <span class="tk-k">EXISTS</span> tb_analyst
+    <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;analyst for tasty bytes&#x27;</span>;
+    
+<span class="tk-c">-- role hierarchy</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ROLE</span> tb_admin <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> sysadmin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ROLE</span> tb_data_engineer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ROLE</span> tb_dev <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ROLE</span> tb_analyst <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;</code></pre>
+</div>
+<div class="step-text"><p>Ahora los privilegios. Con ACCOUNTADMIN damos acceso a la base compartida <code>SNOWFLAKE</code> (historial de uso) y el permiso de crear warehouses. Luego, con SECURITYADMIN, damos <code>USAGE</code> sobre la base y esquemas y <code>ALL</code> sobre cada esquema a los roles del equipo.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Privilegios sobre base y esquemas</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- privilege grants</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> accountadmin;
+
+<span class="tk-c">-- Da acceso a las vistas de metadatos de Snowflake</span>
+<span class="tk-k">GRANT</span> IMPORTED PRIVILEGES <span class="tk-k">ON</span> <span class="tk-k">DATABASE</span> snowflake <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+
+<span class="tk-c">-- Permite crear warehouses al rol admin</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">CREATE</span> <span class="tk-k">WAREHOUSE</span> <span class="tk-k">ON</span> ACCOUNT <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+
+<span class="tk-c">-- create roles</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> securityadmin;
+
+<span class="tk-c">-- Da uso de la base a los roles</span>
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">DATABASE</span> tb_101 <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">DATABASE</span> tb_101 <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">DATABASE</span> tb_101 <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da uso de todos los esquemas a los roles</span>
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">ALL</span> SCHEMAS <span class="tk-k">IN</span> <span class="tk-k">DATABASE</span> tb_101 <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">ALL</span> SCHEMAS <span class="tk-k">IN</span> <span class="tk-k">DATABASE</span> tb_101 <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">ALL</span> SCHEMAS <span class="tk-k">IN</span> <span class="tk-k">DATABASE</span> tb_101 <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da todos los permisos sobre los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.raw_support <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.raw_support <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.raw_support <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da todos los permisos sobre los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.raw_pos <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.raw_pos <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.raw_pos <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da todos los permisos sobre los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.harmonized <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.harmonized <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.harmonized <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da todos los permisos sobre los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.analytics <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.analytics <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.analytics <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da todos los permisos sobre los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.governance <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.governance <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.governance <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da todos los permisos sobre los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.semantic_layer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.semantic_layer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.semantic_layer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;</code></pre>
+</div>
+<div class="step-text"><p>Grants sobre warehouses (incluida la propiedad de <code>tb_de_wh</code> para <code>tb_admin</code>) y <strong>future grants</strong>: privilegios que se aplican automaticamente a las tablas y vistas que se creen <em>despues</em> en esos esquemas, sin tener que volver a otorgarlos.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Warehouses y future grants</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- warehouse grants</span>
+<span class="tk-k">GRANT</span> OWNERSHIP <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin <span class="tk-k">COPY</span> CURRENT GRANTS;
+<span class="tk-c">-- Da permisos sobre los warehouses a los roles</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+
+<span class="tk-c">-- Da permisos sobre los warehouses a los roles</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_dev_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_dev_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_dev_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da permisos sobre los warehouses a los roles</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_analyst_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_analyst_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_analyst_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da permisos sobre los warehouses a los roles</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_cortex_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_cortex_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_cortex_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- future grants</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.raw_pos <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.raw_pos <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.raw_pos <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da permisos sobre objetos futuros de los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.raw_customer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.raw_customer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.raw_customer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da permisos sobre objetos futuros de los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.harmonized <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.harmonized <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.harmonized <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da permisos sobre objetos futuros de los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.analytics <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.analytics <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.analytics <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da permisos sobre objetos futuros de los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.governance <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.governance <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.governance <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;
+
+<span class="tk-c">-- Da permisos sobre objetos futuros de los esquemas</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.semantic_layer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.semantic_layer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> FUTURE VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.semantic_layer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_dev;</code></pre>
+</div>
+<div class="step-text"><p>Privilegios especiales para labs posteriores: aplicar <strong>masking policies</strong> (lab de gobierno), ejecutar <strong>data metric functions</strong> (calidad de datos), acceso del analista a su warehouse y el rol de base de datos <code>SNOWFLAKE.CORTEX_USER</code> para usar las funciones de IA.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Masking, DMF, analista y Cortex</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- privilege grants</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> accountadmin;
+<span class="tk-c">-- Permite aplicar politicas de enmascaramiento</span>
+<span class="tk-k">GRANT</span> APPLY MASKING <span class="tk-k">POLICY</span> <span class="tk-k">ON</span> ACCOUNT <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-k">GRANT</span> APPLY MASKING <span class="tk-k">POLICY</span> <span class="tk-k">ON</span> ACCOUNT <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+  
+<span class="tk-c">-- Grants for tb_admin</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">EXECUTE</span> DATA METRIC <span class="tk-k">FUNCTION</span> <span class="tk-k">ON</span> ACCOUNT <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+
+<span class="tk-c">-- Grants for tb_analyst</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> harmonized <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+<span class="tk-k">GRANT</span> <span class="tk-k">ALL</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> analytics <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+<span class="tk-c">-- Permite al analista usar su warehouse</span>
+<span class="tk-k">GRANT</span> OPERATE, USAGE <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> tb_analyst_wh <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+
+<span class="tk-c">-- Grants for cortex search service</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">DATABASE</span> <span class="tk-k">ROLE</span> SNOWFLAKE.CORTEX_USER <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> TB_DEV;
+<span class="tk-c">-- Da uso del esquema al rol</span>
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> TB_101.HARMONIZED <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> TB_DEV;
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">WAREHOUSE</span> TB_DE_WH <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> TB_DEV;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Cada sentencia devuelve <code>Statement executed successfully.</code> (o <code>... successfully created.</code> para warehouses y roles).</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(2)">Marcar paso 2 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-3" data-step="3">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-info">
+                <h2 class="step-title">File format, stages S3 y tablas raw</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Definimos el formato de archivo, los stages hacia S3 y las tablas raw donde aterrizan los datos de Tasty Bytes.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Existen el file format <code>csv_ff</code>, 3 stages y 9 tablas raw vacias.</div>
+<div class="step-text"><p>Volvemos a SYSADMIN y activamos <code>tb_de_wh</code>. Un <strong>file format</strong> describe como leer los archivos (aqui CSV). Un <strong>stage externo</strong> es un puntero a una ubicacion en la nube (un bucket S3 publico con los datos de Tasty Bytes) desde donde Snowflake carga datos. Tambien creamos un stage interno con <em>directory table</em> para los modelos semanticos YAML.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">File format y stages</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- raw_pos table build</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> sysadmin;
+<span class="tk-c">-- Setup truck details</span>
+<span class="tk-k">USE</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh;
+
+<span class="tk-c">-- Crea el formato de archivo CSV</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">FILE</span> <span class="tk-k">FORMAT</span> tb_101.public.csv_ff 
+type = <span class="tk-s">&#x27;csv&#x27;</span>;
+
+<span class="tk-c">-- Crea el stage externo apuntando a S3</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">STAGE</span> tb_101.public.s3load
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Quickstarts S3 Stage Connection&#x27;</span>
+url = <span class="tk-s">&#x27;s3://sfquickstarts/frostbyte_tastybytes/&#x27;</span>
+file_format = tb_101.public.csv_ff;
+
+<span class="tk-c">-- Crea el stage externo apuntando a S3</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">STAGE</span> tb_101.public.truck_reviews_s3load
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Truck Reviews Stage&#x27;</span>
+url = <span class="tk-s">&#x27;s3://sfquickstarts/tastybytes-voc/&#x27;</span>
+file_format = tb_101.public.csv_ff;
+
+<span class="tk-c">-- This stage will be used to upload your YAML files.</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">STAGE</span> tb_101.semantic_layer.semantic_model_stage
+  DIRECTORY = (ENABLE = <span class="tk-k">TRUE</span>)
+  <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Internal stage for uploading Cortex Analyst semantic model YAML files.&#x27;</span>;</code></pre>
+</div>
+<div class="step-text"><p>Creamos las tablas de la capa raw con su esquema explicito: paises, franquicias, ubicaciones, menu (con una columna <code>VARIANT</code> para JSON semiestructurado), camiones, cabecera y detalle de ordenes, clientes del programa de lealtad y resenas de los food trucks. Son tablas vacias: las llenamos en el paso 5.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Tablas raw</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Crea la tabla</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_pos.country
+(
+    country_id <span class="tk-f">NUMBER</span>(<span class="tk-n">18</span>,<span class="tk-n">0</span>),
+    country <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    iso_currency <span class="tk-f">VARCHAR</span>(<span class="tk-n">3</span>),
+    iso_country <span class="tk-f">VARCHAR</span>(<span class="tk-n">2</span>),
+    city_id <span class="tk-f">NUMBER</span>(<span class="tk-n">19</span>,<span class="tk-n">0</span>),
+    city <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    city_population <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>)
+);
+
+<span class="tk-c">-- franchise table build</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_pos.franchise 
+(
+    franchise_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    first_name <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    last_name <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    city <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    country <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    e_mail <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    phone_number <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>) 
+);
+
+<span class="tk-c">-- location table build</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_pos.location
+(
+    location_id <span class="tk-f">NUMBER</span>(<span class="tk-n">19</span>,<span class="tk-n">0</span>),
+    placekey <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    location <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    city <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    region <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    iso_country_code <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    country <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>)
+);
+
+<span class="tk-c">-- menu table build</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_pos.menu
+(
+    menu_id <span class="tk-f">NUMBER</span>(<span class="tk-n">19</span>,<span class="tk-n">0</span>),
+    menu_type_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    menu_type <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    truck_brand_name <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    menu_item_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    menu_item_name <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    item_category <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    item_subcategory <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    cost_of_goods_usd <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">4</span>),
+    sale_price_usd <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">4</span>),
+    menu_item_health_metrics_obj VARIANT
+);
+
+<span class="tk-c">-- truck table build</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_pos.truck
+(
+    truck_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    menu_type_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    primary_city <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    region <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    iso_region <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    country <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    iso_country_code <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    franchise_flag <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    year <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    make <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    model <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    ev_flag <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    franchise_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    truck_opening_date <span class="tk-k">DATE</span>
+);
+
+<span class="tk-c">-- order_header table build</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_pos.order_header
+(
+    order_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    truck_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    location_id FLOAT,
+    customer_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    discount_id <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    shift_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    shift_start_time <span class="tk-f">TIME</span>(<span class="tk-n">9</span>),
+    shift_end_time <span class="tk-f">TIME</span>(<span class="tk-n">9</span>),
+    order_channel <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    order_ts <span class="tk-f">TIMESTAMP_NTZ</span>(<span class="tk-n">9</span>),
+    served_ts <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    order_currency <span class="tk-f">VARCHAR</span>(<span class="tk-n">3</span>),
+    order_amount <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">4</span>),
+    order_tax_amount <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    order_discount_amount <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    order_total <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">4</span>)
+);
+
+<span class="tk-c">-- order_detail table build</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_pos.order_detail 
+(
+    order_detail_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    order_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    menu_item_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    discount_id <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    line_number <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    quantity <span class="tk-f">NUMBER</span>(<span class="tk-n">5</span>,<span class="tk-n">0</span>),
+    unit_price <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">4</span>),
+    price <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">4</span>),
+    order_item_discount_amount <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>)
+);
+
+<span class="tk-c">-- customer loyalty table build</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_customer.customer_loyalty
+(
+    customer_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    first_name <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    last_name <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    city <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    country <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    postal_code <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    preferred_language <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    gender <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    favourite_brand <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    marital_status <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    children_count <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    sign_up_date <span class="tk-k">DATE</span>,
+    birthday_date <span class="tk-k">DATE</span>,
+    e_mail <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    phone_number <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>)
+);
+
+<span class="tk-c">-- Crea la tabla</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_support.truck_reviews
+(
+    order_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>),
+    <span class="tk-k">language</span> <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    source <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    review <span class="tk-f">VARCHAR</span>(<span class="tk-n">16777216</span>),
+    review_id <span class="tk-f">NUMBER</span>(<span class="tk-n">38</span>,<span class="tk-n">0</span>)  
+);</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>File format CSV_FF successfully created.</code>, <code>Stage area ... successfully created.</code> (x3) y <code>Table ... successfully created.</code> por cada una de las 9 tablas.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(3)">Marcar paso 3 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-4" data-step="4">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-info">
+                <h2 class="step-title">Vistas harmonized, analytics y semantic layer</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Armamos las vistas por capas (harmonized, analytics, semantic layer) que luego consumen los analistas y la IA.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Existen las vistas en <code>harmonized</code>, <code>analytics</code> y <code>semantic_layer</code>.</div>
+<div class="step-text"><p>Una <strong>vista</strong> es una consulta guardada: no copia datos, se calcula al consultarla. En <code>harmonized</code> unimos las tablas raw: <code>orders_v</code> junta ordenes, camiones, menu, franquicias, ubicaciones y clientes; <code>customer_loyalty_metrics_v</code> resume ventas por cliente; <code>truck_reviews_v</code> enriquece las resenas.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Vistas harmonized</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Crea la vista</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">VIEW</span> tb_101.harmonized.orders_v
+    <span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span> 
+    oh.order_id,
+    oh.truck_id,
+    oh.order_ts,
+    od.order_detail_id,
+    od.line_number,
+    m.truck_brand_name,
+    m.menu_type,
+    t.primary_city,
+    t.region,
+    t.country,
+    t.franchise_flag,
+    t.franchise_id,
+    f.first_name <span class="tk-k">AS</span> franchisee_first_name,
+    f.last_name <span class="tk-k">AS</span> franchisee_last_name,
+    l.location_id,
+    cl.customer_id,
+    cl.first_name,
+    cl.last_name,
+    cl.e_mail,
+    cl.phone_number,
+    cl.children_count,
+    cl.gender,
+    cl.marital_status,
+    od.menu_item_id,
+    m.menu_item_name,
+    od.quantity,
+    od.unit_price,
+    od.price,
+    oh.order_amount,
+    oh.order_tax_amount,
+    oh.order_discount_amount,
+    oh.order_total
+<span class="tk-k">FROM</span> tb_101.raw_pos.order_detail od
+<span class="tk-k">JOIN</span> tb_101.raw_pos.order_header oh
+    <span class="tk-k">ON</span> od.order_id = oh.order_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.truck t
+    <span class="tk-k">ON</span> oh.truck_id = t.truck_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.menu m
+    <span class="tk-k">ON</span> od.menu_item_id = m.menu_item_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.franchise f
+    <span class="tk-k">ON</span> t.franchise_id = f.franchise_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.location l
+    <span class="tk-k">ON</span> oh.location_id = l.location_id
+<span class="tk-k">LEFT</span> <span class="tk-k">JOIN</span> tb_101.raw_customer.customer_loyalty cl
+    <span class="tk-k">ON</span> oh.customer_id = cl.customer_id;
+
+<span class="tk-c">-- loyalty_metrics_v view</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">VIEW</span> tb_101.harmonized.customer_loyalty_metrics_v
+    <span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span> 
+    cl.customer_id,
+    cl.city,
+    cl.country,
+    cl.first_name,
+    cl.last_name,
+    cl.phone_number,
+    cl.e_mail,
+    <span class="tk-f">SUM</span>(oh.order_total) <span class="tk-k">AS</span> total_sales,
+    <span class="tk-f">ARRAY_AGG</span>(<span class="tk-k">DISTINCT</span> oh.location_id) <span class="tk-k">AS</span> visited_location_ids_array
+<span class="tk-k">FROM</span> tb_101.raw_customer.customer_loyalty cl
+<span class="tk-k">JOIN</span> tb_101.raw_pos.order_header oh
+<span class="tk-k">ON</span> cl.customer_id = oh.customer_id
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> cl.customer_id, cl.city, cl.country, cl.first_name,
+cl.last_name, cl.phone_number, cl.e_mail;
+
+  <span class="tk-c">-- truck_reviews_v view</span>
+  <span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">VIEW</span> tb_101.harmonized.truck_reviews_v
+      <span class="tk-k">AS</span>
+  <span class="tk-k">SELECT</span> <span class="tk-k">DISTINCT</span>
+      r.review_id,
+      r.order_id,
+      oh.truck_id,
+      r.<span class="tk-k">language</span>,
+      source,
+      r.review,
+      t.primary_city,
+      oh.customer_id,
+      <span class="tk-f">TO_DATE</span>(oh.order_ts) <span class="tk-k">AS</span> <span class="tk-k">date</span>,
+      m.truck_brand_name
+  <span class="tk-k">FROM</span> raw_support.truck_reviews r
+  <span class="tk-k">JOIN</span> raw_pos.order_header oh
+      <span class="tk-k">ON</span> oh.order_id = r.order_id
+  <span class="tk-k">JOIN</span> raw_pos.truck t
+      <span class="tk-k">ON</span> t.truck_id = oh.truck_id
+  <span class="tk-k">JOIN</span> raw_pos.menu m
+      <span class="tk-k">ON</span> m.menu_type_id = t.menu_type_id;</code></pre>
+</div>
+<div class="step-text"><p>La capa <code>analytics</code> expone esas vistas para consumo (agregando la columna <code>date</code>), da acceso a <code>tb_admin</code> sobre las resenas y crea una vista de ventas de Japon en febrero 2022 que usa la app de Streamlit.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Vistas analytics</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Crea la vista</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">VIEW</span> tb_101.analytics.orders_v
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Tasty Bytes Order Detail View&#x27;</span>
+    <span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span> <span class="tk-k">DATE</span>(o.order_ts) <span class="tk-k">AS</span> <span class="tk-k">date</span>, * <span class="tk-k">FROM</span> tb_101.harmonized.orders_v o;
+
+<span class="tk-c">-- customer_loyalty_metrics_v view</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">VIEW</span> tb_101.analytics.customer_loyalty_metrics_v
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Tasty Bytes Customer Loyalty Member Metrics View&#x27;</span>
+    <span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span> * <span class="tk-k">FROM</span> tb_101.harmonized.customer_loyalty_metrics_v;
+
+<span class="tk-c">-- truck_reviews_v view</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">VIEW</span> tb_101.analytics.truck_reviews_v 
+    <span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span> * <span class="tk-k">FROM</span> harmonized.truck_reviews_v;
+<span class="tk-c">-- Da uso del esquema al rol</span>
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> raw_support <span class="tk-k">to</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-c">-- Da lectura del objeto al rol</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">SELECT</span> <span class="tk-k">ON</span> <span class="tk-k">TABLE</span> raw_support.truck_reviews <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+
+<span class="tk-c">-- view for streamlit app</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">VIEW</span> tb_101.analytics.japan_menu_item_sales_feb_2022
+<span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span>
+    <span class="tk-k">DISTINCT</span> menu_item_name,
+    <span class="tk-k">date</span>,
+    order_total
+<span class="tk-k">FROM</span> analytics.orders_v
+<span class="tk-k">WHERE</span> country = <span class="tk-s">&#x27;Japan&#x27;</span>
+    <span class="tk-k">AND</span> <span class="tk-f">YEAR</span>(<span class="tk-k">date</span>) = <span class="tk-s">&#x27;2022&#x27;</span>
+    <span class="tk-k">AND</span> <span class="tk-f">MONTH</span>(<span class="tk-k">date</span>) = <span class="tk-s">&#x27;2&#x27;</span>
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> <span class="tk-k">ALL</span>
+<span class="tk-k">ORDER</span> <span class="tk-k">BY</span> <span class="tk-k">date</span>;</code></pre>
+</div>
+<div class="step-text"><p>La <strong>capa semantica</strong> ofrece vistas "amigables para el negocio": IDs como texto, solo clientes y ciudades conocidos. Sobre ellas trabajaran Cortex Analyst y el agente en los labs 7 y 8.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Vistas semantic_layer</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Orders view for the Semantic Layer</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">VIEW</span> tb_101.semantic_layer.orders_v
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Provides a clean, business-friendly view of order data, filtered to include only orders from known customers and locations.&#x27;</span>
+<span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span>
+    order_id::VARCHAR <span class="tk-k">AS</span> order_id,
+    truck_id::VARCHAR <span class="tk-k">AS</span> truck_id,
+    order_detail_id::VARCHAR <span class="tk-k">AS</span> order_detail_id,
+    truck_brand_name,
+    menu_type,
+    primary_city,
+    region,
+    country,
+    franchise_flag,
+    franchise_id::VARCHAR <span class="tk-k">AS</span> franchise_id,
+    location_id::VARCHAR <span class="tk-k">AS</span> location_id,
+    customer_id::VARCHAR <span class="tk-k">AS</span> customer_id,
+    gender,
+    marital_status,
+    menu_item_id::VARCHAR <span class="tk-k">AS</span> menu_item_id,
+    menu_item_name,
+    quantity,
+    order_total,
+    <span class="tk-k">DATE</span>(order_ts) <span class="tk-k">AS</span> order_date
+<span class="tk-k">FROM</span> 
+    tb_101.harmonized.orders_v
+<span class="tk-k">WHERE</span>
+    customer_id <span class="tk-k">IS</span> <span class="tk-k">NOT</span> <span class="tk-k">NULL</span> 
+    <span class="tk-k">AND</span> primary_city <span class="tk-k">IS</span> <span class="tk-k">NOT</span> <span class="tk-k">NULL</span>;
+
+<span class="tk-c">-- Customer Loyalty Metrics view for the Semantic Layer</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">VIEW</span> tb_101.semantic_layer.customer_loyalty_metrics_v
+<span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span>
+    cl.customer_id::VARCHAR <span class="tk-k">AS</span> customer_id,
+    cl.city,
+    cl.country,
+    <span class="tk-f">SUM</span>(o.order_total) <span class="tk-k">AS</span> total_sales,
+    <span class="tk-f">ARRAY_AGG</span>(<span class="tk-k">DISTINCT</span> o.location_id::VARCHAR) WITHIN <span class="tk-k">GROUP</span> (<span class="tk-k">ORDER</span> <span class="tk-k">BY</span> o.location_id::VARCHAR) <span class="tk-k">AS</span> visited_location_ids_array
+    <span class="tk-k">FROM</span> tb_101.harmonized.customer_loyalty_metrics_v <span class="tk-k">AS</span> cl
+    <span class="tk-k">JOIN</span> tb_101.harmonized.orders_v <span class="tk-k">AS</span> o
+        <span class="tk-k">ON</span> cl.customer_id = o.customer_id
+    <span class="tk-k">GROUP</span> <span class="tk-k">BY</span>
+        cl.customer_id,
+        cl.city,
+        cl.country;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>View ... successfully created.</code> por cada vista. Aun no devuelven filas porque las tablas estan vacias.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(4)">Marcar paso 4 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-5" data-step="5">
+        <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-info">
+                <h2 class="step-title">Cargar datos desde S3 y configurar IA</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Cargamos las resenas desde S3 y dejamos listos los permisos de IA y el stage donde viviran los archivos multimodales.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Los <code>COPY INTO</code> terminan con <code>LOADED</code>, existe el servicio <code>tasty_bytes_review_search</code> y tus roles TB_* estan asignados.</div>
+<div class="step-text"><p><strong>COPY INTO</strong> es el comando de carga masiva: lee en paralelo los archivos del stage y los inserta en la tabla. Por eso <code>tb_de_wh</code> esta en XLARGE: <code>order_detail</code> tiene ~670 millones de filas. Este es el bloque mas lento del setup; mientras corre, el instructor presenta la arquitectura del workshop. No cierres la pestana.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">COPY INTO</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Carga los datos desde el stage a la tabla</span>
+<span class="tk-k">COPY</span> <span class="tk-k">INTO</span> tb_101.raw_support.truck_reviews
+<span class="tk-k">FROM</span> @tb_101.public.truck_reviews_s3load/raw_support/truck_reviews/;
+
+<span class="tk-c">-- country table load</span>
+<span class="tk-k">COPY</span> <span class="tk-k">INTO</span> tb_101.raw_pos.country
+<span class="tk-k">FROM</span> @tb_101.public.s3load/raw_pos/country/;
+
+<span class="tk-c">-- franchise table load</span>
+<span class="tk-k">COPY</span> <span class="tk-k">INTO</span> tb_101.raw_pos.franchise
+<span class="tk-k">FROM</span> @tb_101.public.s3load/raw_pos/franchise/;
+
+<span class="tk-c">-- location table load</span>
+<span class="tk-k">COPY</span> <span class="tk-k">INTO</span> tb_101.raw_pos.location
+<span class="tk-k">FROM</span> @tb_101.public.s3load/raw_pos/location/;
+
+<span class="tk-c">-- menu table load</span>
+<span class="tk-k">COPY</span> <span class="tk-k">INTO</span> tb_101.raw_pos.menu
+<span class="tk-k">FROM</span> @tb_101.public.s3load/raw_pos/menu/;
+
+<span class="tk-c">-- truck table load</span>
+<span class="tk-k">COPY</span> <span class="tk-k">INTO</span> tb_101.raw_pos.truck
+<span class="tk-k">FROM</span> @tb_101.public.s3load/raw_pos/truck/;
+
+<span class="tk-c">-- customer_loyalty table load</span>
+<span class="tk-k">COPY</span> <span class="tk-k">INTO</span> tb_101.raw_customer.customer_loyalty
+<span class="tk-k">FROM</span> @tb_101.public.s3load/raw_customer/customer_loyalty/;
+
+<span class="tk-c">-- order_header table load</span>
+<span class="tk-k">COPY</span> <span class="tk-k">INTO</span> tb_101.raw_pos.order_header
+<span class="tk-k">FROM</span> @tb_101.public.s3load/raw_pos/order_header/;
+
+<span class="tk-c">-- Setup truck details</span>
+<span class="tk-k">USE</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh;
+
+<span class="tk-c">-- order_detail table load</span>
+<span class="tk-k">COPY</span> <span class="tk-k">INTO</span> tb_101.raw_pos.order_detail
+<span class="tk-k">FROM</span> @tb_101.public.s3load/raw_pos/order_detail/;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Una fila por archivo cargado con <code>status = LOADED</code> y <code>rows_loaded</code> en cada COPY. Sin errores.</p></div></div>
+<div class="step-text"><p>Preparamos datos para el lab de pipeline: agregamos a <code>truck</code> una columna <code>OBJECT</code> con anio, marca y modelo, <em>ensuciamos a proposito</em> la marca (<code>Ford_</code> vs <code>Ford</code>) en la mitad de los camiones, y creamos <code>truck_details</code>.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">truck_build y truck_details</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- add truck_build column</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">TABLE</span> tb_101.raw_pos.truck
+ADD COLUMN truck_build OBJECT;
+
+<span class="tk-c">-- construct an object from year, make, model and store on truck_build column</span>
+<span class="tk-k">UPDATE</span> tb_101.raw_pos.truck
+    <span class="tk-k">SET</span> truck_build = <span class="tk-f">OBJECT_CONSTRUCT</span>(
+        <span class="tk-s">&#x27;year&#x27;</span>, year,
+        <span class="tk-s">&#x27;make&#x27;</span>, make,
+        <span class="tk-s">&#x27;model&#x27;</span>, model
+    );
+
+<span class="tk-c">-- Messing up make data in truck_build object</span>
+<span class="tk-k">UPDATE</span> tb_101.raw_pos.truck
+<span class="tk-k">SET</span> truck_build = <span class="tk-f">OBJECT_INSERT</span>(
+    truck_build,
+    <span class="tk-s">&#x27;make&#x27;</span>,
+    <span class="tk-s">&#x27;Ford&#x27;</span>,
+    <span class="tk-k">TRUE</span>
+)
+<span class="tk-k">WHERE</span> 
+    truck_build:make::STRING = <span class="tk-s">&#x27;Ford_&#x27;</span>
+    <span class="tk-k">AND</span> 
+    truck_id % <span class="tk-n">2</span> = <span class="tk-n">0</span>;
+
+<span class="tk-c">-- truck_details table build</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.raw_pos.truck_details
+<span class="tk-k">AS</span> 
+<span class="tk-k">SELECT</span> * EXCLUDE (year, make, model)
+<span class="tk-k">FROM</span> tb_101.raw_pos.truck;</code></pre>
+</div>
+<div class="step-text"><p>Creamos un servicio de <strong>Cortex Search</strong> sobre el texto de las resenas: indexa la columna <code>REVIEW</code> para busqueda semantica y se refresca cada hora (<code>TARGET_LAG</code>). Lo usara el agente.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Cortex Search</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Create or replace the Cortex Search Service named &#x27;tasty_bytes_review_search&#x27;. --</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">CORTEX</span> <span class="tk-k">SEARCH</span> <span class="tk-k">SERVICE</span> tb_101.harmonized.tasty_bytes_review_search
+<span class="tk-k">ON</span> REVIEW 
+ATTRIBUTES <span class="tk-k">LANGUAGE</span>, ORDER_ID, REVIEW_ID, TRUCK_BRAND_NAME, PRIMARY_CITY, <span class="tk-k">DATE</span>, SOURCE 
+<span class="tk-k">WAREHOUSE</span> = tb_de_wh
+TARGET_LAG = <span class="tk-s">&#x27;1 hour&#x27;</span> 
+<span class="tk-k">AS</span> (
+    <span class="tk-k">SELECT</span>
+        REVIEW,             
+        <span class="tk-k">LANGUAGE</span>,           
+        ORDER_ID,           
+        REVIEW_ID,          
+        TRUCK_BRAND_NAME,  
+        PRIMARY_CITY,       
+        <span class="tk-k">DATE</span>,               
+        SOURCE             
+    <span class="tk-k">FROM</span>
+        tb_101.harmonized.truck_reviews_v 
+    <span class="tk-k">WHERE</span>
+        REVIEW <span class="tk-k">IS</span> <span class="tk-k">NOT</span> <span class="tk-k">NULL</span> 
+);</code></pre>
+</div>
+<div class="step-text"><p>Grants sobre la capa semantica y su stage, habilitamos <strong>cross-region</strong> para que Cortex pueda usar modelos de otra region si no estan en la tuya, y creamos la base <code>snowflake_intelligence.agents</code> donde viviran los agentes.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Semantic layer y Snowflake Intelligence</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- create roles</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> securityadmin;
+<span class="tk-c">-- Additional Grants on semantic layer</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">SELECT</span> <span class="tk-k">ON</span> <span class="tk-k">VIEW</span> tb_101.semantic_layer.orders_v <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> PUBLIC;
+<span class="tk-k">GRANT</span> <span class="tk-k">SELECT</span> <span class="tk-k">ON</span> <span class="tk-k">VIEW</span> tb_101.semantic_layer.customer_loyalty_metrics_v <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> PUBLIC;
+<span class="tk-c">-- Da permisos sobre el stage al rol</span>
+<span class="tk-k">GRANT</span> READ <span class="tk-k">ON</span> <span class="tk-k">STAGE</span> tb_101.semantic_layer.semantic_model_stage <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-c">-- Da permisos sobre el stage al rol</span>
+<span class="tk-k">GRANT</span> WRITE <span class="tk-k">ON</span> <span class="tk-k">STAGE</span> tb_101.semantic_layer.semantic_model_stage <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+
+<span class="tk-c">-- privilege grants</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> ACCOUNTADMIN;
+
+<span class="tk-c">-- ability to run across cloud if claude is not in your region:</span>
+<span class="tk-k">ALTER</span> ACCOUNT <span class="tk-k">SET</span> CORTEX_ENABLED_CROSS_REGION = <span class="tk-s">&#x27;ANY_REGION&#x27;</span>;
+ 
+<span class="tk-c">-- Create a database</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">DATABASE</span> <span class="tk-k">IF</span> <span class="tk-k">NOT</span> <span class="tk-k">EXISTS</span> snowflake_intelligence;
+<span class="tk-c">-- Crea el esquema para los agentes</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">SCHEMA</span> <span class="tk-k">IF</span> <span class="tk-k">NOT</span> <span class="tk-k">EXISTS</span> snowflake_intelligence.agents;
+
+<span class="tk-c">-- create a schema to store the agents</span>
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">DATABASE</span> snowflake_intelligence <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> TB_DEV;
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> snowflake_intelligence.agents <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> TB_DEV;
+
+<span class="tk-c">-- Grant the CREATE AGENT privilege on the agents schema</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">CREATE</span> <span class="tk-k">AGENT</span> <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> snowflake_intelligence.agents <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> TB_DEV;</code></pre>
+</div>
+<div class="step-text"><p><strong>Ajustes del HOL</strong> sobre el setup oficial: grants que le faltaban a <code>tb_analyst</code> y <code>tb_data_engineer</code>, y asignacion de los roles <code>tb_admin</code>, <code>tb_analyst</code> y <code>tb_dev</code> a <em>tu</em> usuario (con <code>CURRENT_USER()</code>). Luego creamos el stage interno <code>archivos</code> (cifrado del lado del servidor y con directory table) para los archivos multimodales, y bajamos <code>tb_de_wh</code> a XSMALL.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Ajustes HOL, roles y stage archivos</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- create roles</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> securityadmin;
+<span class="tk-c">-- Da uso de la base a los roles</span>
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">DATABASE</span> tb_101 <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">ALL</span> SCHEMAS <span class="tk-k">IN</span> <span class="tk-k">DATABASE</span> tb_101 <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+<span class="tk-c">-- Da lectura de todas las tablas o vistas al analista</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">SELECT</span> <span class="tk-k">ON</span> <span class="tk-k">ALL</span> <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.raw_pos <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+<span class="tk-k">GRANT</span> <span class="tk-k">SELECT</span> <span class="tk-k">ON</span> <span class="tk-k">ALL</span> <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.raw_customer <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+<span class="tk-k">GRANT</span> <span class="tk-k">SELECT</span> <span class="tk-k">ON</span> <span class="tk-k">ALL</span> VIEWS <span class="tk-k">IN</span> <span class="tk-k">DATABASE</span> tb_101 <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+<span class="tk-c">-- Da acceso a las funciones Cortex AI</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">DATABASE</span> <span class="tk-k">ROLE</span> SNOWFLAKE.CORTEX_USER <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+<span class="tk-c">-- Da uso del esquema al rol</span>
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">SCHEMA</span> tb_101.public <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">FILE</span> <span class="tk-k">FORMAT</span> tb_101.public.csv_ff <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_data_engineer;
+
+<span class="tk-c">-- Guarda tu usuario actual en una variable</span>
+<span class="tk-k">SET</span> my_user = <span class="tk-f">CURRENT_USER</span>();
+<span class="tk-c">-- Asigna los roles a tu usuario</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">ROLE</span> tb_admin   <span class="tk-k">TO</span> USER <span class="tk-f">IDENTIFIER</span>($my_user);
+<span class="tk-k">GRANT</span> <span class="tk-k">ROLE</span> tb_analyst <span class="tk-k">TO</span> USER <span class="tk-f">IDENTIFIER</span>($my_user);
+<span class="tk-k">GRANT</span> <span class="tk-k">ROLE</span> tb_dev     <span class="tk-k">TO</span> USER <span class="tk-f">IDENTIFIER</span>($my_user);
+
+<span class="tk-c">-- privilege grants</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> accountadmin;
+<span class="tk-c">-- Crea el stage interno para archivos multimodales</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">STAGE</span> tb_101.public.archivos
+    DIRECTORY = (ENABLE = <span class="tk-k">TRUE</span>)
+    ENCRYPTION = (TYPE = <span class="tk-s">&#x27;SNOWFLAKE_SSE&#x27;</span>)
+    <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Archivos multimodales del HOL (audio, docx, imagenes)&#x27;</span>;
+<span class="tk-c">-- Da permisos sobre el stage al rol</span>
+<span class="tk-k">GRANT</span> READ, WRITE <span class="tk-k">ON</span> <span class="tk-k">STAGE</span> tb_101.public.archivos <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_admin;
+<span class="tk-c">-- Da permisos sobre el stage al rol</span>
+<span class="tk-k">GRANT</span> READ <span class="tk-k">ON</span> <span class="tk-k">STAGE</span> tb_101.public.archivos <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+
+<span class="tk-c">-- Devuelve el warehouse a XSmall</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh <span class="tk-k">SET</span> WAREHOUSE_SIZE = <span class="tk-s">&#x27;xsmall&#x27;</span>;</code></pre>
+</div>
+<div class="callout callout-warning"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#b45309"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><div class="callout-content"><strong class="callout-title">Bug real: 3 errores del setup oficial que aqui ya vienen corregidos</strong><p><code>tb_data_engineer</code> no tenia USAGE sobre <code>public.csv_ff</code>, por lo que fallaba el stage del menu (lab 2). <code>tb_analyst</code> no tenia SELECT sobre <code>raw_customer</code> ni el rol CORTEX_USER. El grant correcto es <code>GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER</code> (no <code>GRANT SNOWFLAKE.CORTEX_USER</code>).</p></div></div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>Cortex search service TASTY_BYTES_REVIEW_SEARCH successfully created.</code>, <code>Stage area ARCHIVOS successfully created.</code> y el resto <code>Statement executed successfully.</code></p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(5)">Marcar paso 5 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-6" data-step="6">
+        <div class="step-header">
+            <div class="step-number">6</div>
+            <div class="step-info">
+                <h2 class="step-title">Subir los archivos multimodales al stage ARCHIVOS</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge ui">UI</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Subimos por la interfaz los archivos de ejemplo al stage ARCHIVOS para usarlos mas adelante con funciones de IA.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> El stage <code>@tb_101.public.archivos</code> muestra los 7 archivos.</div>
+<div class="step-text"><p>Estos audios, documentos e imagenes se usan en el lab 4 (IA multimodal).</p><ol><li>Ubicate en <strong>Catalog &gt; Database Explorer &gt; TB_101 &gt; PUBLIC &gt; Stages &gt; ARCHIVOS</strong>.</li><li>Haz clic en <strong>+ Files</strong> y arrastra los 7 archivos de la carpeta <code>archivos/</code> que te entrego el instructor:<ul><li><code>CONTRATO_ARRENDAMIENTO_01.docx</code></li><li><code>CONTRATO_ARRENDAMIENTO_02.docx</code></li><li><code>TELCO.png</code></li><li><code>cedula.jpg</code></li><li><code>choque.png</code></li><li><code>ofreciendo-producto.mp3</code></li><li><code>problema-servicio.mp3</code></li></ul></li><li>Confirma con <strong>Upload</strong>.</li></ol></div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>La pestana <strong>Files</strong> del stage ARCHIVOS lista los 7 archivos.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(6)">Marcar paso 6 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-7" data-step="7">
+        <div class="step-header">
+            <div class="step-number">7</div>
+            <div class="step-info">
+                <h2 class="step-title">Capa de negocio y verificacion de la carga</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Construimos la capa de negocio y verificamos que la carga quedo completa con conteos de filas.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Existen <code>ventas_diarias</code>, <code>ventas_items_mes</code> y <code>ventas_hora_ciudad</code>, y los conteos coinciden con las cifras verificadas.</div>
+<div class="step-text"><p>Resumimos ~670M lineas de detalle en <strong>tablas compactas de negocio</strong> que usan el lab 7, el agente y las apps. Subimos temporalmente <code>tb_de_wh</code> a XLARGE para que el calculo sea rapido. <code>CREATE TABLE ... AS SELECT</code> (CTAS) crea y llena la tabla en un solo paso. La primera tiene grano dia x camion.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Warehouse XLARGE y ventas_diarias</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- privilege grants</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> accountadmin;
+<span class="tk-c">-- Escala el warehouse a XLarge</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh <span class="tk-k">SET</span> WAREHOUSE_SIZE = <span class="tk-s">&#x27;xlarge&#x27;</span>;
+<span class="tk-c">-- Setup truck details</span>
+<span class="tk-k">USE</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh;
+
+<span class="tk-c">-- Grano: dia x camion  (ordenes y ticket promedio exactos)</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.analytics.ventas_diarias
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Ventas diarias por food truck (USD)&#x27;</span>
+<span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span>
+    <span class="tk-k">DATE</span>(oh.order_ts)               <span class="tk-k">AS</span> fecha,
+    t.truck_id,
+    m.truck_brand_name              <span class="tk-k">AS</span> marca,
+    m.menu_type                     <span class="tk-k">AS</span> tipo_menu,
+    t.primary_city                  <span class="tk-k">AS</span> ciudad,
+    t.country                       <span class="tk-k">AS</span> pais,
+    t.franchise_flag = <span class="tk-n">1</span>            <span class="tk-k">AS</span> es_franquicia,
+    <span class="tk-f">SUM</span>(od.price)                   <span class="tk-k">AS</span> ventas,
+    <span class="tk-f">SUM</span>(od.quantity)                <span class="tk-k">AS</span> unidades,
+    <span class="tk-f">COUNT</span>(<span class="tk-k">DISTINCT</span> oh.order_id)     <span class="tk-k">AS</span> ordenes
+<span class="tk-k">FROM</span> tb_101.raw_pos.order_detail od
+<span class="tk-k">JOIN</span> tb_101.raw_pos.order_header oh <span class="tk-k">ON</span> oh.order_id = od.order_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.truck t         <span class="tk-k">ON</span> t.truck_id = oh.truck_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.menu m          <span class="tk-k">ON</span> m.menu_item_id = od.menu_item_id
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> <span class="tk-k">ALL</span>;</code></pre>
+</div>
+<div class="step-text"><p><code>ventas_items_mes</code> tiene grano mes x camion x item del menu (preguntas por producto). <code>ventas_hora_ciudad</code> es el pulso horario 2022 por ciudad y marca (pestana "Ciudad viva" de las apps). Al final volvemos <code>tb_de_wh</code> a XSMALL y damos SELECT al analista.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">ventas_items_mes, ventas_hora_ciudad y grants</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Grano: mes x camion x item del menu  (preguntas por producto)</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.analytics.ventas_items_mes
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Ventas mensuales por item del menu y food truck (USD)&#x27;</span>
+<span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span>
+    <span class="tk-f">DATE_TRUNC</span>(<span class="tk-s">&#x27;month&#x27;</span>, oh.order_ts)::<span class="tk-k">DATE</span> <span class="tk-k">AS</span> mes,
+    t.truck_id,
+    m.truck_brand_name              <span class="tk-k">AS</span> marca,
+    m.menu_type                     <span class="tk-k">AS</span> tipo_menu,
+    m.menu_item_name                <span class="tk-k">AS</span> item_menu,
+    m.item_category                 <span class="tk-k">AS</span> categoria_item,
+    t.primary_city                  <span class="tk-k">AS</span> ciudad,
+    t.country                       <span class="tk-k">AS</span> pais,
+    <span class="tk-f">SUM</span>(od.price)                   <span class="tk-k">AS</span> ventas,
+    <span class="tk-f">SUM</span>(od.quantity)                <span class="tk-k">AS</span> unidades
+<span class="tk-k">FROM</span> tb_101.raw_pos.order_detail od
+<span class="tk-k">JOIN</span> tb_101.raw_pos.order_header oh <span class="tk-k">ON</span> oh.order_id = od.order_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.truck t         <span class="tk-k">ON</span> t.truck_id = oh.truck_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.menu m          <span class="tk-k">ON</span> m.menu_item_id = od.menu_item_id
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> <span class="tk-k">ALL</span>;
+
+<span class="tk-c">-- Grano: ciudad x hora x marca, 2022  (pestana &quot;Ciudad viva&quot; de las apps)</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> tb_101.analytics.ventas_hora_ciudad
+<span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Pulso horario 2022 por ciudad y marca (USD)&#x27;</span>
+<span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span>
+    t.primary_city                  <span class="tk-k">AS</span> ciudad,
+    <span class="tk-f">HOUR</span>(oh.order_ts)               <span class="tk-k">AS</span> hora,
+    m.truck_brand_name              <span class="tk-k">AS</span> marca,
+    <span class="tk-f">COUNT</span>(<span class="tk-k">DISTINCT</span> oh.order_id)     <span class="tk-k">AS</span> ordenes,
+    <span class="tk-f">SUM</span>(od.price)                   <span class="tk-k">AS</span> ventas,
+    <span class="tk-f">COUNT</span>(<span class="tk-k">DISTINCT</span> oh.location_id)  <span class="tk-k">AS</span> ubicaciones,
+    <span class="tk-f">COUNT</span>(<span class="tk-k">DISTINCT</span> t.truck_id)      <span class="tk-k">AS</span> camiones
+<span class="tk-k">FROM</span> tb_101.raw_pos.order_detail od
+<span class="tk-k">JOIN</span> tb_101.raw_pos.order_header oh <span class="tk-k">ON</span> oh.order_id = od.order_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.truck t         <span class="tk-k">ON</span> t.truck_id = oh.truck_id
+<span class="tk-k">JOIN</span> tb_101.raw_pos.menu m          <span class="tk-k">ON</span> m.menu_item_id = od.menu_item_id
+<span class="tk-k">WHERE</span> <span class="tk-f">YEAR</span>(oh.order_ts) = <span class="tk-n">2022</span>
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> <span class="tk-k">ALL</span>;
+
+<span class="tk-c">-- Devuelve el warehouse a XSmall</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh <span class="tk-k">SET</span> WAREHOUSE_SIZE = <span class="tk-s">&#x27;xsmall&#x27;</span>;
+<span class="tk-c">-- Da lectura de todas las tablas o vistas al analista</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">SELECT</span> <span class="tk-k">ON</span> <span class="tk-k">ALL</span> <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> tb_101.analytics <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;</code></pre>
+</div>
+<div class="callout callout-info"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#29B5E8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="callout-content"><strong class="callout-title">Resultado verificado</strong><p>La capa de negocio sobre ~670M lineas tarda ~17 s en XLARGE (Gen2). El setup completo tomo 5 min 27 s en la ejecucion de validacion.</p></div></div>
+<div class="step-text"><p>Por ultimo, contamos filas de las tablas principales para confirmar que la carga desde S3 fue completa.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Verificacion</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Verificacion de la carga</span>
+<span class="tk-k">SELECT</span> <span class="tk-s">&#x27;order_header&#x27;</span> <span class="tk-k">AS</span> tabla, <span class="tk-f">COUNT</span>(*) <span class="tk-k">AS</span> filas <span class="tk-k">FROM</span> tb_101.raw_pos.order_header
+<span class="tk-k">UNION</span> <span class="tk-k">ALL</span> <span class="tk-k">SELECT</span> <span class="tk-s">&#x27;order_detail&#x27;</span>, <span class="tk-f">COUNT</span>(*) <span class="tk-k">FROM</span> tb_101.raw_pos.order_detail
+<span class="tk-k">UNION</span> <span class="tk-k">ALL</span> <span class="tk-k">SELECT</span> <span class="tk-s">&#x27;customer_loyalty&#x27;</span>, <span class="tk-f">COUNT</span>(*) <span class="tk-k">FROM</span> tb_101.raw_customer.customer_loyalty
+<span class="tk-k">UNION</span> <span class="tk-k">ALL</span> <span class="tk-k">SELECT</span> <span class="tk-s">&#x27;truck_reviews&#x27;</span>, <span class="tk-f">COUNT</span>(*) <span class="tk-k">FROM</span> tb_101.raw_support.truck_reviews
+<span class="tk-k">UNION</span> <span class="tk-k">ALL</span> <span class="tk-k">SELECT</span> <span class="tk-s">&#x27;truck&#x27;</span>, <span class="tk-f">COUNT</span>(*) <span class="tk-k">FROM</span> tb_101.raw_pos.truck;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>order_header</code> 248,201,269 · <code>order_detail</code> 673,655,465 · <code>customer_loyalty</code> 222,540 · <code>truck_reviews</code> 124,593 · <code>truck</code> 450. Ademas <code>analytics.ventas_diarias</code>: 261,847 filas, de 2019-01-01 a 2022-11-01, ventas totales $10,110,817,820.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(7)">Marcar paso 7 como completado</button></div>
+        </div>
+    </article>
+</main>
+
+<section id="resources" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Recursos</h2>
+        <div class="prerequisites-grid">
+            <a href="https://docs.snowflake.com/en/user-guide/ui-snowsight/workspaces" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                <div class="prereq-info"><h4>Documentacion: Workspaces</h4><p>Editor de SQL y archivos en Snowsight.</p></div>
+            </a>
+            <a href="https://docs.snowflake.com/en/sql-reference/sql/copy-into-table" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                <div class="prereq-info"><h4>Documentacion: COPY INTO</h4><p>Carga masiva desde stages externos.</p></div>
+            </a>
+            <a href="https://docs.snowflake.com/en/user-guide/data-load-local-file-system-stage-ui" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                <div class="prereq-info"><h4>Documentacion: subir archivos a un stage</h4><p>Carga de archivos desde Snowsight.</p></div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Completion -->
+<section class="completion-section" id="completionSection">
+    <div class="completion-container">
+        <div class="completion-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div>
+        <h2>Ambiente listo</h2>
+        <p>TB_101 cargada, roles creados y archivos en el stage. Ya puedes construir.</p>
+        <div class="completion-summary">
+            <div class="summary-item"><span class="summary-label">Tiempo total</span><span class="summary-value" id="totalTime">--</span></div>
+            <div class="summary-item"><span class="summary-label">Pasos completados</span><span class="summary-value">7/7</span></div>
+            <div class="summary-item"><span class="summary-label">Duracion objetivo</span><span class="summary-value">7 min</span></div>
+        </div>
+        <div class="next-actions">
+            <h3>Siguiente laboratorio</h3>
+            <ul>
+                <li><strong><a href="lab1_fundamentos.html" style="color:white;text-decoration:underline;">LAB 1: Fundamentos &rarr;</a></strong> — warehouses, escalamiento, cache, clonacion y Time Travel.</li>
+                <li><a href="index.html" style="color:white;text-decoration:underline;">Volver al indice del workshop</a></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="hol-footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>
+            <p>Snowflake Hands-On Labs · Zero to Snowflake</p>
+        </div>
+        <div class="footer-meta">
+            <p>LAB 0 de 10 · Setup del ambiente</p>
+            <p>&copy; 2026 Snowflake Inc. All Rights Reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+
+const HOLState = {
+    totalSteps: 0,
+    completedSteps: new Set(),
+    startTime: null,
+    currentStep: 1
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeHOL();
+});
+
+function initializeHOL() {
+    HOLState.totalSteps = document.querySelectorAll('.step-card').length;
+    HOLState.startTime = new Date();
+    loadProgress();
+    initStepToggles();
+    initScrollSpy();
+    initKeyboardShortcuts();
+    updateProgressUI();
+}
+
+function markStepComplete(stepNumber) {
+    HOLState.completedSteps.add(stepNumber);
+
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) {
+        stepCard.classList.add('completed');
+        const btn = stepCard.querySelector('.btn-check');
+        if (btn) {
+            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> Completado`;
+            btn.disabled = true;
+            btn.style.background = 'var(--sf-green)';
+            btn.style.color = 'white';
+        }
+    }
+
+    const navItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (navItem) { navItem.classList.add('completed'); }
+
+    saveProgress();
+    updateProgressUI();
+
+    if (HOLState.completedSteps.size === HOLState.totalSteps) {
+        showCompletion();
+    } else if (stepNumber < HOLState.totalSteps) {
+        setTimeout(() => { scrollToStep(stepNumber + 1); }, 500);
+    }
+}
+
+function updateProgressUI() {
+    const progress = (HOLState.completedSteps.size / HOLState.totalSteps) * 100;
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) { progressFill.style.width = `${progress}%`; }
+    const progressPercent = document.querySelector('.progress-percent');
+    if (progressPercent) { progressPercent.textContent = `${Math.round(progress)}%`; }
+}
+
+function saveProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const data = {
+        completedSteps: Array.from(HOLState.completedSteps),
+        startTime: HOLState.startTime.toISOString(),
+        lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem(`hol-progress-${holId}`, JSON.stringify(data));
+}
+
+function loadProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const saved = localStorage.getItem(`hol-progress-${holId}`);
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            data.completedSteps.forEach(step => {
+                HOLState.completedSteps.add(step);
+                const stepCard = document.getElementById(`step-${step}`);
+                if (stepCard) { stepCard.classList.add('completed'); }
+                const navItem = document.querySelector(`.step-nav-item[data-step="${step}"]`);
+                if (navItem) { navItem.classList.add('completed'); }
+            });
+            if (data.startTime) { HOLState.startTime = new Date(data.startTime); }
+        } catch (e) { console.error('Error loading progress:', e); }
+    }
+}
+
+function initStepToggles() {
+    document.querySelectorAll('.step-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const stepCard = this.closest('.step-card');
+            const content = stepCard.querySelector('.step-content');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed', isExpanded);
+        });
+    });
+    document.querySelectorAll('.step-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const toggle = this.querySelector('.step-toggle');
+            if (toggle) { toggle.click(); }
+        });
+    });
+}
+
+function copyCode(button) {
+    const codeBlock = button.closest('.code-block');
+    const code = codeBlock.querySelector('code');
+    const text = code.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copiado ✓';
+        setTimeout(() => { button.textContent = originalText; }, 2000);
+    }).catch(err => {
+        console.error('Error copying:', err);
+        alert('Error al copiar el código');
+    });
+}
+
+function initScrollSpy() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const stepNumber = entry.target.dataset.step;
+                updateActiveNavItem(stepNumber);
+                HOLState.currentStep = parseInt(stepNumber);
+            }
+        });
+    }, { rootMargin: '-100px 0px -50% 0px' });
+
+    document.querySelectorAll('.step-card').forEach(card => { observer.observe(card); });
+}
+
+function updateActiveNavItem(stepNumber) {
+    document.querySelectorAll('.step-nav-item').forEach(item => { item.classList.remove('active'); });
+    const activeItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (activeItem) { activeItem.classList.add('active'); }
+}
+
+function scrollToStep(stepNumber) {
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) { stepCard.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && e.key >= '1' && e.key <= '9') {
+            const stepNumber = parseInt(e.key);
+            if (stepNumber <= HOLState.totalSteps) { scrollToStep(stepNumber); e.preventDefault(); }
+        }
+        if (e.altKey && e.key === 'c') {
+            if (!HOLState.completedSteps.has(HOLState.currentStep)) { markStepComplete(HOLState.currentStep); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'n') {
+            if (HOLState.currentStep < HOLState.totalSteps) { scrollToStep(HOLState.currentStep + 1); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'p') {
+            if (HOLState.currentStep > 1) { scrollToStep(HOLState.currentStep - 1); }
+            e.preventDefault();
+        }
+    });
+}
+
+function showCompletion() {
+    const completionSection = document.getElementById('completionSection');
+    if (completionSection) {
+        completionSection.classList.add('visible');
+        completionSection.scrollIntoView({ behavior: 'smooth' });
+        const endTime = new Date();
+        const duration = endTime - HOLState.startTime;
+        const minutes = Math.floor(duration / 60000);
+        const seconds = Math.floor((duration % 60000) / 1000);
+        const totalTimeEl = document.getElementById('totalTime');
+        if (totalTimeEl) { totalTimeEl.textContent = `${minutes}m ${seconds}s`; }
+    }
+}
+
+</script>
+
+<script id="visual-layer">
+(function () {
+  // Tracker only after the hero: avoids covering the title / overview
+  var steps = document.getElementById('steps');
+  if (steps && 'IntersectionObserver' in window) {
+    var toggle = function () { document.body.classList.toggle('in-steps', steps.getBoundingClientRect().top < window.innerHeight * 0.6 && steps.getBoundingClientRect().bottom > 120); };
+    window.addEventListener('scroll', toggle, { passive: true }); toggle();
+  }
+  // Click-to-zoom figures
+  var lb = document.createElement('div'); lb.className = 'lightbox'; lb.innerHTML = '<img alt="">';
+  document.body.appendChild(lb);
+  lb.addEventListener('click', function () { lb.classList.remove('open'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') lb.classList.remove('open'); });
+  document.querySelectorAll('.step-figure img').forEach(function (img) {
+    img.addEventListener('click', function () { lb.querySelector('img').src = img.src; lb.classList.add('open'); });
+  });
+})();
+</script>
+</body>
+</html>

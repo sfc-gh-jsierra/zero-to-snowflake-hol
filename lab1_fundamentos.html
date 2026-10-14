@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAB 1: Fundamentos de Snowflake | Zero to Snowflake HOL</title>
+<style>
+
+:root {
+    --sf-accent: #29B5E8;
+    --sf-headers: #11567F;
+    --sf-headers-dark: #0c3f5c;
+    --sf-green: #2fb380;
+    --sf-red: #e5484d;
+    --sf-orange: #ff922b;
+    --sf-yellow: #ffb703;
+
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+
+    --font-head: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+    --font-body: 'Lato', 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', 'Consolas', 'Menlo', monospace;
+
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 10px -2px rgba(17,86,127,0.15);
+    --shadow-lg: 0 10px 20px -4px rgba(17,86,127,0.20);
+
+    --header-height: 64px;
+    --sidebar-width: 270px;
+    --content-max-width: 880px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-height) + var(--space-lg)); }
+body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--gray-800);
+    background-color: var(--gray-50);
+    -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 {
+    font-family: var(--font-head);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-900);
+}
+a { color: var(--sf-accent); text-decoration: none; }
+a:hover { color: var(--sf-headers); }
+code { font-family: var(--font-mono); }
+
+/* Header */
+.hol-header {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+    background: white; border-bottom: 1px solid var(--gray-200); z-index: 100; box-shadow: var(--shadow-sm);
+}
+.header-container {
+    max-width: 1400px; margin: 0 auto; height: 100%;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-xl);
+}
+.logo-section { display: flex; align-items: center; gap: var(--space-md); }
+.sf-logo-mark { width: 32px; height: 32px; }
+.brand-name { font-family: var(--font-head); font-weight: 700; font-size: 1rem; color: var(--sf-headers); letter-spacing: 0.5px; }
+.logo-divider { width: 1px; height: 24px; background: var(--gray-300); }
+.hol-badge {
+    background: linear-gradient(135deg, var(--sf-accent), var(--sf-headers));
+    color: white; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.header-nav { display: flex; gap: var(--space-lg); }
+.header-nav a { color: var(--gray-600); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Hero */
+.hero-section {
+    margin-top: var(--header-height);
+    background: linear-gradient(135deg, var(--sf-headers-dark) 0%, var(--sf-headers) 100%);
+    padding: var(--space-3xl) 0; color: white;
+}
+.hero-container {
+    max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl);
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--space-3xl); align-items: center;
+}
+.industry-tag {
+    display: inline-block; background: rgba(41,181,232,0.25); color: #bfe9f9;
+    padding: var(--space-xs) var(--space-md); border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: var(--space-md);
+}
+.hero-title { font-family: var(--font-head); font-size: 2.3rem; font-weight: 800; line-height: 1.25; margin-bottom: var(--space-md); text-transform: none; color: white; }
+.hero-subtitle { font-family: var(--font-body); font-size: 1.05rem; color: #dceefa; margin-bottom: var(--space-xl); line-height: 1.7; text-transform: none; }
+.hero-meta { display: flex; gap: var(--space-xl); margin-bottom: var(--space-xl); flex-wrap: wrap; }
+.meta-item { display: flex; align-items: center; gap: var(--space-sm); color: #cfe6f2; font-size: 0.875rem; }
+.meta-icon { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+.hero-cta {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    background: var(--sf-accent); color: white; padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md); font-family: var(--font-head); font-weight: 700; letter-spacing: 0.5px;
+    box-shadow: var(--shadow-lg);
+}
+.hero-cta:hover { background: white; color: var(--sf-headers); }
+.architecture-preview {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-lg); padding: var(--space-xl); backdrop-filter: blur(6px);
+    font-family: var(--font-mono); font-size: 0.8rem; color: #cfe6f2; line-height: 1.9;
+}
+.arch-line { display: block; }
+.arch-arrow { color: var(--sf-accent); }
+
+/* Content sections */
+.content-section { padding: var(--space-2xl) 0; }
+.content-section.alt-bg { background: white; }
+.section-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); }
+.section-title {
+    font-size: 1.5rem; font-weight: 800; color: var(--gray-900);
+    margin-bottom: var(--space-xl); position: relative; padding-bottom: var(--space-md);
+}
+.section-title::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 56px; height: 4px;
+    background: linear-gradient(90deg, var(--sf-accent), var(--sf-headers)); border-radius: var(--radius-full);
+}
+
+.overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.overview-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: var(--space-xl); }
+.overview-card.highlight { background: linear-gradient(135deg, #eaf7fd, white); border-color: var(--sf-accent); }
+.overview-card h3 { font-size: 0.95rem; color: var(--gray-700); margin-bottom: var(--space-md); }
+.overview-card p { text-transform: none; font-family: var(--font-body); color: var(--gray-600); }
+.learning-list { list-style: none; }
+.learning-list li { position: relative; padding-left: var(--space-lg); margin-bottom: var(--space-sm); color: var(--gray-600); text-transform: none; font-family: var(--font-body); }
+.learning-list li::before { content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px; background: var(--sf-accent); border-radius: 50%; }
+.tech-tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.tech-tag {
+    display: inline-flex; align-items: center; background: var(--gray-100);
+    padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-size: 0.78rem; color: var(--gray-700); font-family: var(--font-mono); text-transform: none;
+}
+
+.prerequisites-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.prereq-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: var(--space-lg); display: flex; gap: var(--space-md); align-items: flex-start; }
+.prereq-icon { width: 28px; height: 28px; flex-shrink: 0; color: var(--sf-accent); }
+.prereq-info h4 { font-size: 0.9rem; color: var(--gray-800); margin-bottom: var(--space-xs); }
+.prereq-info p { font-family: var(--font-body); font-size: 0.85rem; color: var(--gray-500); text-transform: none; }
+
+/* Progress tracker */
+.progress-tracker {
+    position: fixed; left: 0; top: var(--header-height); bottom: 0; width: var(--sidebar-width);
+    background: white; border-right: 1px solid var(--gray-200); padding: var(--space-xl); overflow-y: auto; z-index: 50;
+}
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); font-family: var(--font-head); font-weight: 700; font-size: 0.8rem; color: var(--gray-700); }
+.progress-percent { color: var(--sf-accent); }
+.progress-bar { height: 6px; background: var(--gray-200); border-radius: var(--radius-full); margin-bottom: var(--space-xl); overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--sf-accent), var(--sf-green)); border-radius: var(--radius-full); width: 0%; transition: width 250ms ease; }
+.steps-nav { display: flex; flex-direction: column; gap: var(--space-xs); }
+.step-nav-item {
+    display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md); color: var(--gray-600); font-size: 0.82rem; text-decoration: none;
+}
+.step-nav-item:hover { background: var(--gray-100); }
+.step-nav-item.active { background: #eaf7fd; color: var(--sf-headers); font-weight: 700; }
+.step-nav-item.completed { color: var(--sf-green); }
+.step-nav-item .step-indicator {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid currentColor;
+    display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+.step-nav-item.completed .step-indicator { background: var(--sf-green); border-color: var(--sf-green); color: white; }
+
+/* Steps container */
+.steps-container { margin-left: var(--sidebar-width); padding: var(--space-2xl); max-width: calc(var(--content-max-width) + var(--sidebar-width) + var(--space-3xl) * 2); }
+
+.callout { display: flex; gap: var(--space-md); padding: var(--space-lg); border-radius: var(--radius-md); margin: 0 0 var(--space-xl) 0; }
+.callout-icon { flex-shrink: 0; width: 24px; height: 24px; }
+.callout-icon svg { width: 100%; height: 100%; }
+.callout-content { flex: 1; }
+.callout-title { display: block; margin-bottom: var(--space-xs); font-family: var(--font-head); font-size: 0.85rem; letter-spacing: 0.5px; }
+.callout-content p { margin: 0; font-size: 0.92rem; font-family: var(--font-body); text-transform: none; color: var(--gray-700); }
+.callout-warning { background: #fff4e6; border-left: 4px solid var(--sf-orange); }
+.callout-warning .callout-icon { color: var(--sf-orange); }
+.callout-info { background: #eaf7fd; border-left: 4px solid var(--sf-accent); }
+.callout-info .callout-icon { color: var(--sf-accent); }
+.callout-tip { background: #eafaf3; border-left: 4px solid var(--sf-green); }
+.callout-tip .callout-icon { color: var(--sf-green); }
+
+.step-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); margin-bottom: var(--space-xl); overflow: hidden; scroll-margin-top: calc(var(--header-height) + var(--space-lg)); }
+.step-card.completed { border-color: var(--sf-green); }
+.step-card.completed .step-number { background: var(--sf-green); }
+.step-header { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-lg); background: var(--gray-50); border-bottom: 1px solid var(--gray-200); cursor: pointer; }
+.step-number {
+    width: 40px; height: 40px; background: var(--sf-headers); color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; font-size: 1.05rem; flex-shrink: 0;
+}
+.step-info { flex: 1; }
+.step-title { font-size: 1.05rem; font-weight: 800; color: var(--gray-800); margin: 0; text-transform: none; }
+.step-duration { font-family: var(--font-body); font-size: 0.78rem; color: var(--gray-500); text-transform: none; }
+.step-toggle { background: none; border: none; padding: var(--space-sm); cursor: pointer; color: var(--gray-400); transition: transform 150ms ease; }
+.step-toggle[aria-expanded="false"] { transform: rotate(-90deg); }
+.step-toggle svg { width: 22px; height: 22px; fill: currentColor; }
+.step-content { padding: var(--space-xl); }
+.step-content.collapsed { display: none; }
+.step-description { color: var(--gray-600); margin-bottom: var(--space-lg); line-height: 1.75; text-transform: none; font-family: var(--font-body); }
+.step-description strong { color: var(--gray-800); }
+.step-description code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.85rem; }
+.step-actions { display: flex; justify-content: flex-end; padding-top: var(--space-lg); border-top: 1px solid var(--gray-200); margin-top: var(--space-xl); }
+.btn-check {
+    display: inline-flex; align-items: center; gap: var(--space-sm); background: var(--gray-100); color: var(--gray-700);
+    border: none; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); font-family: var(--font-head);
+    font-weight: 700; font-size: 0.78rem; letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer;
+}
+.btn-check:hover { background: var(--sf-green); color: white; }
+.btn-check svg { width: 16px; height: 16px; fill: currentColor; }
+.btn-check:disabled { cursor: default; }
+
+.sub-heading { font-family: var(--font-head); font-size: 0.85rem; color: var(--sf-headers); letter-spacing: 0.5px; margin: var(--space-lg) 0 var(--space-sm) 0; }
+
+/* Code blocks */
+.code-block { background: var(--gray-900); border-radius: var(--radius-md); margin: var(--space-md) 0 var(--space-lg) 0; overflow: hidden; }
+.code-header { display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) var(--space-md); background: var(--gray-800); border-bottom: 1px solid var(--gray-700); }
+.code-language { color: var(--gray-400); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font-head); }
+.code-actions { display: flex; gap: var(--space-xs); }
+.code-actions button { background: transparent; border: none; padding: var(--space-xs) var(--space-sm); cursor: pointer; color: var(--gray-400); border-radius: var(--radius-sm); font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; }
+.code-actions button:hover { background: var(--gray-700); color: var(--sf-accent); }
+.code-block pre { margin: 0; padding: var(--space-lg); overflow-x: auto; max-height: 480px; }
+.code-block code { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; color: var(--gray-100); white-space: pre; }
+
+/* Tables */
+.table-wrapper { overflow-x: auto; margin: var(--space-lg) 0; border-radius: var(--radius-md); border: 1px solid var(--gray-200); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.data-table th { background: var(--gray-100); padding: var(--space-sm) var(--space-md); text-align: left; font-family: var(--font-head); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px; text-transform: uppercase; color: var(--gray-700); border-bottom: 2px solid var(--gray-300); white-space: nowrap; }
+.data-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--gray-200); color: var(--gray-600); }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.78rem; }
+
+/* Completion */
+.completion-section { display: none; background: linear-gradient(135deg, var(--sf-green), #1f8a5f); color: white; padding: var(--space-3xl) 0; text-align: center; margin-left: var(--sidebar-width); }
+.completion-section.visible { display: block; }
+.completion-container { max-width: 600px; margin: 0 auto; padding: 0 var(--space-xl); }
+.completion-icon { width: 72px; height: 72px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-xl); }
+.completion-icon svg { width: 42px; height: 42px; fill: var(--sf-green); }
+.completion-section h2 { font-size: 1.7rem; margin-bottom: var(--space-md); color: white; }
+.completion-section p { text-transform: none; font-family: var(--font-body); }
+.completion-summary { display: flex; justify-content: center; gap: var(--space-2xl); margin: var(--space-xl) 0; }
+.summary-item { text-align: center; }
+.summary-label { display: block; font-size: 0.8rem; opacity: 0.9; margin-bottom: var(--space-xs); text-transform: none; font-family: var(--font-body); }
+.summary-value { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; }
+.next-actions { background: rgba(255,255,255,0.12); border-radius: var(--radius-lg); padding: var(--space-xl); margin-top: var(--space-xl); text-align: left; }
+.next-actions h3 { font-size: 0.9rem; margin-bottom: var(--space-md); }
+.next-actions ul { list-style: none; text-transform: none; font-family: var(--font-body); }
+.next-actions li { padding: var(--space-xs) 0; }
+
+/* Footer */
+.hol-footer { background: var(--gray-900); color: var(--gray-400); padding: var(--space-xl) 0; margin-left: var(--sidebar-width); }
+.footer-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md); }
+.footer-brand { display: flex; align-items: center; gap: var(--space-md); }
+.footer-brand .sf-logo-mark { filter: brightness(0) invert(1); }
+.footer-meta { text-align: right; font-size: 0.78rem; }
+
+@media (max-width: 992px) {
+    .progress-tracker { display: none; }
+    .steps-container, .hol-footer, .completion-section { margin-left: 0; }
+    .hero-container, .overview-grid, .prerequisites-grid { grid-template-columns: 1fr; }
+    .header-nav { display: none; }
+}
+
+
+/* ============================================================
+   EXTENSIONES SEMANTICAS DEL HOL
+   Traduce el vocabulario del HOL real (paso-criterio, modalidad-badge,
+   bug-real, wow, evidencia, prompt de CoCo, ubicate, arquitectura)
+   al lenguaje visual del skill (paleta #29B5E8 / #11567F).
+   ============================================================ */
+
+/* --- Criterio de exito por paso (franja verde) --- */
+.step-criterio {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    background: rgba(47,179,128,0.08);
+    border-left: 3px solid var(--sf-green);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+    font-size: 0.9375rem;
+    color: var(--gray-700);
+}
+.step-criterio strong { color: #1c7a56; }
+.step-criterio.hard {
+    background: rgba(229,72,77,0.07);
+    border-left-color: var(--sf-red);
+}
+.step-criterio.hard strong { color: #b3282c; }
+
+/* --- Badge de modalidad de ejecucion (SQL / Snowsight / CoCo / CLI) --- */
+.modalidad-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-sm);
+}
+.modalidad-badge.sql   { background: rgba(41,181,232,0.14); color: #14708f; border: 1px solid rgba(41,181,232,0.35); }
+.modalidad-badge.ui    { background: rgba(17,86,127,0.10);  color: var(--sf-headers); border: 1px solid rgba(17,86,127,0.28); }
+.modalidad-badge.coco  { background: rgba(139,92,246,0.12); color: #6d3fd4; border: 1px solid rgba(139,92,246,0.32); }
+.modalidad-badge.cli   { background: rgba(100,116,139,0.12); color: var(--gray-600); border: 1px solid rgba(100,116,139,0.30); }
+
+/* --- Bug real encontrado en la validacion (borde rojo punteado) --- */
+.bug-real {
+    border: 2px dashed var(--sf-red);
+    border-radius: var(--radius-md);
+    background: rgba(229,72,77,0.04);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.bug-titulo {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: #b3282c;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.bug-real p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.bug-real p:last-child { margin-bottom: 0; }
+
+/* --- Momento WOW: construye algo que impresiona (borde morado) --- */
+.wow {
+    border: 2px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(41,181,232,0.05) 100%);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.wow-titulo {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1rem;
+    color: #6d3fd4;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.wow p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.wow p:last-child { margin-bottom: 0; }
+
+/* --- Evidencia verificada (borde verde punteado) --- */
+.evidencia {
+    border: 1px dashed var(--sf-green);
+    border-radius: var(--radius-md);
+    background: rgba(47,179,128,0.05);
+    padding: var(--space-md) var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+}
+.evidencia code { background: rgba(47,179,128,0.12); color: #1c7a56; }
+
+/* --- Prompt para CoCo (estilo burbuja de chat) --- */
+.prompt-label {
+    font-family: var(--font-head);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6d3fd4;
+    margin: var(--space-md) 0 var(--space-xs);
+}
+.prompt-coco {
+    position: relative;
+    background: #f5f3ff;
+    border: 1px solid rgba(139,92,246,0.30);
+    border-left: 4px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-md);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-style: italic;
+    color: var(--gray-800);
+    line-height: 1.65;
+}
+
+/* --- "Ubicate": donde pararse antes de ejecutar el paso --- */
+.ubicate {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--sf-headers);
+    background: rgba(41,181,232,0.10);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    margin-right: 6px;
+}
+
+/* --- Detalle colapsable: "ver el SQL que corre por debajo" --- */
+details.underlying {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    background: var(--gray-50);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+}
+details.underlying > summary {
+    cursor: pointer;
+    font-family: var(--font-head);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--sf-headers);
+    list-style: none;
+}
+details.underlying > summary::before { content: '▸ '; color: var(--sf-accent); }
+details.underlying[open] > summary::before { content: '▾ '; }
+details.underlying[open] > summary { margin-bottom: var(--space-md); }
+
+/* --- Diagrama de arquitectura en texto (sin dependencias externas) --- */
+.arch-diagram {
+    background: var(--gray-900);
+    color: #cbd5e1;
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+}
+.arch-diagram .n { color: var(--sf-accent); font-weight: 700; }
+.arch-diagram .g { color: var(--sf-green); }
+
+/* --- Badges de estado de track (PASA / conectas-no-construyes) --- */
+.track-badge {
+    display: inline-block;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    margin-left: var(--space-sm);
+    vertical-align: middle;
+}
+.track-badge.pasa    { background: rgba(47,179,128,0.15); color: #1c7a56; }
+.track-badge.connect { background: rgba(41,181,232,0.15); color: #14708f; }
+.track-badge.excep   { background: rgba(255,146,43,0.15); color: #b35f00; }
+
+/* Sobre fondo oscuro (hero) los badges necesitan fondo solido para tener contraste */
+.hero-section .track-badge.pasa,
+.hero-section .track-badge.connect,
+.hero-section .track-badge.excep {
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+
+/* --- Rol del proveedor (nota de gobernanza del Anexo 11) --- */
+.rol-proveedor {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+    font-style: italic;
+}
+
+
+/* figures + expected (generated by _build/build_labs.py) */
+.step-figure { margin: var(--space-md) 0 var(--space-lg); text-align: center; }
+.step-figure img { max-width: 100%; border-radius: 10px; border: 1px solid #dbe6f0; box-shadow: 0 6px 22px rgba(17,86,127,0.12); }
+.step-figure figcaption { margin-top: 6px; font-size: 0.8rem; color: var(--gray-500, #6b7280); font-style: italic; }
+.step-text { margin: var(--space-md) 0; line-height: 1.65; }
+.step-text p { margin: 0 0 0.6em; }
+.code-label { font-weight: 600; margin-left: 8px; color: #9fd8f0; text-transform: none; }
+.step-resumen { margin: 10px 0 12px; padding: 10px 14px; border-radius: 10px; background: linear-gradient(90deg, rgba(41,181,232,0.12), rgba(41,181,232,0.02)); border: 1px solid rgba(41,181,232,0.25); font-size: 0.95rem; line-height: 1.55; }
+.step-resumen strong { color: #11567F; }
+.callout-expected { background: #f2f7ff; border-left: 4px solid #11567F; }
+
+.hol-footer{margin-left:0!important}
+/* ===== visual layer v2 (generated by _build/build_labs.py) ===== */
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+.progress-tracker {
+  top: calc(var(--header-height) + 18px); left: 18px; bottom: auto; max-height: calc(100vh - var(--header-height) - 36px);
+  width: calc(var(--sidebar-width) - 36px); border: 1px solid rgba(41,181,232,0.22); border-radius: 18px;
+  background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 48px rgba(17,86,127,0.16); padding: 18px 14px;
+  opacity: 0; transform: translateX(-16px); pointer-events: none; transition: opacity .35s ease, transform .35s ease;
+}
+body.in-steps .progress-tracker { opacity: 1; transform: none; pointer-events: auto; }
+.step-nav-item { align-items: flex-start; line-height: 1.3; padding: 7px 10px; font-size: 0.8rem; transition: background .2s, color .2s; }
+.step-nav-item .nav-label { flex: 1; }
+.step-nav-item .nav-min { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: #11567F; background: rgba(41,181,232,0.12); border-radius: 999px; padding: 2px 7px; margin-top: 1px; }
+.step-nav-item.active { box-shadow: inset 3px 0 0 var(--sf-accent); }
+.steps-container { max-width: calc(980px + var(--sidebar-width)); margin-left: var(--sidebar-width); margin-right: auto; }
+@media (min-width: 1500px) { .steps-container { margin-left: calc(var(--sidebar-width) + (100vw - var(--sidebar-width) - 1060px) / 2 - 40px); } }
+
+.step-card { border: 1px solid #e3edf5; border-radius: 20px; box-shadow: 0 2px 4px rgba(17,86,127,0.04), 0 14px 36px rgba(17,86,127,0.08); overflow: hidden; transition: box-shadow .25s, transform .25s; }
+.step-card:hover { box-shadow: 0 2px 4px rgba(17,86,127,0.05), 0 22px 54px rgba(17,86,127,0.14); }
+.step-card.active-card { border-color: rgba(41,181,232,0.55); }
+.step-header { background: linear-gradient(100deg, #f5fbff 0%, #ffffff 70%); border-bottom: 1px solid #eef4f9; }
+.step-number { background: linear-gradient(135deg, #29B5E8, #11567F) !important; color: #fff !important; border: none !important; box-shadow: 0 6px 16px rgba(41,181,232,0.45); }
+.step-duration { display: inline-block; background: rgba(41,181,232,0.12); color: #11567F; font-weight: 700; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
+.step-content { padding-top: 18px; }
+.modalidad-badge { letter-spacing: .6px; }
+.modalidad-badge.ui { background: rgba(255,146,43,0.14); color: #b45309; border: 1px solid rgba(255,146,43,0.4); }
+.modalidad-badge.cli, .modalidad-badge.python { background: rgba(125,68,207,0.12); color: #6d28d9; border: 1px solid rgba(125,68,207,0.35); }
+.modalidad-badge.ia { background: rgba(212,91,144,0.12); color: #be185d; border: 1px solid rgba(212,91,144,0.35); }
+.step-resumen { position: relative; padding-left: 44px; }
+.step-resumen::before { content: "→"; position: absolute; left: 14px; top: 8px; width: 20px; height: 20px; border-radius: 50%; background: #29B5E8; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.step-text { font-size: 0.97rem; color: #1f2937; }
+.step-text p:first-child { margin-top: 0; }
+.step-text table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.88rem; }
+.step-text th, .step-text td { border-bottom: 1px solid #e5edf4; padding: 7px 10px; text-align: left; vertical-align: top; }
+.step-text th { background: #f2f8fc; color: #11567F; }
+
+.code-block { background: #0b1220; border: 1px solid #1c2a44; border-radius: 14px; box-shadow: 0 10px 30px rgba(2,8,23,0.28); }
+.code-header { background: linear-gradient(180deg, #131d33, #0f1829); border-bottom: 1px solid #1c2a44; padding: 9px 14px !important; display: flex; align-items: center; }
+.code-header::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; box-shadow: 16px 0 0 #febc2e, 32px 0 0 #28c840; margin-right: 46px; flex-shrink: 0; }
+.code-language { color: #7dd3fc !important; font-size: 0.7rem !important; letter-spacing: 1px; }
+.code-label { color: #cbd5e1 !important; font-weight: 500 !important; letter-spacing: 0; }
+.code-actions { margin-left: auto; }
+.btn-copy { background: rgba(41,181,232,0.16) !important; color: #e0f2fe !important; border: 1px solid rgba(41,181,232,0.45) !important; border-radius: 8px !important; padding: 4px 12px !important; font-weight: 700; cursor: pointer; transition: background .2s, transform .1s; }
+.btn-copy:hover { background: #29B5E8 !important; color: #fff !important; }
+.btn-copy:active { transform: scale(.96); }
+.code-block pre { max-height: 560px; }
+.code-block code { color: #e2e8f0; font-size: 0.83rem; }
+.code-block .tk-c { color: #64748b; font-style: italic; }
+.code-block .tk-k { color: #7dd3fc; font-weight: 600; }
+.code-block .tk-s { color: #fcd34d; }
+.code-block .tk-n { color: #f0abfc; }
+.code-block .tk-f { color: #86efac; }
+
+.step-figure { margin: 18px 0 24px; }
+.step-figure img { max-height: 460px; width: auto; max-width: 100%; object-fit: contain; background: #fff; border-radius: 14px; cursor: zoom-in; transition: transform .25s, box-shadow .25s; }
+.step-figure img:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(17,86,127,0.22); }
+.step-figure figcaption::before { content: "🔍 "; font-style: normal; }
+.lightbox { position: fixed; inset: 0; z-index: 999; background: rgba(5,11,24,0.88); display: none; align-items: center; justify-content: center; padding: 32px; cursor: zoom-out; backdrop-filter: blur(6px); }
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 96vw; max-height: 92vh; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); background: #fff; }
+
+.callout { border-radius: 14px; }
+.callout-expected { background: linear-gradient(100deg, #eef6ff, #f8fbff); border-left-color: #11567F; }
+.btn-check { border-radius: 10px !important; transition: transform .1s, box-shadow .2s; }
+.btn-check:hover { box-shadow: 0 8px 22px rgba(47,179,128,0.35); }
+@media (max-width: 992px) { .steps-container { margin-left: 0 !important; } .code-header::before { display: none; } }
+</style>
+</head>
+<body data-hol-id="z2s-lab1-fundamentos">
+
+<!-- Header -->
+<header class="hol-header">
+    <div class="header-container">
+        <div class="logo-section">
+            <svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="var(--sf-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="var(--sf-accent)" stroke="none"/></svg>
+            <span class="brand-name">Snowflake</span>
+            <span class="logo-divider"></span>
+            <span class="hol-badge">Hands-On Lab</span>
+        </div>
+        <nav class="header-nav">
+            <a href="#overview">Vision General</a>
+            <a href="#prerequisites">Requisitos</a>
+            <a href="#steps">Pasos</a>
+            <a href="#resources">Recursos</a>
+            <a href="index.html">Indice</a>
+        </nav>
+    </div>
+</header>
+
+<!-- Hero -->
+<section class="hero-section">
+    <div class="hero-container">
+        <div class="hero-content">
+            <span class="industry-tag">TASTY BYTES · FOOD TRUCKS GLOBALES</span>
+            <h1 class="hero-title">LAB 1: Fundamentos de Snowflake</h1>
+            <p class="hero-subtitle"><strong>Objetivo:</strong> entender los pilares de Snowflake: computo elastico, cache, clonacion sin copia, Time Travel y control de costos.</p>
+            <div class="hero-meta">
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/></svg><span>8 minutos</span></div>
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6z"/></svg><span>Nivel Introductorio</span></div>
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><span>8 pasos</span></div>
+            </div>
+            <a href="#step-1" class="hero-cta">Comenzar Lab 1</a>
+        </div>
+        <div class="hero-visual">
+            <div class="arch-diagram"><span class="n">my_wh</span>  XSmall <span class="g">──▶</span> XLarge <span class="g">──▶</span> XSmall
+   <span class="g">│</span>  Result Cache: 7.5 s <span class="g">→</span> 1.2 s
+   <span class="g">▼</span>
+<span class="n">truck_details</span> <span class="g">──CLONE──▶</span> truck_dev
+   <span class="g">▲</span>                     <span class="g">│</span> fix 'Ford_'
+   <span class="g">└────────SWAP──────────┘</span>
+<span class="n">DROP</span> <span class="g">──▶</span> UNDROP  (Time Travel)
+<span class="n">Resource Monitor</span>  100 creditos/mes</div>
+        </div>
+    </div>
+</section>
+
+<section id="overview" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Vision General</h2>
+        <div class="overview-grid">
+            <div class="overview-card">
+                <h3>Lo que vas a construir</h3>
+                <ul class="learning-list">
+                    <li>Un warehouse propio que escala de XSmall a XLarge en segundos</li>
+                    <li>Un clon de desarrollo de la tabla de camiones</li>
+                    <li>Una correccion de calidad promovida a produccion con SWAP</li>
+                    <li>Una tabla recuperada con UNDROP</li>
+                    <li>Un Resource Monitor con cuota mensual</li>
+                </ul>
+            </div>
+            <div class="overview-card">
+                <h3>Tecnologias utilizadas</h3>
+                <div class="tech-tags">
+                    <span class="tech-tag">Virtual Warehouses</span>
+                    <span class="tech-tag">Result Cache</span>
+                    <span class="tech-tag">Zero Copy Cloning</span>
+                    <span class="tech-tag">VARIANT</span>
+                    <span class="tech-tag">SWAP</span>
+                    <span class="tech-tag">Time Travel</span>
+                    <span class="tech-tag">Resource Monitors</span>
+                </div>
+            </div>
+            <div class="overview-card highlight">
+                <h3>Por que importa</h3>
+                <p>Tasty Bytes procesa cientos de millones de ordenes. Separar computo de almacenamiento le permite pagar por segundo solo lo que usa, probar cambios sobre clones gratuitos y recuperarse de errores sin restaurar backups.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section id="prerequisites" class="content-section alt-bg">
+    <div class="section-container">
+        <h2 class="section-title">Requisitos Previos</h2>
+        <div class="prerequisites-grid">
+            <div class="prereq-card">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>LAB 0 completado</h4><p>Base <code>TB_101</code> cargada (completaste el LAB 0).</p></div>
+            </div>
+            <div class="prereq-card">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>Rol</h4><p>Este lab corre con <code>ACCOUNTADMIN</code>.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Progress tracker -->
+<aside class="progress-tracker" id="progressTracker">
+    <div class="progress-header"><span>PROGRESO</span><span class="progress-percent">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <nav class="steps-nav" id="stepsNav">
+        <a href="#step-1" class="step-nav-item" data-step="1"><span class="step-indicator">1</span><span class="nav-label">Contexto y warehouse</span><span class="nav-min">1'</span></a>
+        <a href="#step-2" class="step-nav-item" data-step="2"><span class="step-indicator">2</span><span class="nav-label">RESUME y AUTO_RESUME</span><span class="nav-min">1'</span></a>
+        <a href="#step-3" class="step-nav-item" data-step="3"><span class="step-indicator">3</span><span class="nav-label">Escalamiento y cache</span><span class="nav-min">1'</span></a>
+        <a href="#step-4" class="step-nav-item" data-step="4"><span class="step-indicator">4</span><span class="nav-label">Clonacion y VARIANT</span><span class="nav-min">1'</span></a>
+        <a href="#step-5" class="step-nav-item" data-step="5"><span class="step-indicator">5</span><span class="nav-label">Limpieza y SWAP</span><span class="nav-min">1'</span></a>
+        <a href="#step-6" class="step-nav-item" data-step="6"><span class="step-indicator">6</span><span class="nav-label">UNDROP</span><span class="nav-min">1'</span></a>
+        <a href="#step-7" class="step-nav-item" data-step="7"><span class="step-indicator">7</span><span class="nav-label">Resource Monitor</span><span class="nav-min">1'</span></a>
+        <a href="#step-8" class="step-nav-item" data-step="8"><span class="step-indicator">8</span><span class="nav-label">Budgets y Universal Search</span><span class="nav-min">1'</span></a>
+    </nav>
+</aside>
+
+<main class="steps-container" id="steps">
+<div class="callout callout-info"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#29B5E8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="callout-content"><strong class="callout-title">Como trabajar este lab</strong><p>Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab1_fundamentos</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>.</p></div></div>
+<figure class="step-figure"><img src="img/quickstart/create_a_worksheet.gif" alt="Crear un SQL File en Workspaces (quickstart Zero to Snowflake)" loading="lazy"><figcaption>Crear un SQL File en Workspaces (quickstart Zero to Snowflake)</figcaption></figure>
+
+    <article class="step-card" id="step-1" data-step="1">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-info">
+                <h2 class="step-title">Contexto y tu primer warehouse</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Fijamos el contexto de trabajo y creamos nuestro primer warehouse para ver como se configura el computo en Snowflake.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> <code>my_wh</code> aparece en el listado, suspendido.</div>
+<div class="step-text"><p>Todo comando en Snowflake corre con un <strong>rol</strong> (que permisos tienes), una <strong>base de datos</strong> (donde estan los datos) y un <strong>warehouse</strong> (el computo que ejecuta el query). Primero fijamos el contexto y listamos los warehouses que creo el setup.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Contexto</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Cambia al rol de trabajo</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> accountadmin;
+<span class="tk-k">USE</span> <span class="tk-k">DATABASE</span> tb_101;
+
+<span class="tk-c">-- Lista los warehouses de la cuenta</span>
+<span class="tk-k">SHOW</span> WAREHOUSES;</code></pre>
+</div>
+<div class="step-text"><p>Un <strong>Virtual Warehouse</strong> es computo puro, separado del almacenamiento: lo enciendes, lo apagas o lo cambias de tamano sin mover datos. Creamos el nuestro <em>suspendido</em> y <em>sin auto resume</em>, a proposito, para ver que pasa cuando no hay computo encendido.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Crear my_wh</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Creamos nuestro propio warehouse (suspendido y SIN auto resume a proposito)</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">WAREHOUSE</span> my_wh
+    <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Mi warehouse de Tasty Bytes&#x27;</span>
+    WAREHOUSE_TYPE = <span class="tk-s">&#x27;standard&#x27;</span>
+    WAREHOUSE_SIZE = <span class="tk-s">&#x27;xsmall&#x27;</span>
+    MIN_CLUSTER_COUNT = <span class="tk-n">1</span>
+    MAX_CLUSTER_COUNT = <span class="tk-n">2</span>
+    SCALING_POLICY = <span class="tk-s">&#x27;standard&#x27;</span>
+    AUTO_SUSPEND = <span class="tk-n">60</span>
+    INITIALLY_SUSPENDED = <span class="tk-k">TRUE</span>
+    AUTO_RESUME = <span class="tk-k">FALSE</span>;</code></pre>
+</div>
+<div class="callout callout-tip"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#10b981"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg></div><div class="callout-content"><strong class="callout-title">Que significa cada parametro</strong><p><code>WAREHOUSE_SIZE</code>: tamano (XS a 6XL; cada talla duplica computo y costo por segundo). <code>MIN/MAX_CLUSTER_COUNT</code>: multi-cluster para concurrencia. <code>AUTO_SUSPEND = 60</code>: se apaga solo tras 60 s sin uso. <code>AUTO_RESUME</code>: se enciende solo al llegar un query.</p></div></div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>Warehouse MY_WH successfully created.</code> En <code>SHOW WAREHOUSES</code> veras <code>MY_WH</code> con estado <code>SUSPENDED</code> junto a <code>TB_DE_WH</code>, <code>TB_DEV_WH</code> y <code>TB_ANALYST_WH</code>.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(1)">Marcar paso 1 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-2" data-step="2">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-info">
+                <h2 class="step-title">Sin computo no hay query: RESUME y AUTO_RESUME</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Encendemos computo propio y comprobamos que en Snowflake el almacenamiento y el computo son independientes.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> El primer SELECT falla y, tras el RESUME, devuelve los camiones.</div>
+<div class="step-text"><p>Activamos <code>my_wh</code> en la sesion e intentamos consultar la tabla de camiones. Como esta suspendido y sin auto resume, <strong>el query debe fallar</strong>.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Error esperado</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Selecciona el warehouse de computo</span>
+<span class="tk-k">USE</span> <span class="tk-k">WAREHOUSE</span> my_wh;
+
+<span class="tk-c">-- Este query falla: el warehouse esta suspendido  (error esperado)</span>
+<span class="tk-k">SELECT</span> * <span class="tk-k">FROM</span> raw_pos.truck_details;</code></pre>
+</div>
+<div class="callout callout-warning"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#b45309"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><div class="callout-content"><strong class="callout-title">Error esperado</strong><p><code>No active warehouse selected</code> o <code>Warehouse 'MY_WH' is suspended</code>. Es didactico: el almacenamiento esta ahi, pero no hay computo encendido para leerlo.</p></div></div>
+<div class="step-text"><p>Lo encendemos y activamos <code>AUTO_RESUME</code> para que a partir de ahora se encienda solo cuando llegue un query. Repetimos el SELECT.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Encender y reintentar</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Lo encendemos y activamos auto resume</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">WAREHOUSE</span> my_wh RESUME;
+<span class="tk-k">ALTER</span> <span class="tk-k">WAREHOUSE</span> my_wh <span class="tk-k">SET</span> AUTO_RESUME = <span class="tk-k">TRUE</span>;
+
+<span class="tk-c">-- Este query falla: el warehouse esta suspendido  (error esperado)</span>
+<span class="tk-k">SELECT</span> * <span class="tk-k">FROM</span> raw_pos.truck_details;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>450 filas, una por food truck, con columnas como <code>truck_id</code>, <code>primary_city</code> y <code>truck_build</code> (un JSON).</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(2)">Marcar paso 2 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-3" data-step="3">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-info">
+                <h2 class="step-title">Escalar en segundos y el Result Cache</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Escalamos el warehouse en segundos y vemos como el Result Cache devuelve resultados repetidos sin gastar computo.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> La segunda ejecucion del mismo query responde en milisegundos.</div>
+<div class="step-text"><p>Vamos a sumar ventas sobre <strong>~670 millones de lineas</strong>. Subimos a <code>XLarge</code> con un solo comando: no hay que mover datos ni reiniciar nada.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Escalar a XLarge</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Escala el warehouse a XLarge</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">WAREHOUSE</span> my_wh <span class="tk-k">SET</span> WAREHOUSE_SIZE = <span class="tk-s">&#x27;XLarge&#x27;</span>;</code></pre>
+</div>
+<div class="step-text"><p>Ejecuta el query y <strong>anota el tiempo</strong> que muestra Snowsight debajo de los resultados.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Ventas por marca</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Ventas por marca sobre ~670 millones de lineas de detalle (anota el tiempo)</span>
+<span class="tk-k">SELECT</span>
+    o.truck_brand_name,
+    <span class="tk-f">COUNT</span>(<span class="tk-k">DISTINCT</span> o.order_id) <span class="tk-k">AS</span> ordenes,
+    <span class="tk-f">SUM</span>(o.price)               <span class="tk-k">AS</span> ventas_totales
+<span class="tk-k">FROM</span> analytics.orders_v o
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> o.truck_brand_name
+<span class="tk-k">ORDER</span> <span class="tk-k">BY</span> ventas_totales <span class="tk-k">DESC</span>;</code></pre>
+</div>
+<div class="step-text"><p>Ahora ejecuta <strong>exactamente el mismo query otra vez</strong>. Snowflake guarda el resultado 24 h en el <strong>Result Cache</strong>: si los datos no cambiaron, lo devuelve sin usar el warehouse (costo cero).</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Mismo query, otra vez</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Ventas por marca sobre ~670 millones de lineas de detalle (anota el tiempo)</span>
+<span class="tk-k">SELECT</span>
+    o.truck_brand_name,
+    <span class="tk-f">COUNT</span>(<span class="tk-k">DISTINCT</span> o.order_id) <span class="tk-k">AS</span> ordenes,
+    <span class="tk-f">SUM</span>(o.price)               <span class="tk-k">AS</span> ventas_totales
+<span class="tk-k">FROM</span> analytics.orders_v o
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> o.truck_brand_name
+<span class="tk-k">ORDER</span> <span class="tk-k">BY</span> ventas_totales <span class="tk-k">DESC</span>;</code></pre>
+</div>
+<figure class="step-figure"><img src="img/quickstart/vignette-1/query_result_cache.png" alt="En Query Profile la segunda ejecucion muestra QUERY RESULT REUSE" loading="lazy"><figcaption>En Query Profile la segunda ejecucion muestra QUERY RESULT REUSE</figcaption></figure>
+<div class="step-text"><p>Terminamos el calculo pesado: bajamos a <code>XSmall</code>. Pagas por segundo solo lo que usaste.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Volver a XSmall</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Volvemos a XSmall: pagas por segundo solo lo que usas</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">WAREHOUSE</span> my_wh <span class="tk-k">SET</span> WAREHOUSE_SIZE = <span class="tk-s">&#x27;XSmall&#x27;</span>;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>15 marcas ordenadas por ventas. La 1a ejecucion tarda unos segundos; la 2a, milisegundos. En el Query Profile (clic en el ID del query) la 2a muestra <code>QUERY RESULT REUSE</code>.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(3)">Marcar paso 3 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-4" data-step="4">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-info">
+                <h2 class="step-title">Zero Copy Cloning y datos semi-estructurados</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Clonamos una tabla sin duplicar datos y consultamos campos JSON para enriquecer el catalogo de camiones.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> <code>truck_dev</code> creado con columnas year, make y model pobladas.</div>
+<div class="step-text"><p>La columna <code>truck_build</code> es un <strong>OBJECT</strong> (JSON) con anio, marca y modelo. Snowflake lo guarda nativo en <code>VARIANT</code>: no hay que definir esquema antes de cargar.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Ver el JSON</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Consulta los datos</span>
+<span class="tk-k">SELECT</span> truck_build <span class="tk-k">FROM</span> raw_pos.truck_details <span class="tk-k">LIMIT</span> <span class="tk-n">10</span>;</code></pre>
+</div>
+<div class="step-text"><p>Queremos aplanar ese JSON sin tocar produccion. Creamos un <strong>clon de desarrollo</strong>: es instantaneo y <em>no duplica almacenamiento</em>, porque comparte los micro-particiones con el original hasta que alguno cambie.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Clonar y agregar columnas</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Clon de desarrollo instantaneo, sin duplicar almacenamiento</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> raw_pos.truck_dev <span class="tk-k">CLONE</span> raw_pos.truck_details;
+
+<span class="tk-c">-- Agrega una columna a la tabla</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">TABLE</span> raw_pos.truck_dev ADD COLUMN <span class="tk-k">IF</span> <span class="tk-k">NOT</span> <span class="tk-k">EXISTS</span> year  NUMBER;
+<span class="tk-k">ALTER</span> <span class="tk-k">TABLE</span> raw_pos.truck_dev ADD COLUMN <span class="tk-k">IF</span> <span class="tk-k">NOT</span> <span class="tk-k">EXISTS</span> make  <span class="tk-f">VARCHAR</span>(<span class="tk-n">255</span>);
+<span class="tk-k">ALTER</span> <span class="tk-k">TABLE</span> raw_pos.truck_dev ADD COLUMN <span class="tk-k">IF</span> <span class="tk-k">NOT</span> <span class="tk-k">EXISTS</span> model <span class="tk-f">VARCHAR</span>(<span class="tk-n">255</span>);</code></pre>
+</div>
+<div class="step-text"><p>Con la notacion <code>columna:campo::TIPO</code> leemos el JSON y lo convertimos en columnas tipadas.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Aplanar el JSON</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Notacion &quot;:&quot; para leer el JSON</span>
+<span class="tk-k">UPDATE</span> raw_pos.truck_dev
+<span class="tk-k">SET</span> year  = truck_build:year::NUMBER,
+    make  = truck_build:make::VARCHAR,
+    model = truck_build:model::VARCHAR;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>number of rows updated: 450</code>.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(4)">Marcar paso 4 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-5" data-step="5">
+        <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-info">
+                <h2 class="step-title">Calidad de datos y SWAP atomico a produccion</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Corregimos datos en el clon y lo promovemos a produccion con un SWAP atomico, sin afectar a los usuarios.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> En <code>truck_details</code> solo existe <code>Ford</code> (sin <code>Ford_</code>).</div>
+<div class="step-text"><p>Contamos camiones por marca. Mira bien: hay un problema de calidad.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Detectar el problema</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Problema de calidad: &#x27;Ford&#x27; y &#x27;Ford_&#x27;</span>
+<span class="tk-k">SELECT</span> make, <span class="tk-f">COUNT</span>(*) <span class="tk-k">AS</span> camiones
+<span class="tk-k">FROM</span> raw_pos.truck_dev
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> make
+<span class="tk-k">ORDER</span> <span class="tk-k">BY</span> make;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Aparecen <code>Ford</code> y <code>Ford_</code> como si fueran marcas distintas.</p></div></div>
+<div class="step-text"><p>Lo corregimos en el clon y luego <strong>intercambiamos</strong> dev y produccion con <code>SWAP</code>: es un cambio de metadatos atomico, los usuarios nunca ven un estado intermedio.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Corregir y promover</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Corrige los valores mal escritos</span>
+<span class="tk-k">UPDATE</span> raw_pos.truck_dev <span class="tk-k">SET</span> make = <span class="tk-s">&#x27;Ford&#x27;</span> <span class="tk-k">WHERE</span> make = <span class="tk-s">&#x27;Ford_&#x27;</span>;
+
+<span class="tk-c">-- Promovemos dev a produccion de forma atomica</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">TABLE</span> raw_pos.truck_details <span class="tk-k">SWAP</span> <span class="tk-k">WITH</span> raw_pos.truck_dev;</code></pre>
+</div>
+<div class="step-text"><p>Verificamos produccion y quitamos la columna JSON que ya no necesitamos.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Verificar produccion</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Cuenta registros por categoria</span>
+<span class="tk-k">SELECT</span> make, <span class="tk-f">COUNT</span>(*) <span class="tk-k">AS</span> camiones
+<span class="tk-k">FROM</span> raw_pos.truck_details
+<span class="tk-k">GROUP</span> <span class="tk-k">BY</span> make
+<span class="tk-k">ORDER</span> <span class="tk-k">BY</span> camiones <span class="tk-k">DESC</span>;
+
+<span class="tk-c">-- Elimina la columna JSON ya extraida</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">TABLE</span> raw_pos.truck_details <span class="tk-k">DROP</span> COLUMN truck_build;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Una sola fila <code>Ford</code> con el total combinado, y el mensaje <code>Statement executed successfully</code> del DROP COLUMN.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(5)">Marcar paso 5 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-6" data-step="6">
+        <div class="step-header">
+            <div class="step-number">6</div>
+            <div class="step-info">
+                <h2 class="step-title">Time Travel: recuperar una tabla borrada</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Borramos una tabla por error y la recuperamos con Time Travel, sin backups ni restauraciones manuales.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> <code>truck_details</code> vuelve a existir tras el UNDROP.</div>
+<div class="step-text"><p>Simulamos el peor dia: alguien borra la tabla de <strong>produccion</strong>. Ejecuta el DROP y luego intenta describirla.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Ups...</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Borra la tabla</span>
+<span class="tk-k">DROP</span> <span class="tk-k">TABLE</span> raw_pos.truck_details;
+
+<span class="tk-c">-- No existe  (error esperado)</span>
+<span class="tk-k">DESCRIBE</span> <span class="tk-k">TABLE</span> raw_pos.truck_details;</code></pre>
+</div>
+<div class="callout callout-warning"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#b45309"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><div class="callout-content"><strong class="callout-title">Error esperado</strong><p><code>Table 'TRUCK_DETAILS' does not exist or not authorized.</code></p></div></div>
+<div class="step-text"><p>Con <strong>Time Travel</strong> no llamamos al DBA ni restauramos backups: <code>UNDROP</code> la trae de vuelta con todos sus datos. Luego borramos el clon que ya no usamos.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">UNDROP</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Sin llamar al DBA ni restaurar backups</span>
+<span class="tk-k">UNDROP</span> <span class="tk-k">TABLE</span> raw_pos.truck_details;
+
+<span class="tk-c">-- Revisa los datos resultantes</span>
+<span class="tk-k">SELECT</span> * <span class="tk-k">FROM</span> raw_pos.truck_details <span class="tk-k">LIMIT</span> <span class="tk-n">10</span>;
+
+<span class="tk-c">-- Borra la tabla</span>
+<span class="tk-k">DROP</span> <span class="tk-k">TABLE</span> raw_pos.truck_dev;</code></pre>
+</div>
+<div class="step-text"><p>Bonus: Time Travel tambien consulta el estado de una tabla en el pasado.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">La tabla hace 1 minuto</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Bonus: Time Travel por tiempo (estado de la tabla hace 1 minuto)</span>
+<span class="tk-k">SELECT</span> <span class="tk-f">COUNT</span>(*) <span class="tk-k">FROM</span> raw_pos.truck <span class="tk-k">AT</span>(OFFSET =&gt; -<span class="tk-n">60</span>);</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>Table TRUCK_DETAILS successfully restored.</code>, 10 camiones y un conteo de 450.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(6)">Marcar paso 6 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-7" data-step="7">
+        <div class="step-header">
+            <div class="step-number">7</div>
+            <div class="step-info">
+                <h2 class="step-title">Control de costos: Resource Monitor</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Ponemos un tope de creditos al warehouse con un Resource Monitor para controlar el gasto.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> <code>MY_RESOURCE_MONITOR</code> creado y asignado a <code>my_wh</code>.</div>
+<div class="step-text"><p>Un <strong>Resource Monitor</strong> pone un techo de creditos: avisa al 75%, suspende al 90% (dejando terminar lo que corre) y corta todo al 100%.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Crear y asignar</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Crea el Resource Monitor con tope de creditos</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">RESOURCE</span> <span class="tk-k">MONITOR</span> my_resource_monitor
+    <span class="tk-k">WITH</span> CREDIT_QUOTA = <span class="tk-n">100</span>
+    FREQUENCY = MONTHLY
+    START_TIMESTAMP = IMMEDIATELY
+    TRIGGERS <span class="tk-k">ON</span> <span class="tk-n">75</span> PERCENT <span class="tk-k">DO</span> NOTIFY
+             <span class="tk-k">ON</span> <span class="tk-n">90</span> PERCENT <span class="tk-k">DO</span> SUSPEND
+             <span class="tk-k">ON</span> <span class="tk-n">100</span> PERCENT <span class="tk-k">DO</span> SUSPEND_IMMEDIATE;
+
+<span class="tk-c">-- Asocia el Resource Monitor al warehouse</span>
+<span class="tk-k">ALTER</span> <span class="tk-k">WAREHOUSE</span> my_wh <span class="tk-k">SET</span> RESOURCE_MONITOR = my_resource_monitor;
+
+<span class="tk-c">-- Verifica el Resource Monitor creado</span>
+<span class="tk-k">SHOW</span> <span class="tk-k">RESOURCE</span> MONITORS <span class="tk-k">LIKE</span> <span class="tk-s">&#x27;MY_RESOURCE_MONITOR&#x27;</span>;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Una fila con <code>credit_quota = 100</code>, <code>frequency = MONTHLY</code> y <code>used_credits</code> cercano a 0.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(7)">Marcar paso 7 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-8" data-step="8">
+        <div class="step-header">
+            <div class="step-number">8</div>
+            <div class="step-info">
+                <h2 class="step-title">Budgets y Universal Search (UI)</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge ui">UI</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Revisamos desde la interfaz los Budgets de costos y la busqueda universal para encontrar objetos y datos.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Encontraste la tabla <code>TRUCK_DETAILS</code> desde la barra de busqueda.</div>
+<div class="step-text"><p>Los Resource Monitors controlan warehouses; los <strong>Budgets</strong> controlan el gasto de toda la cuenta (incluido serverless). En el menu izquierdo ve a <strong>Admin &gt; Cost Management &gt; Budgets</strong> y explora el presupuesto de la cuenta.</p></div>
+<figure class="step-figure"><img src="img/quickstart/vignette-1/budget_page.png" alt="Admin &gt; Cost Management &gt; Budgets" loading="lazy"><figcaption>Admin > Cost Management > Budgets</figcaption></figure>
+<figure class="step-figure"><img src="img/quickstart/vignette-1/edit_budget.png" alt="Editar el monto mensual y los avisos del budget" loading="lazy"><figcaption>Editar el monto mensual y los avisos del budget</figcaption></figure>
+<div class="step-text"><p>Ahora usa la barra superior <strong>Search</strong> (Universal Search): escribe <code>truck</code>. Encuentra tablas, vistas, worksheets y documentacion. Prueba tambien en lenguaje natural: <em>¿que tablas tienen informacion de clientes?</em></p></div>
+<figure class="step-figure"><img src="img/quickstart/vignette-1/universal_search_truck.png" alt="Universal Search: buscar &#x27;truck&#x27;" loading="lazy"><figcaption>Universal Search: buscar 'truck'</figcaption></figure>
+<figure class="step-figure"><img src="img/quickstart/vignette-1/universal_search_natural_language_query.png" alt="Busqueda en lenguaje natural" loading="lazy"><figcaption>Busqueda en lenguaje natural</figcaption></figure>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Resultados con <code>TRUCK_DETAILS</code>, <code>TRUCK</code> y las vistas de <code>ANALYTICS</code>.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(8)">Marcar paso 8 como completado</button></div>
+        </div>
+    </article>
+</main>
+
+<section id="resources" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Recursos</h2>
+        <div class="prerequisites-grid">
+            <a href="https://docs.snowflake.com/en/user-guide/warehouses-overview" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                <div class="prereq-info"><h4>Documentacion: Warehouses</h4><p>Tamanos, multi-cluster y auto suspend.</p></div>
+            </a>
+            <a href="https://docs.snowflake.com/en/user-guide/tables-storage-considerations" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                <div class="prereq-info"><h4>Documentacion: Cloning</h4><p>Zero Copy Cloning y almacenamiento.</p></div>
+            </a>
+            <a href="https://docs.snowflake.com/en/user-guide/data-time-travel" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                <div class="prereq-info"><h4>Documentacion: Time Travel</h4><p>UNDROP y consultas AT/BEFORE.</p></div>
+            </a>
+            <a href="https://docs.snowflake.com/en/user-guide/resource-monitors" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
+                <div class="prereq-info"><h4>Documentacion: Resource Monitors</h4><p>Cuotas y acciones de suspension.</p></div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Completion -->
+<section class="completion-section" id="completionSection">
+    <div class="completion-container">
+        <div class="completion-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div>
+        <h2>Fundamentos completos</h2>
+        <p>Escalaste computo, aprovechaste la cache, clonaste, recuperaste una tabla y pusiste un techo de costos.</p>
+        <div class="completion-summary">
+            <div class="summary-item"><span class="summary-label">Tiempo total</span><span class="summary-value" id="totalTime">--</span></div>
+            <div class="summary-item"><span class="summary-label">Pasos completados</span><span class="summary-value">8/8</span></div>
+            <div class="summary-item"><span class="summary-label">Duracion objetivo</span><span class="summary-value">8 min</span></div>
+        </div>
+        <div class="next-actions">
+            <h3>Siguiente laboratorio</h3>
+            <ul>
+                <li><strong><a href="lab2_pipeline.html" style="color:white;text-decoration:underline;">LAB 2: Pipeline semi-estructurado &rarr;</a></strong> — ingesta desde S3, VARIANT/FLATTEN y Dynamic Tables encadenadas.</li>
+                <li><a href="index.html" style="color:white;text-decoration:underline;">Volver al indice del workshop</a></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="hol-footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>
+            <p>Snowflake Hands-On Labs · Zero to Snowflake</p>
+        </div>
+        <div class="footer-meta">
+            <p>LAB 1 de 10 · Fundamentos</p>
+            <p>&copy; 2026 Snowflake Inc. All Rights Reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+
+const HOLState = {
+    totalSteps: 0,
+    completedSteps: new Set(),
+    startTime: null,
+    currentStep: 1
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeHOL();
+});
+
+function initializeHOL() {
+    HOLState.totalSteps = document.querySelectorAll('.step-card').length;
+    HOLState.startTime = new Date();
+    loadProgress();
+    initStepToggles();
+    initScrollSpy();
+    initKeyboardShortcuts();
+    updateProgressUI();
+}
+
+function markStepComplete(stepNumber) {
+    HOLState.completedSteps.add(stepNumber);
+
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) {
+        stepCard.classList.add('completed');
+        const btn = stepCard.querySelector('.btn-check');
+        if (btn) {
+            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> Completado`;
+            btn.disabled = true;
+            btn.style.background = 'var(--sf-green)';
+            btn.style.color = 'white';
+        }
+    }
+
+    const navItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (navItem) { navItem.classList.add('completed'); }
+
+    saveProgress();
+    updateProgressUI();
+
+    if (HOLState.completedSteps.size === HOLState.totalSteps) {
+        showCompletion();
+    } else if (stepNumber < HOLState.totalSteps) {
+        setTimeout(() => { scrollToStep(stepNumber + 1); }, 500);
+    }
+}
+
+function updateProgressUI() {
+    const progress = (HOLState.completedSteps.size / HOLState.totalSteps) * 100;
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) { progressFill.style.width = `${progress}%`; }
+    const progressPercent = document.querySelector('.progress-percent');
+    if (progressPercent) { progressPercent.textContent = `${Math.round(progress)}%`; }
+}
+
+function saveProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const data = {
+        completedSteps: Array.from(HOLState.completedSteps),
+        startTime: HOLState.startTime.toISOString(),
+        lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem(`hol-progress-${holId}`, JSON.stringify(data));
+}
+
+function loadProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const saved = localStorage.getItem(`hol-progress-${holId}`);
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            data.completedSteps.forEach(step => {
+                HOLState.completedSteps.add(step);
+                const stepCard = document.getElementById(`step-${step}`);
+                if (stepCard) { stepCard.classList.add('completed'); }
+                const navItem = document.querySelector(`.step-nav-item[data-step="${step}"]`);
+                if (navItem) { navItem.classList.add('completed'); }
+            });
+            if (data.startTime) { HOLState.startTime = new Date(data.startTime); }
+        } catch (e) { console.error('Error loading progress:', e); }
+    }
+}
+
+function initStepToggles() {
+    document.querySelectorAll('.step-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const stepCard = this.closest('.step-card');
+            const content = stepCard.querySelector('.step-content');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed', isExpanded);
+        });
+    });
+    document.querySelectorAll('.step-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const toggle = this.querySelector('.step-toggle');
+            if (toggle) { toggle.click(); }
+        });
+    });
+}
+
+function copyCode(button) {
+    const codeBlock = button.closest('.code-block');
+    const code = codeBlock.querySelector('code');
+    const text = code.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copiado ✓';
+        setTimeout(() => { button.textContent = originalText; }, 2000);
+    }).catch(err => {
+        console.error('Error copying:', err);
+        alert('Error al copiar el código');
+    });
+}
+
+function initScrollSpy() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const stepNumber = entry.target.dataset.step;
+                updateActiveNavItem(stepNumber);
+                HOLState.currentStep = parseInt(stepNumber);
+            }
+        });
+    }, { rootMargin: '-100px 0px -50% 0px' });
+
+    document.querySelectorAll('.step-card').forEach(card => { observer.observe(card); });
+}
+
+function updateActiveNavItem(stepNumber) {
+    document.querySelectorAll('.step-nav-item').forEach(item => { item.classList.remove('active'); });
+    const activeItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (activeItem) { activeItem.classList.add('active'); }
+}
+
+function scrollToStep(stepNumber) {
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) { stepCard.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && e.key >= '1' && e.key <= '9') {
+            const stepNumber = parseInt(e.key);
+            if (stepNumber <= HOLState.totalSteps) { scrollToStep(stepNumber); e.preventDefault(); }
+        }
+        if (e.altKey && e.key === 'c') {
+            if (!HOLState.completedSteps.has(HOLState.currentStep)) { markStepComplete(HOLState.currentStep); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'n') {
+            if (HOLState.currentStep < HOLState.totalSteps) { scrollToStep(HOLState.currentStep + 1); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'p') {
+            if (HOLState.currentStep > 1) { scrollToStep(HOLState.currentStep - 1); }
+            e.preventDefault();
+        }
+    });
+}
+
+function showCompletion() {
+    const completionSection = document.getElementById('completionSection');
+    if (completionSection) {
+        completionSection.classList.add('visible');
+        completionSection.scrollIntoView({ behavior: 'smooth' });
+        const endTime = new Date();
+        const duration = endTime - HOLState.startTime;
+        const minutes = Math.floor(duration / 60000);
+        const seconds = Math.floor((duration % 60000) / 1000);
+        const totalTimeEl = document.getElementById('totalTime');
+        if (totalTimeEl) { totalTimeEl.textContent = `${minutes}m ${seconds}s`; }
+    }
+}
+
+</script>
+
+<script id="visual-layer">
+(function () {
+  // Tracker only after the hero: avoids covering the title / overview
+  var steps = document.getElementById('steps');
+  if (steps && 'IntersectionObserver' in window) {
+    var toggle = function () { document.body.classList.toggle('in-steps', steps.getBoundingClientRect().top < window.innerHeight * 0.6 && steps.getBoundingClientRect().bottom > 120); };
+    window.addEventListener('scroll', toggle, { passive: true }); toggle();
+  }
+  // Click-to-zoom figures
+  var lb = document.createElement('div'); lb.className = 'lightbox'; lb.innerHTML = '<img alt="">';
+  document.body.appendChild(lb);
+  lb.addEventListener('click', function () { lb.classList.remove('open'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') lb.classList.remove('open'); });
+  document.querySelectorAll('.step-figure img').forEach(function (img) {
+    img.addEventListener('click', function () { lb.querySelector('img').src = img.src; lb.classList.add('open'); });
+  });
+})();
+</script>
+</body>
+</html>

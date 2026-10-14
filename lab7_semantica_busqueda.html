@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAB 7: Capa semantica y busqueda — preparar los datos para la IA | Zero to Snowflake HOL</title>
+<style>
+
+:root {
+    --sf-accent: #29B5E8;
+    --sf-headers: #11567F;
+    --sf-headers-dark: #0c3f5c;
+    --sf-green: #2fb380;
+    --sf-red: #e5484d;
+    --sf-orange: #ff922b;
+    --sf-yellow: #ffb703;
+
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+
+    --font-head: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+    --font-body: 'Lato', 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', 'Consolas', 'Menlo', monospace;
+
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 10px -2px rgba(17,86,127,0.15);
+    --shadow-lg: 0 10px 20px -4px rgba(17,86,127,0.20);
+
+    --header-height: 64px;
+    --sidebar-width: 270px;
+    --content-max-width: 880px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-height) + var(--space-lg)); }
+body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--gray-800);
+    background-color: var(--gray-50);
+    -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 {
+    font-family: var(--font-head);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-900);
+}
+a { color: var(--sf-accent); text-decoration: none; }
+a:hover { color: var(--sf-headers); }
+code { font-family: var(--font-mono); }
+
+/* Header */
+.hol-header {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+    background: white; border-bottom: 1px solid var(--gray-200); z-index: 100; box-shadow: var(--shadow-sm);
+}
+.header-container {
+    max-width: 1400px; margin: 0 auto; height: 100%;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-xl);
+}
+.logo-section { display: flex; align-items: center; gap: var(--space-md); }
+.sf-logo-mark { width: 32px; height: 32px; }
+.brand-name { font-family: var(--font-head); font-weight: 700; font-size: 1rem; color: var(--sf-headers); letter-spacing: 0.5px; }
+.logo-divider { width: 1px; height: 24px; background: var(--gray-300); }
+.hol-badge {
+    background: linear-gradient(135deg, var(--sf-accent), var(--sf-headers));
+    color: white; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.header-nav { display: flex; gap: var(--space-lg); }
+.header-nav a { color: var(--gray-600); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Hero */
+.hero-section {
+    margin-top: var(--header-height);
+    background: linear-gradient(135deg, var(--sf-headers-dark) 0%, var(--sf-headers) 100%);
+    padding: var(--space-3xl) 0; color: white;
+}
+.hero-container {
+    max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl);
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--space-3xl); align-items: center;
+}
+.industry-tag {
+    display: inline-block; background: rgba(41,181,232,0.25); color: #bfe9f9;
+    padding: var(--space-xs) var(--space-md); border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: var(--space-md);
+}
+.hero-title { font-family: var(--font-head); font-size: 2.3rem; font-weight: 800; line-height: 1.25; margin-bottom: var(--space-md); text-transform: none; color: white; }
+.hero-subtitle { font-family: var(--font-body); font-size: 1.05rem; color: #dceefa; margin-bottom: var(--space-xl); line-height: 1.7; text-transform: none; }
+.hero-meta { display: flex; gap: var(--space-xl); margin-bottom: var(--space-xl); flex-wrap: wrap; }
+.meta-item { display: flex; align-items: center; gap: var(--space-sm); color: #cfe6f2; font-size: 0.875rem; }
+.meta-icon { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+.hero-cta {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    background: var(--sf-accent); color: white; padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md); font-family: var(--font-head); font-weight: 700; letter-spacing: 0.5px;
+    box-shadow: var(--shadow-lg);
+}
+.hero-cta:hover { background: white; color: var(--sf-headers); }
+.architecture-preview {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-lg); padding: var(--space-xl); backdrop-filter: blur(6px);
+    font-family: var(--font-mono); font-size: 0.8rem; color: #cfe6f2; line-height: 1.9;
+}
+.arch-line { display: block; }
+.arch-arrow { color: var(--sf-accent); }
+
+/* Content sections */
+.content-section { padding: var(--space-2xl) 0; }
+.content-section.alt-bg { background: white; }
+.section-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); }
+.section-title {
+    font-size: 1.5rem; font-weight: 800; color: var(--gray-900);
+    margin-bottom: var(--space-xl); position: relative; padding-bottom: var(--space-md);
+}
+.section-title::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 56px; height: 4px;
+    background: linear-gradient(90deg, var(--sf-accent), var(--sf-headers)); border-radius: var(--radius-full);
+}
+
+.overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.overview-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: var(--space-xl); }
+.overview-card.highlight { background: linear-gradient(135deg, #eaf7fd, white); border-color: var(--sf-accent); }
+.overview-card h3 { font-size: 0.95rem; color: var(--gray-700); margin-bottom: var(--space-md); }
+.overview-card p { text-transform: none; font-family: var(--font-body); color: var(--gray-600); }
+.learning-list { list-style: none; }
+.learning-list li { position: relative; padding-left: var(--space-lg); margin-bottom: var(--space-sm); color: var(--gray-600); text-transform: none; font-family: var(--font-body); }
+.learning-list li::before { content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px; background: var(--sf-accent); border-radius: 50%; }
+.tech-tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.tech-tag {
+    display: inline-flex; align-items: center; background: var(--gray-100);
+    padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-size: 0.78rem; color: var(--gray-700); font-family: var(--font-mono); text-transform: none;
+}
+
+.prerequisites-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.prereq-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: var(--space-lg); display: flex; gap: var(--space-md); align-items: flex-start; }
+.prereq-icon { width: 28px; height: 28px; flex-shrink: 0; color: var(--sf-accent); }
+.prereq-info h4 { font-size: 0.9rem; color: var(--gray-800); margin-bottom: var(--space-xs); }
+.prereq-info p { font-family: var(--font-body); font-size: 0.85rem; color: var(--gray-500); text-transform: none; }
+
+/* Progress tracker */
+.progress-tracker {
+    position: fixed; left: 0; top: var(--header-height); bottom: 0; width: var(--sidebar-width);
+    background: white; border-right: 1px solid var(--gray-200); padding: var(--space-xl); overflow-y: auto; z-index: 50;
+}
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); font-family: var(--font-head); font-weight: 700; font-size: 0.8rem; color: var(--gray-700); }
+.progress-percent { color: var(--sf-accent); }
+.progress-bar { height: 6px; background: var(--gray-200); border-radius: var(--radius-full); margin-bottom: var(--space-xl); overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--sf-accent), var(--sf-green)); border-radius: var(--radius-full); width: 0%; transition: width 250ms ease; }
+.steps-nav { display: flex; flex-direction: column; gap: var(--space-xs); }
+.step-nav-item {
+    display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md); color: var(--gray-600); font-size: 0.82rem; text-decoration: none;
+}
+.step-nav-item:hover { background: var(--gray-100); }
+.step-nav-item.active { background: #eaf7fd; color: var(--sf-headers); font-weight: 700; }
+.step-nav-item.completed { color: var(--sf-green); }
+.step-nav-item .step-indicator {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid currentColor;
+    display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+.step-nav-item.completed .step-indicator { background: var(--sf-green); border-color: var(--sf-green); color: white; }
+
+/* Steps container */
+.steps-container { margin-left: var(--sidebar-width); padding: var(--space-2xl); max-width: calc(var(--content-max-width) + var(--sidebar-width) + var(--space-3xl) * 2); }
+
+.callout { display: flex; gap: var(--space-md); padding: var(--space-lg); border-radius: var(--radius-md); margin: 0 0 var(--space-xl) 0; }
+.callout-icon { flex-shrink: 0; width: 24px; height: 24px; }
+.callout-icon svg { width: 100%; height: 100%; }
+.callout-content { flex: 1; }
+.callout-title { display: block; margin-bottom: var(--space-xs); font-family: var(--font-head); font-size: 0.85rem; letter-spacing: 0.5px; }
+.callout-content p { margin: 0; font-size: 0.92rem; font-family: var(--font-body); text-transform: none; color: var(--gray-700); }
+.callout-warning { background: #fff4e6; border-left: 4px solid var(--sf-orange); }
+.callout-warning .callout-icon { color: var(--sf-orange); }
+.callout-info { background: #eaf7fd; border-left: 4px solid var(--sf-accent); }
+.callout-info .callout-icon { color: var(--sf-accent); }
+.callout-tip { background: #eafaf3; border-left: 4px solid var(--sf-green); }
+.callout-tip .callout-icon { color: var(--sf-green); }
+
+.step-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); margin-bottom: var(--space-xl); overflow: hidden; scroll-margin-top: calc(var(--header-height) + var(--space-lg)); }
+.step-card.completed { border-color: var(--sf-green); }
+.step-card.completed .step-number { background: var(--sf-green); }
+.step-header { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-lg); background: var(--gray-50); border-bottom: 1px solid var(--gray-200); cursor: pointer; }
+.step-number {
+    width: 40px; height: 40px; background: var(--sf-headers); color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; font-size: 1.05rem; flex-shrink: 0;
+}
+.step-info { flex: 1; }
+.step-title { font-size: 1.05rem; font-weight: 800; color: var(--gray-800); margin: 0; text-transform: none; }
+.step-duration { font-family: var(--font-body); font-size: 0.78rem; color: var(--gray-500); text-transform: none; }
+.step-toggle { background: none; border: none; padding: var(--space-sm); cursor: pointer; color: var(--gray-400); transition: transform 150ms ease; }
+.step-toggle[aria-expanded="false"] { transform: rotate(-90deg); }
+.step-toggle svg { width: 22px; height: 22px; fill: currentColor; }
+.step-content { padding: var(--space-xl); }
+.step-content.collapsed { display: none; }
+.step-description { color: var(--gray-600); margin-bottom: var(--space-lg); line-height: 1.75; text-transform: none; font-family: var(--font-body); }
+.step-description strong { color: var(--gray-800); }
+.step-description code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.85rem; }
+.step-actions { display: flex; justify-content: flex-end; padding-top: var(--space-lg); border-top: 1px solid var(--gray-200); margin-top: var(--space-xl); }
+.btn-check {
+    display: inline-flex; align-items: center; gap: var(--space-sm); background: var(--gray-100); color: var(--gray-700);
+    border: none; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); font-family: var(--font-head);
+    font-weight: 700; font-size: 0.78rem; letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer;
+}
+.btn-check:hover { background: var(--sf-green); color: white; }
+.btn-check svg { width: 16px; height: 16px; fill: currentColor; }
+.btn-check:disabled { cursor: default; }
+
+.sub-heading { font-family: var(--font-head); font-size: 0.85rem; color: var(--sf-headers); letter-spacing: 0.5px; margin: var(--space-lg) 0 var(--space-sm) 0; }
+
+/* Code blocks */
+.code-block { background: var(--gray-900); border-radius: var(--radius-md); margin: var(--space-md) 0 var(--space-lg) 0; overflow: hidden; }
+.code-header { display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) var(--space-md); background: var(--gray-800); border-bottom: 1px solid var(--gray-700); }
+.code-language { color: var(--gray-400); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font-head); }
+.code-actions { display: flex; gap: var(--space-xs); }
+.code-actions button { background: transparent; border: none; padding: var(--space-xs) var(--space-sm); cursor: pointer; color: var(--gray-400); border-radius: var(--radius-sm); font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; }
+.code-actions button:hover { background: var(--gray-700); color: var(--sf-accent); }
+.code-block pre { margin: 0; padding: var(--space-lg); overflow-x: auto; max-height: 480px; }
+.code-block code { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; color: var(--gray-100); white-space: pre; }
+
+/* Tables */
+.table-wrapper { overflow-x: auto; margin: var(--space-lg) 0; border-radius: var(--radius-md); border: 1px solid var(--gray-200); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.data-table th { background: var(--gray-100); padding: var(--space-sm) var(--space-md); text-align: left; font-family: var(--font-head); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px; text-transform: uppercase; color: var(--gray-700); border-bottom: 2px solid var(--gray-300); white-space: nowrap; }
+.data-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--gray-200); color: var(--gray-600); }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.78rem; }
+
+/* Completion */
+.completion-section { display: none; background: linear-gradient(135deg, var(--sf-green), #1f8a5f); color: white; padding: var(--space-3xl) 0; text-align: center; margin-left: var(--sidebar-width); }
+.completion-section.visible { display: block; }
+.completion-container { max-width: 600px; margin: 0 auto; padding: 0 var(--space-xl); }
+.completion-icon { width: 72px; height: 72px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-xl); }
+.completion-icon svg { width: 42px; height: 42px; fill: var(--sf-green); }
+.completion-section h2 { font-size: 1.7rem; margin-bottom: var(--space-md); color: white; }
+.completion-section p { text-transform: none; font-family: var(--font-body); }
+.completion-summary { display: flex; justify-content: center; gap: var(--space-2xl); margin: var(--space-xl) 0; }
+.summary-item { text-align: center; }
+.summary-label { display: block; font-size: 0.8rem; opacity: 0.9; margin-bottom: var(--space-xs); text-transform: none; font-family: var(--font-body); }
+.summary-value { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; }
+.next-actions { background: rgba(255,255,255,0.12); border-radius: var(--radius-lg); padding: var(--space-xl); margin-top: var(--space-xl); text-align: left; }
+.next-actions h3 { font-size: 0.9rem; margin-bottom: var(--space-md); }
+.next-actions ul { list-style: none; text-transform: none; font-family: var(--font-body); }
+.next-actions li { padding: var(--space-xs) 0; }
+
+/* Footer */
+.hol-footer { background: var(--gray-900); color: var(--gray-400); padding: var(--space-xl) 0; margin-left: var(--sidebar-width); }
+.footer-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md); }
+.footer-brand { display: flex; align-items: center; gap: var(--space-md); }
+.footer-brand .sf-logo-mark { filter: brightness(0) invert(1); }
+.footer-meta { text-align: right; font-size: 0.78rem; }
+
+@media (max-width: 992px) {
+    .progress-tracker { display: none; }
+    .steps-container, .hol-footer, .completion-section { margin-left: 0; }
+    .hero-container, .overview-grid, .prerequisites-grid { grid-template-columns: 1fr; }
+    .header-nav { display: none; }
+}
+
+
+/* ============================================================
+   EXTENSIONES SEMANTICAS DEL HOL
+   Traduce el vocabulario del HOL real (paso-criterio, modalidad-badge,
+   bug-real, wow, evidencia, prompt de CoCo, ubicate, arquitectura)
+   al lenguaje visual del skill (paleta #29B5E8 / #11567F).
+   ============================================================ */
+
+/* --- Criterio de exito por paso (franja verde) --- */
+.step-criterio {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    background: rgba(47,179,128,0.08);
+    border-left: 3px solid var(--sf-green);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+    font-size: 0.9375rem;
+    color: var(--gray-700);
+}
+.step-criterio strong { color: #1c7a56; }
+.step-criterio.hard {
+    background: rgba(229,72,77,0.07);
+    border-left-color: var(--sf-red);
+}
+.step-criterio.hard strong { color: #b3282c; }
+
+/* --- Badge de modalidad de ejecucion (SQL / Snowsight / CoCo / CLI) --- */
+.modalidad-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-sm);
+}
+.modalidad-badge.sql   { background: rgba(41,181,232,0.14); color: #14708f; border: 1px solid rgba(41,181,232,0.35); }
+.modalidad-badge.ui    { background: rgba(17,86,127,0.10);  color: var(--sf-headers); border: 1px solid rgba(17,86,127,0.28); }
+.modalidad-badge.coco  { background: rgba(139,92,246,0.12); color: #6d3fd4; border: 1px solid rgba(139,92,246,0.32); }
+.modalidad-badge.cli   { background: rgba(100,116,139,0.12); color: var(--gray-600); border: 1px solid rgba(100,116,139,0.30); }
+
+/* --- Bug real encontrado en la validacion (borde rojo punteado) --- */
+.bug-real {
+    border: 2px dashed var(--sf-red);
+    border-radius: var(--radius-md);
+    background: rgba(229,72,77,0.04);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.bug-titulo {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: #b3282c;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.bug-real p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.bug-real p:last-child { margin-bottom: 0; }
+
+/* --- Momento WOW: construye algo que impresiona (borde morado) --- */
+.wow {
+    border: 2px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(41,181,232,0.05) 100%);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.wow-titulo {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1rem;
+    color: #6d3fd4;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.wow p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.wow p:last-child { margin-bottom: 0; }
+
+/* --- Evidencia verificada (borde verde punteado) --- */
+.evidencia {
+    border: 1px dashed var(--sf-green);
+    border-radius: var(--radius-md);
+    background: rgba(47,179,128,0.05);
+    padding: var(--space-md) var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+}
+.evidencia code { background: rgba(47,179,128,0.12); color: #1c7a56; }
+
+/* --- Prompt para CoCo (estilo burbuja de chat) --- */
+.prompt-label {
+    font-family: var(--font-head);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6d3fd4;
+    margin: var(--space-md) 0 var(--space-xs);
+}
+.prompt-coco {
+    position: relative;
+    background: #f5f3ff;
+    border: 1px solid rgba(139,92,246,0.30);
+    border-left: 4px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-md);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-style: italic;
+    color: var(--gray-800);
+    line-height: 1.65;
+}
+
+/* --- "Ubicate": donde pararse antes de ejecutar el paso --- */
+.ubicate {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--sf-headers);
+    background: rgba(41,181,232,0.10);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    margin-right: 6px;
+}
+
+/* --- Detalle colapsable: "ver el SQL que corre por debajo" --- */
+details.underlying {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    background: var(--gray-50);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+}
+details.underlying > summary {
+    cursor: pointer;
+    font-family: var(--font-head);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--sf-headers);
+    list-style: none;
+}
+details.underlying > summary::before { content: '▸ '; color: var(--sf-accent); }
+details.underlying[open] > summary::before { content: '▾ '; }
+details.underlying[open] > summary { margin-bottom: var(--space-md); }
+
+/* --- Diagrama de arquitectura en texto (sin dependencias externas) --- */
+.arch-diagram {
+    background: var(--gray-900);
+    color: #cbd5e1;
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+}
+.arch-diagram .n { color: var(--sf-accent); font-weight: 700; }
+.arch-diagram .g { color: var(--sf-green); }
+
+/* --- Badges de estado de track (PASA / conectas-no-construyes) --- */
+.track-badge {
+    display: inline-block;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    margin-left: var(--space-sm);
+    vertical-align: middle;
+}
+.track-badge.pasa    { background: rgba(47,179,128,0.15); color: #1c7a56; }
+.track-badge.connect { background: rgba(41,181,232,0.15); color: #14708f; }
+.track-badge.excep   { background: rgba(255,146,43,0.15); color: #b35f00; }
+
+/* Sobre fondo oscuro (hero) los badges necesitan fondo solido para tener contraste */
+.hero-section .track-badge.pasa,
+.hero-section .track-badge.connect,
+.hero-section .track-badge.excep {
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+
+/* --- Rol del proveedor (nota de gobernanza del Anexo 11) --- */
+.rol-proveedor {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+    font-style: italic;
+}
+
+
+/* figures + expected (generated by _build/build_labs.py) */
+.step-figure { margin: var(--space-md) 0 var(--space-lg); text-align: center; }
+.step-figure img { max-width: 100%; border-radius: 10px; border: 1px solid #dbe6f0; box-shadow: 0 6px 22px rgba(17,86,127,0.12); }
+.step-figure figcaption { margin-top: 6px; font-size: 0.8rem; color: var(--gray-500, #6b7280); font-style: italic; }
+.step-text { margin: var(--space-md) 0; line-height: 1.65; }
+.step-text p { margin: 0 0 0.6em; }
+.code-label { font-weight: 600; margin-left: 8px; color: #9fd8f0; text-transform: none; }
+.step-resumen { margin: 10px 0 12px; padding: 10px 14px; border-radius: 10px; background: linear-gradient(90deg, rgba(41,181,232,0.12), rgba(41,181,232,0.02)); border: 1px solid rgba(41,181,232,0.25); font-size: 0.95rem; line-height: 1.55; }
+.step-resumen strong { color: #11567F; }
+.callout-expected { background: #f2f7ff; border-left: 4px solid #11567F; }
+
+.hol-footer{margin-left:0!important}
+/* ===== visual layer v2 (generated by _build/build_labs.py) ===== */
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+.progress-tracker {
+  top: calc(var(--header-height) + 18px); left: 18px; bottom: auto; max-height: calc(100vh - var(--header-height) - 36px);
+  width: calc(var(--sidebar-width) - 36px); border: 1px solid rgba(41,181,232,0.22); border-radius: 18px;
+  background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 48px rgba(17,86,127,0.16); padding: 18px 14px;
+  opacity: 0; transform: translateX(-16px); pointer-events: none; transition: opacity .35s ease, transform .35s ease;
+}
+body.in-steps .progress-tracker { opacity: 1; transform: none; pointer-events: auto; }
+.step-nav-item { align-items: flex-start; line-height: 1.3; padding: 7px 10px; font-size: 0.8rem; transition: background .2s, color .2s; }
+.step-nav-item .nav-label { flex: 1; }
+.step-nav-item .nav-min { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: #11567F; background: rgba(41,181,232,0.12); border-radius: 999px; padding: 2px 7px; margin-top: 1px; }
+.step-nav-item.active { box-shadow: inset 3px 0 0 var(--sf-accent); }
+.steps-container { max-width: calc(980px + var(--sidebar-width)); margin-left: var(--sidebar-width); margin-right: auto; }
+@media (min-width: 1500px) { .steps-container { margin-left: calc(var(--sidebar-width) + (100vw - var(--sidebar-width) - 1060px) / 2 - 40px); } }
+
+.step-card { border: 1px solid #e3edf5; border-radius: 20px; box-shadow: 0 2px 4px rgba(17,86,127,0.04), 0 14px 36px rgba(17,86,127,0.08); overflow: hidden; transition: box-shadow .25s, transform .25s; }
+.step-card:hover { box-shadow: 0 2px 4px rgba(17,86,127,0.05), 0 22px 54px rgba(17,86,127,0.14); }
+.step-card.active-card { border-color: rgba(41,181,232,0.55); }
+.step-header { background: linear-gradient(100deg, #f5fbff 0%, #ffffff 70%); border-bottom: 1px solid #eef4f9; }
+.step-number { background: linear-gradient(135deg, #29B5E8, #11567F) !important; color: #fff !important; border: none !important; box-shadow: 0 6px 16px rgba(41,181,232,0.45); }
+.step-duration { display: inline-block; background: rgba(41,181,232,0.12); color: #11567F; font-weight: 700; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
+.step-content { padding-top: 18px; }
+.modalidad-badge { letter-spacing: .6px; }
+.modalidad-badge.ui { background: rgba(255,146,43,0.14); color: #b45309; border: 1px solid rgba(255,146,43,0.4); }
+.modalidad-badge.cli, .modalidad-badge.python { background: rgba(125,68,207,0.12); color: #6d28d9; border: 1px solid rgba(125,68,207,0.35); }
+.modalidad-badge.ia { background: rgba(212,91,144,0.12); color: #be185d; border: 1px solid rgba(212,91,144,0.35); }
+.step-resumen { position: relative; padding-left: 44px; }
+.step-resumen::before { content: "→"; position: absolute; left: 14px; top: 8px; width: 20px; height: 20px; border-radius: 50%; background: #29B5E8; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.step-text { font-size: 0.97rem; color: #1f2937; }
+.step-text p:first-child { margin-top: 0; }
+.step-text table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.88rem; }
+.step-text th, .step-text td { border-bottom: 1px solid #e5edf4; padding: 7px 10px; text-align: left; vertical-align: top; }
+.step-text th { background: #f2f8fc; color: #11567F; }
+
+.code-block { background: #0b1220; border: 1px solid #1c2a44; border-radius: 14px; box-shadow: 0 10px 30px rgba(2,8,23,0.28); }
+.code-header { background: linear-gradient(180deg, #131d33, #0f1829); border-bottom: 1px solid #1c2a44; padding: 9px 14px !important; display: flex; align-items: center; }
+.code-header::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; box-shadow: 16px 0 0 #febc2e, 32px 0 0 #28c840; margin-right: 46px; flex-shrink: 0; }
+.code-language { color: #7dd3fc !important; font-size: 0.7rem !important; letter-spacing: 1px; }
+.code-label { color: #cbd5e1 !important; font-weight: 500 !important; letter-spacing: 0; }
+.code-actions { margin-left: auto; }
+.btn-copy { background: rgba(41,181,232,0.16) !important; color: #e0f2fe !important; border: 1px solid rgba(41,181,232,0.45) !important; border-radius: 8px !important; padding: 4px 12px !important; font-weight: 700; cursor: pointer; transition: background .2s, transform .1s; }
+.btn-copy:hover { background: #29B5E8 !important; color: #fff !important; }
+.btn-copy:active { transform: scale(.96); }
+.code-block pre { max-height: 560px; }
+.code-block code { color: #e2e8f0; font-size: 0.83rem; }
+.code-block .tk-c { color: #64748b; font-style: italic; }
+.code-block .tk-k { color: #7dd3fc; font-weight: 600; }
+.code-block .tk-s { color: #fcd34d; }
+.code-block .tk-n { color: #f0abfc; }
+.code-block .tk-f { color: #86efac; }
+
+.step-figure { margin: 18px 0 24px; }
+.step-figure img { max-height: 460px; width: auto; max-width: 100%; object-fit: contain; background: #fff; border-radius: 14px; cursor: zoom-in; transition: transform .25s, box-shadow .25s; }
+.step-figure img:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(17,86,127,0.22); }
+.step-figure figcaption::before { content: "🔍 "; font-style: normal; }
+.lightbox { position: fixed; inset: 0; z-index: 999; background: rgba(5,11,24,0.88); display: none; align-items: center; justify-content: center; padding: 32px; cursor: zoom-out; backdrop-filter: blur(6px); }
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 96vw; max-height: 92vh; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); background: #fff; }
+
+.callout { border-radius: 14px; }
+.callout-expected { background: linear-gradient(100deg, #eef6ff, #f8fbff); border-left-color: #11567F; }
+.btn-check { border-radius: 10px !important; transition: transform .1s, box-shadow .2s; }
+.btn-check:hover { box-shadow: 0 8px 22px rgba(47,179,128,0.35); }
+@media (max-width: 992px) { .steps-container { margin-left: 0 !important; } .code-header::before { display: none; } }
+</style>
+</head>
+<body data-hol-id="z2s-lab7-semantica-busqueda">
+
+<!-- Header -->
+<header class="hol-header">
+    <div class="header-container">
+        <div class="logo-section">
+            <svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="var(--sf-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="var(--sf-accent)" stroke="none"/></svg>
+            <span class="brand-name">Snowflake</span>
+            <span class="logo-divider"></span>
+            <span class="hol-badge">Hands-On Lab</span>
+        </div>
+        <nav class="header-nav">
+            <a href="#overview">Vision General</a>
+            <a href="#prerequisites">Requisitos</a>
+            <a href="#steps">Pasos</a>
+            <a href="#resources">Recursos</a>
+            <a href="index.html">Indice</a>
+        </nav>
+    </div>
+</header>
+
+<!-- Hero -->
+<section class="hero-section">
+    <div class="hero-container">
+        <div class="hero-content">
+            <span class="industry-tag">TASTY BYTES · FOOD TRUCKS GLOBALES</span>
+            <h1 class="hero-title">LAB 7: Capa semantica y busqueda — preparar los datos para la IA</h1>
+            <p class="hero-subtitle"><strong>Objetivo:</strong> construir las piezas que un agente necesita para entender Tasty Bytes: tablas curadas, un Cortex Search Service sobre reviews y una SV (Semantic View) con metricas, sinonimos y preguntas verificadas.</p>
+            <div class="hero-meta">
+                <div class="meta-item">
+                    <svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/></svg>
+                    <span>9 minutos</span>
+                </div>
+                <div class="meta-item">
+                    <svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6z"/></svg>
+                    <span>Nivel Intermedio</span>
+                </div>
+                <div class="meta-item">
+                    <svg class="meta-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>
+                    <span>6 pasos</span>
+                </div>
+            </div>
+            <a href="#step-1" class="hero-cta">Comenzar Lab 7</a>
+        </div>
+        <div class="hero-visual">
+            <div class="architecture-preview arch-diagram">
+                <span class="arch-line">ventas_diarias · ventas_items_mes · ciudades · clima</span>
+                <span class="arch-line"> <span class="arch-arrow">│</span></span>
+                <span class="arch-line"> <span class="arch-arrow">▼</span></span>
+                <span class="arch-line"><span class="n">SEMANTIC VIEW</span> sv_tasty_bytes</span>
+                <span class="arch-line"> <span class="arch-arrow">└──▶</span> <span class="g">Cortex Analyst</span> (texto a SQL)</span>
+                <span class="arch-line"> </span>
+                <span class="arch-line">reviews_sentimiento (2,000)</span>
+                <span class="arch-line"> <span class="arch-arrow">│</span></span>
+                <span class="arch-line"> <span class="arch-arrow">▼</span></span>
+                <span class="arch-line"><span class="n">CORTEX SEARCH</span> tasty_bytes_review_search</span>
+                <span class="arch-line"> <span class="arch-arrow">└──▶</span> <span class="g">busqueda hibrida</span></span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Overview -->
+<section id="overview" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Vision General</h2>
+        <div class="overview-grid">
+            <div class="overview-card">
+                <h3>Lo que vas a construir</h3>
+                <ul class="learning-list">
+                    <li>Tablas de negocio curadas: ciudades con coordenadas y 2,000 reviews con sentimiento IA</li>
+                    <li>Un Cortex Search Service con busqueda hibrida y filtros por marca, ciudad y sentimiento</li>
+                    <li>Una Semantic View con tablas logicas, relaciones, hechos, dimensiones, metricas, sinonimos e instrucciones</li>
+                    <li>Preguntas en lenguaje natural respondidas por Cortex Analyst</li>
+                </ul>
+            </div>
+            <div class="overview-card">
+                <h3>Tecnologias utilizadas</h3>
+                <div class="tech-tags">
+                    <span class="tech-tag">AI_SENTIMENT</span>
+                    <span class="tech-tag">Cortex Search</span>
+                    <span class="tech-tag">Semantic Views</span>
+                    <span class="tech-tag">Cortex Analyst</span>
+                    <span class="tech-tag">AI_VERIFIED_QUERIES</span>
+                    <span class="tech-tag">SEMANTIC_VIEW()</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Prerequisites -->
+<section id="prerequisites" class="content-section alt-bg">
+    <div class="section-container">
+        <h2 class="section-title">Requisitos Previos</h2>
+        <div class="prerequisites-grid">
+            <div class="prereq-card">
+                <svg class="prereq-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>LAB 0 completado</h4><p>Tablas <code>analytics.ventas_diarias</code> y <code>analytics.ventas_items_mes</code> creadas en el setup.</p></div>
+            </div>
+            <div class="prereq-card">
+                <svg class="prereq-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>LAB 6 completado</h4><p>La vista <code>analytics.daily_sales_by_weather_v</code> (clima del Marketplace) es una de las tablas logicas.</p></div>
+            </div>
+            <div class="prereq-card">
+                <svg class="prereq-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>Warehouse TB_DE_WH</h4><p>Se usa para construir las tablas y el servicio de busqueda.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Progress tracker -->
+<aside class="progress-tracker" id="progressTracker">
+    <div class="progress-header"><span>PROGRESO</span><span class="progress-percent">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <nav class="steps-nav" id="stepsNav">
+        <a href="#step-1" class="step-nav-item" data-step="1"><span class="step-indicator">1</span><span class="nav-label">Tablas curadas</span><span class="nav-min">2'</span></a>
+        <a href="#step-2" class="step-nav-item" data-step="2"><span class="step-indicator">2</span><span class="nav-label">Reviews + sentimiento</span><span class="nav-min">1'</span></a>
+        <a href="#step-3" class="step-nav-item" data-step="3"><span class="step-indicator">3</span><span class="nav-label">Cortex Search</span><span class="nav-min">2'</span></a>
+        <a href="#step-4" class="step-nav-item" data-step="4"><span class="step-indicator">4</span><span class="nav-label">Semantic View</span><span class="nav-min">2'</span></a>
+        <a href="#step-5" class="step-nav-item" data-step="5"><span class="step-indicator">5</span><span class="nav-label">SEMANTIC_VIEW() y permisos</span><span class="nav-min">1'</span></a>
+        <a href="#step-6" class="step-nav-item" data-step="6"><span class="step-indicator">6</span><span class="nav-label">Cortex Analyst</span><span class="nav-min">1'</span></a>
+    </nav>
+</aside>
+
+<!-- Steps -->
+<main class="steps-container" id="steps">
+<div class="callout callout-info"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#29B5E8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="callout-content"><strong class="callout-title">Como trabajar este lab</strong><p>Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab7_semantica_busqueda</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>.</p></div></div>
+<figure class="step-figure"><img src="img/quickstart/create_a_worksheet.gif" alt="Crear un SQL File en Workspaces (quickstart Zero to Snowflake)" loading="lazy"><figcaption>Crear un SQL File en Workspaces (quickstart Zero to Snowflake)</figcaption></figure>
+
+    <article class="step-card" id="step-1" data-step="1">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-info">
+                <h2 class="step-title">Contexto y tablas de negocio curadas</h2>
+                <span class="step-duration">~2 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Revisamos las tablas de negocio curadas y agregamos coordenadas de ciudades, base limpia para que la IA responda bien.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> El conteo de <code>analytics.ventas_diarias</code> devuelve 261,847 filas y se crea <code>analytics.ciudades</code>.</div>
+<div class="step-text"><p>Un agente de IA responde mejor sobre datos limpios y resumidos. El setup ya creo <code>analytics.ventas_diarias</code> y <code>analytics.ventas_items_mes</code>, que resumen ~670M lineas de orden. Fijamos contexto y verificamos la tabla de ventas diarias.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Contexto y verificacion</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Contexto: rol, base y warehouse del lab</span>
+<span class="tk-k">USE</span> <span class="tk-k">ROLE</span> accountadmin;
+
+<span class="tk-k">USE</span> <span class="tk-k">DATABASE</span> tb_101;
+
+<span class="tk-k">USE</span> <span class="tk-k">WAREHOUSE</span> tb_de_wh;
+
+<span class="tk-c">-- Verifica filas, rango de fechas y ventas totales</span>
+<span class="tk-k">SELECT</span> <span class="tk-f">COUNT</span>(*) <span class="tk-k">AS</span> filas, <span class="tk-f">MIN</span>(fecha) <span class="tk-k">AS</span> desde, <span class="tk-f">MAX</span>(fecha) <span class="tk-k">AS</span> hasta, <span class="tk-f">SUM</span>(ventas) <span class="tk-k">AS</span> ventas_totales
+<span class="tk-k">FROM</span> analytics.ventas_diarias;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>1 fila: <code>FILAS</code> = <strong>261,847</strong>, desde <code>2019-01-01</code> hasta <code>2022-11-01</code>, <code>VENTAS_TOTALES</code> = <strong>$10,110,817,820</strong>.</p></div></div>
+<div class="callout callout-warning"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#b45309"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><div class="callout-content"><strong class="callout-title">Bug real: orders_v repite order_total</strong><p>La vista oficial <code>semantic_layer.orders_v</code> repite <code>order_total</code> en cada linea de detalle de la orden. Si la sumas, inflas las ventas tantas veces como lineas tenga la orden. Por eso la Semantic View de este lab se construye sobre tablas agregadas con <code>SUM(price)</code> (<code>ventas_diarias</code>, <code>ventas_items_mes</code>), no sobre <code>order_total</code>.</p></div></div>
+<div class="step-text"><p>Creamos una tabla de las 30 ciudades con latitud, longitud y poblacion: sera una tabla logica de la Semantic View y servira para mapas en las apps. Las coordenadas vienen de una lista <code>VALUES</code> unida a <code>raw_pos.country</code>.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Tabla de ciudades</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Coordenadas de las 30 ciudades (para mapas en las apps)</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> analytics.ciudades (
+    ciudad STRING, pais STRING, latitud FLOAT, longitud FLOAT, poblacion NUMBER
+) <span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span> c.city, c.country, g.lat, g.lon, <span class="tk-f">TRY_TO_NUMBER</span>(c.city_population)
+<span class="tk-k">FROM</span> raw_pos.country c
+<span class="tk-k">JOIN</span> (<span class="tk-k">SELECT</span> column1 city, column2 lat, column3 lon <span class="tk-k">FROM</span> <span class="tk-k">VALUES</span>
+    (<span class="tk-s">&#x27;Melbourne&#x27;</span>,-<span class="tk-n">37.8136</span>,<span class="tk-n">144.9631</span>),(<span class="tk-s">&#x27;Sydney&#x27;</span>,-<span class="tk-n">33.8688</span>,<span class="tk-n">151.2093</span>),(<span class="tk-s">&#x27;Rio de Janeiro&#x27;</span>,-<span class="tk-n">22.9068</span>,-<span class="tk-n">43.1729</span>),
+    (<span class="tk-s">&#x27;Sao Paulo&#x27;</span>,-<span class="tk-n">23.5505</span>,-<span class="tk-n">46.6333</span>),(<span class="tk-s">&#x27;Montreal&#x27;</span>,<span class="tk-n">45.5017</span>,-<span class="tk-n">73.5673</span>),(<span class="tk-s">&#x27;Toronto&#x27;</span>,<span class="tk-n">43.6532</span>,-<span class="tk-n">79.3832</span>),
+    (<span class="tk-s">&#x27;Vancouver&#x27;</span>,<span class="tk-n">49.2827</span>,-<span class="tk-n">123.1207</span>),(<span class="tk-s">&#x27;Cairo&#x27;</span>,<span class="tk-n">30.0444</span>,<span class="tk-n">31.2357</span>),(<span class="tk-s">&#x27;London&#x27;</span>,<span class="tk-n">51.5074</span>,-<span class="tk-n">0.1278</span>),
+    (<span class="tk-s">&#x27;Manchester&#x27;</span>,<span class="tk-n">53.4808</span>,-<span class="tk-n">2.2426</span>),(<span class="tk-s">&#x27;Nice&#x27;</span>,<span class="tk-n">43.7102</span>,<span class="tk-n">7.2620</span>),(<span class="tk-s">&#x27;Paris&#x27;</span>,<span class="tk-n">48.8566</span>,<span class="tk-n">2.3522</span>),
+    (<span class="tk-s">&#x27;Berlin&#x27;</span>,<span class="tk-n">52.5200</span>,<span class="tk-n">13.4050</span>),(<span class="tk-s">&#x27;Hamburg&#x27;</span>,<span class="tk-n">53.5511</span>,<span class="tk-n">9.9937</span>),(<span class="tk-s">&#x27;Munich&#x27;</span>,<span class="tk-n">48.1351</span>,<span class="tk-n">11.5820</span>),
+    (<span class="tk-s">&#x27;Delhi&#x27;</span>,<span class="tk-n">28.7041</span>,<span class="tk-n">77.1025</span>),(<span class="tk-s">&#x27;Mumbai&#x27;</span>,<span class="tk-n">19.0760</span>,<span class="tk-n">72.8777</span>),(<span class="tk-s">&#x27;Tokyo&#x27;</span>,<span class="tk-n">35.6762</span>,<span class="tk-n">139.6503</span>),
+    (<span class="tk-s">&#x27;Krakow&#x27;</span>,<span class="tk-n">50.0647</span>,<span class="tk-n">19.9450</span>),(<span class="tk-s">&#x27;Warsaw&#x27;</span>,<span class="tk-n">52.2297</span>,<span class="tk-n">21.0122</span>),(<span class="tk-s">&#x27;Cape Town&#x27;</span>,-<span class="tk-n">33.9249</span>,<span class="tk-n">18.4241</span>),
+    (<span class="tk-s">&#x27;Seoul&#x27;</span>,<span class="tk-n">37.5665</span>,<span class="tk-n">126.9780</span>),(<span class="tk-s">&#x27;Barcelona&#x27;</span>,<span class="tk-n">41.3874</span>,<span class="tk-n">2.1686</span>),(<span class="tk-s">&#x27;Madrid&#x27;</span>,<span class="tk-n">40.4168</span>,-<span class="tk-n">3.7038</span>),
+    (<span class="tk-s">&#x27;Stockholm&#x27;</span>,<span class="tk-n">59.3293</span>,<span class="tk-n">18.0686</span>),(<span class="tk-s">&#x27;Boston&#x27;</span>,<span class="tk-n">42.3601</span>,-<span class="tk-n">71.0589</span>),(<span class="tk-s">&#x27;Denver&#x27;</span>,<span class="tk-n">39.7392</span>,-<span class="tk-n">104.9903</span>),
+    (<span class="tk-s">&#x27;New York City&#x27;</span>,<span class="tk-n">40.7128</span>,-<span class="tk-n">74.0060</span>),(<span class="tk-s">&#x27;San Mateo&#x27;</span>,<span class="tk-n">37.5630</span>,-<span class="tk-n">122.3255</span>),(<span class="tk-s">&#x27;Seattle&#x27;</span>,<span class="tk-n">47.6062</span>,-<span class="tk-n">122.3321</span>)
+) g <span class="tk-k">ON</span> g.city = c.city;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>Table CIUDADES successfully created.</code> (30 ciudades).</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(1)">Marcar paso 1 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-2" data-step="2">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-info">
+                <h2 class="step-title">Reviews con sentimiento precalculado por IA</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge ia">IA</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Calculamos con IA el sentimiento de 2,000 reviews de clientes para poder filtrarlas y analizarlas despues.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Se crea <code>analytics.reviews_sentimiento</code> con 2,000 reviews y el conteo por marca y sentimiento.</div>
+<div class="step-text"><p>Tomamos una muestra reproducible de 2,000 reviews en ingles (ordenadas por <code>HASH(review_id)</code>) y precalculamos su sentimiento con <code>AI_SENTIMENT</code>. Guardarlo en una tabla evita pagar la llamada de IA en cada consulta y lo deja disponible como atributo de filtro para la busqueda.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Reviews con sentimiento</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Reviews en ingles con sentimiento precalculado con IA (una muestra de 2,000)</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">TABLE</span> analytics.reviews_sentimiento <span class="tk-k">AS</span>
+<span class="tk-k">SELECT</span>
+    review_id, truck_brand_name <span class="tk-k">AS</span> marca, primary_city <span class="tk-k">AS</span> ciudad, <span class="tk-k">date</span> <span class="tk-k">AS</span> fecha, review,
+    <span class="tk-f">AI_SENTIMENT</span>(review):categories[<span class="tk-n">0</span>]:sentiment::STRING <span class="tk-k">AS</span> sentimiento
+<span class="tk-k">FROM</span> (
+    <span class="tk-k">SELECT</span> * <span class="tk-k">FROM</span> harmonized.truck_reviews_v
+    <span class="tk-k">WHERE</span> <span class="tk-k">language</span> ILIKE <span class="tk-s">&#x27;en%&#x27;</span> <span class="tk-k">AND</span> review <span class="tk-k">IS</span> <span class="tk-k">NOT</span> <span class="tk-k">NULL</span>
+    <span class="tk-k">ORDER</span> <span class="tk-k">BY</span> <span class="tk-f">HASH</span>(review_id)
+    <span class="tk-k">LIMIT</span> <span class="tk-n">2000</span>
+);
+
+<span class="tk-c">-- Cuenta reviews por marca y sentimiento</span>
+<span class="tk-k">SELECT</span> marca, sentimiento, <span class="tk-f">COUNT</span>(*) <span class="tk-k">AS</span> reviews
+<span class="tk-k">FROM</span> analytics.reviews_sentimiento <span class="tk-k">GROUP</span> <span class="tk-k">BY</span> <span class="tk-k">ALL</span> <span class="tk-k">ORDER</span> <span class="tk-k">BY</span> marca, reviews <span class="tk-k">DESC</span>;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>Table REVIEWS_SENTIMIENTO successfully created.</code> El conteo muestra, por cada marca, cuantas reviews son <code>positive</code>, <code>negative</code>, <code>neutral</code> o <code>mixed</code> (2,000 en total).</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(2)">Marcar paso 2 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-3" data-step="3">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-info">
+                <h2 class="step-title">Cortex Search sobre las reviews</h2>
+                <span class="step-duration">~2 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Creamos un buscador semantico sobre las reviews que entiende el significado de las quejas, no solo palabras exactas.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> El servicio <code>analytics.tasty_bytes_review_search</code> se crea y <code>SEARCH_PREVIEW</code> devuelve 3 reviews de Freezing Point.</div>
+<div class="step-text"><p>Las reviews son texto libre: un <code>LIKE</code> no entiende que "the ice cream was melted" es una queja de temperatura. <strong>Cortex Search</strong> hace busqueda <strong>hibrida</strong> (semantica con embeddings + palabras clave) y gestiona por ti el indice, los embeddings y la actualizacion. <code>ON review</code> es la columna que se busca; <code>ATTRIBUTES</code> son las columnas por las que se puede filtrar; <code>TARGET_LAG</code> define cada cuanto se refresca el indice. En el quickstart se crea por UI; aqui lo hacemos con una sentencia.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Crear el servicio</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Crea la busqueda semantica sobre las reviews</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">CORTEX</span> <span class="tk-k">SEARCH</span> <span class="tk-k">SERVICE</span> analytics.tasty_bytes_review_search
+    <span class="tk-k">ON</span> review
+    ATTRIBUTES marca, ciudad, sentimiento
+    <span class="tk-k">WAREHOUSE</span> = tb_de_wh
+    TARGET_LAG = <span class="tk-s">&#x27;1 day&#x27;</span>
+<span class="tk-k">AS</span> (
+    <span class="tk-k">SELECT</span> review, review_id, marca, ciudad, sentimiento, fecha
+    <span class="tk-k">FROM</span> analytics.reviews_sentimiento
+);</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>Cortex search service TASTY_BYTES_REVIEW_SEARCH successfully created.</code> (verificado en ~22 s).</p></div></div>
+<div class="step-text"><p>Lo probamos con <code>SEARCH_PREVIEW</code>: buscamos "cold food long wait" solo en la marca <em>Freezing Point</em> y pedimos 3 resultados.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Probar la busqueda</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Prueba: &quot;que dicen de comida fria o espera larga&quot; en una marca</span>
+<span class="tk-k">SELECT</span> <span class="tk-f">PARSE_JSON</span>(
+  SNOWFLAKE.<span class="tk-k">CORTEX</span>.<span class="tk-f">SEARCH_PREVIEW</span>(<span class="tk-s">&#x27;tb_101.analytics.tasty_bytes_review_search&#x27;</span>,
+    <span class="tk-s">&#x27;{&quot;query&quot;: &quot;cold food long wait&quot;, &quot;columns&quot;: [&quot;review&quot;,&quot;marca&quot;,&quot;ciudad&quot;,&quot;sentimiento&quot;],
+      &quot;filter&quot;: {&quot;@eq&quot;: {&quot;marca&quot;: &quot;Freezing Point&quot;}}, &quot;limit&quot;: 3}&#x27;</span>)
+):results <span class="tk-k">AS</span> resultados;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Una celda <code>RESULTADOS</code> con un arreglo JSON de 3 reviews de <code>Freezing Point</code>, cada una con <code>review</code>, <code>marca</code>, <code>ciudad</code> y <code>sentimiento</code>.</p></div></div>
+<div class="step-text"><p><strong>Verlo en la UI (opcional):</strong></p><ol><li>Ve a <strong>AI &amp; ML &gt; Cortex Search</strong>.</li><li>Selecciona <code>TB_101.ANALYTICS</code> y abre <code>TASTY_BYTES_REVIEW_SEARCH</code>.</li><li>Abre el <strong>Playground</strong> y escribe una consulta, por ejemplo <code>melted ice cream</code>; prueba filtrar por <code>sentimiento</code>.</li></ol></div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-search-existing-service.png" alt="El servicio creado por SQL aparece en Cortex Search" loading="lazy"><figcaption>El servicio creado por SQL aparece en Cortex Search</figcaption></figure>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-search-playground.gif" alt="Playground de Cortex Search: consultas en lenguaje natural sobre las reviews" loading="lazy"><figcaption>Playground de Cortex Search: consultas en lenguaje natural sobre las reviews</figcaption></figure>
+<div class="callout callout-info"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#29B5E8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="callout-content"><strong class="callout-title">Para que sirve</strong><p>Este servicio sera la herramienta <strong>ReviewsClientes</strong> del agente en el LAB 8.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(3)">Marcar paso 3 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-4" data-step="4">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-info">
+                <h2 class="step-title">Semantic View: el diccionario de negocio</h2>
+                <span class="step-duration">~2 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Definimos el diccionario de negocio (Semantic View) que la IA usa para traducir preguntas en espanol a SQL correcto.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> <code>CREATE SEMANTIC VIEW analytics.sv_tasty_bytes</code> termina sin error.</div>
+<div class="step-text"><p>Una <strong>SV (Semantic View)</strong> es el diccionario de negocio que la IA (Cortex Analyst) lee antes de escribir SQL. Le dice que significa cada cosa:</p><ul><li><strong>Tablas logicas</strong> (<code>TABLES</code>): ventas, items, ciudades y clima, con su llave primaria y para que usar cada una.</li><li><strong>Relaciones</strong> (<code>RELATIONSHIPS</code>): como se unen (todas por ciudad).</li><li><strong>Hechos</strong> (<code>FACTS</code>): columnas numericas crudas a nivel de fila.</li><li><strong>Dimensiones</strong> (<code>DIMENSIONS</code>): por donde agrupar o filtrar (fecha, marca, tipo de menu, pais...).</li><li><strong>Metricas</strong> (<code>METRICS</code>): agregaciones con nombre de negocio (ventas totales, ticket promedio...).</li><li><strong>Sinonimos</strong> (<code>WITH SYNONYMS</code>): "revenue", "ingresos" y "facturacion" significan lo mismo.</li><li><strong>Instrucciones</strong> (<code>AI_SQL_GENERATION</code>): reglas como "si no se indica el anio usa 2022".</li><li><strong>Verified queries</strong> (<code>AI_VERIFIED_QUERIES</code>): preguntas con su SQL correcto, que ademas aparecen como sugerencias iniciales.</li></ul><p>En el quickstart esto se arma con el asistente de UI (elegir tablas, columnas, relaciones y sinonimos); aqui lo declaramos todo en una sola sentencia.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Crear la Semantic View</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Crea la Semantic View: tablas, relaciones, metricas</span>
+<span class="tk-k">CREATE</span> <span class="tk-k">OR</span> <span class="tk-k">REPLACE</span> <span class="tk-k">SEMANTIC</span> <span class="tk-k">VIEW</span> analytics.sv_tasty_bytes
+  <span class="tk-k">TABLES</span> (
+    ventas <span class="tk-k">AS</span> analytics.ventas_diarias
+      PRIMARY KEY (fecha, truck_id)
+      <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;ventas diarias&#x27;</span>, <span class="tk-s">&#x27;ordenes&#x27;</span>, <span class="tk-s">&#x27;transacciones&#x27;</span>)
+      <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Ventas diarias por food truck. Usar para ventas, ordenes y ticket promedio por marca, ciudad, pais o fecha&#x27;</span>,
+    items <span class="tk-k">AS</span> analytics.ventas_items_mes
+      PRIMARY KEY (mes, truck_id, item_menu)
+      <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;productos&#x27;</span>, <span class="tk-s">&#x27;menu&#x27;</span>, <span class="tk-s">&#x27;platos&#x27;</span>)
+      <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Ventas mensuales por item del menu. Usar SOLO para preguntas por producto o item del menu&#x27;</span>,
+    ciudades <span class="tk-k">AS</span> analytics.ciudades
+      PRIMARY KEY (ciudad)
+      <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Ciudades donde opera Tasty Bytes con coordenadas y poblacion&#x27;</span>,
+    clima <span class="tk-k">AS</span> analytics.daily_sales_by_weather_v
+      PRIMARY KEY (fecha, ciudad)
+      <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Clima diario por ciudad desde Weather Source (Marketplace), junto con las ventas del dia&#x27;</span>
+  )
+  <span class="tk-k">RELATIONSHIPS</span> (
+    ventas_a_ciudad <span class="tk-k">AS</span> ventas (ciudad) REFERENCES ciudades,
+    items_a_ciudad  <span class="tk-k">AS</span> items (ciudad) REFERENCES ciudades,
+    clima_a_ciudad  <span class="tk-k">AS</span> clima (ciudad) REFERENCES ciudades
+  )
+  <span class="tk-k">FACTS</span> (
+    ventas.f_ventas   <span class="tk-k">AS</span> ventas,
+    ventas.f_unidades <span class="tk-k">AS</span> unidades,
+    ventas.f_ordenes  <span class="tk-k">AS</span> ordenes,
+    items.f_ventas_item   <span class="tk-k">AS</span> ventas,
+    items.f_unidades_item <span class="tk-k">AS</span> unidades,
+    clima.f_ventas_clima  <span class="tk-k">AS</span> ventas_diarias,
+    clima.f_temp      <span class="tk-k">AS</span> temp_promedio_f,
+    clima.f_lluvia    <span class="tk-k">AS</span> precipitacion_in,
+    clima.f_viento    <span class="tk-k">AS</span> viento_max_mph
+  )
+  <span class="tk-k">DIMENSIONS</span> (
+    ventas.fecha      <span class="tk-k">AS</span> fecha <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;dia&#x27;</span>, <span class="tk-s">&#x27;date&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Fecha de la venta&#x27;</span>,
+    ventas.anio       <span class="tk-k">AS</span> <span class="tk-f">YEAR</span>(fecha) <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;year&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Anio de la venta&#x27;</span>,
+    ventas.mes        <span class="tk-k">AS</span> <span class="tk-f">DATE_TRUNC</span>(<span class="tk-s">&#x27;month&#x27;</span>, fecha) <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;month&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Mes de la venta&#x27;</span>,
+    ventas.marca      <span class="tk-k">AS</span> marca <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;brand&#x27;</span>, <span class="tk-s">&#x27;food truck&#x27;</span>, <span class="tk-s">&#x27;truck brand&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Marca del food truck, ej. Freezing Point, Kitakata Ramen Bar&#x27;</span>,
+    ventas.tipo_menu  <span class="tk-k">AS</span> tipo_menu <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;tipo de comida&#x27;</span>, <span class="tk-s">&#x27;cuisine&#x27;</span>, <span class="tk-s">&#x27;menu type&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Tipo de comida, ej. Ramen, Tacos, BBQ, Ice Cream&#x27;</span>,
+    ventas.truck_id   <span class="tk-k">AS</span> truck_id <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;camion&#x27;</span>, <span class="tk-s">&#x27;truck&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Identificador del camion&#x27;</span>,
+    ventas.es_franquicia <span class="tk-k">AS</span> es_franquicia <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;TRUE si el camion es de un franquiciado&#x27;</span>,
+    ventas.pais_venta <span class="tk-k">AS</span> pais <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Pais de la venta&#x27;</span>,
+    items.mes_item    <span class="tk-k">AS</span> mes <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Mes de la venta del item&#x27;</span>,
+    items.marca_item  <span class="tk-k">AS</span> marca <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Marca del food truck que vende el item&#x27;</span>,
+    items.item_menu   <span class="tk-k">AS</span> item_menu <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;producto&#x27;</span>, <span class="tk-s">&#x27;plato&#x27;</span>, <span class="tk-s">&#x27;menu item&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Nombre del item del menu&#x27;</span>,
+    items.categoria_item <span class="tk-k">AS</span> categoria_item <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;categoria&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Categoria del item: Main, Beverage, Dessert, Snack&#x27;</span>,
+    ciudades.ciudad   <span class="tk-k">AS</span> ciudad <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;city&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Ciudad&#x27;</span>,
+    ciudades.pais     <span class="tk-k">AS</span> pais <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;country&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Pais&#x27;</span>,
+    ciudades.latitud  <span class="tk-k">AS</span> latitud <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Latitud de la ciudad&#x27;</span>,
+    ciudades.longitud <span class="tk-k">AS</span> longitud <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Longitud de la ciudad&#x27;</span>,
+    clima.fecha_clima <span class="tk-k">AS</span> fecha <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Fecha de la observacion del clima&#x27;</span>
+  )
+  <span class="tk-k">METRICS</span> (
+    ventas.ventas_totales    <span class="tk-k">AS</span> <span class="tk-f">SUM</span>(ventas.f_ventas) <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;revenue&#x27;</span>, <span class="tk-s">&#x27;ingresos&#x27;</span>, <span class="tk-s">&#x27;facturacion&#x27;</span>, <span class="tk-s">&#x27;sales&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Ventas totales en USD&#x27;</span>,
+    ventas.unidades_vendidas <span class="tk-k">AS</span> <span class="tk-f">SUM</span>(ventas.f_unidades) <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;cantidad&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Unidades vendidas&#x27;</span>,
+    ventas.numero_ordenes    <span class="tk-k">AS</span> <span class="tk-f">SUM</span>(ventas.f_ordenes) <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;pedidos&#x27;</span>, <span class="tk-s">&#x27;orders&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Numero de ordenes&#x27;</span>,
+    ventas.ticket_promedio   <span class="tk-k">AS</span> <span class="tk-f">SUM</span>(ventas.f_ventas) / <span class="tk-f">NULLIF</span>(<span class="tk-f">SUM</span>(ventas.f_ordenes), <span class="tk-n">0</span>) <span class="tk-k">WITH</span> SYNONYMS = (<span class="tk-s">&#x27;average order value&#x27;</span>, <span class="tk-s">&#x27;AOV&#x27;</span>) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Venta promedio por orden en USD&#x27;</span>,
+    ventas.camiones_activos  <span class="tk-k">AS</span> <span class="tk-f">COUNT</span>(<span class="tk-k">DISTINCT</span> ventas.truck_id) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Camiones con ventas&#x27;</span>,
+    items.ventas_item        <span class="tk-k">AS</span> <span class="tk-f">SUM</span>(items.f_ventas_item) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Ventas en USD del item del menu&#x27;</span>,
+    items.unidades_item      <span class="tk-k">AS</span> <span class="tk-f">SUM</span>(items.f_unidades_item) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Unidades vendidas del item del menu&#x27;</span>,
+    clima.ventas_dia_clima   <span class="tk-k">AS</span> <span class="tk-f">SUM</span>(clima.f_ventas_clima) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Ventas del dia, para analizar contra el clima&#x27;</span>,
+    clima.temperatura_promedio <span class="tk-k">AS</span> <span class="tk-f">AVG</span>(clima.f_temp) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Temperatura promedio en Fahrenheit&#x27;</span>,
+    clima.lluvia_promedio    <span class="tk-k">AS</span> <span class="tk-f">AVG</span>(clima.f_lluvia) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Precipitacion promedio diaria en pulgadas&#x27;</span>,
+    clima.viento_promedio    <span class="tk-k">AS</span> <span class="tk-f">AVG</span>(clima.f_viento) <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Velocidad maxima de viento promedio en mph&#x27;</span>
+  )
+  <span class="tk-k">COMMENT</span> = <span class="tk-s">&#x27;Modelo de negocio de Tasty Bytes: ventas, productos, ciudades y clima&#x27;</span>
+  AI_SQL_GENERATION <span class="tk-s">&#x27;Las ventas estan en USD. Los datos van de 2019 a 2022; si no se indica el anio usa 2022. Para preguntas por producto usa la tabla items; para todo lo demas usa ventas. Redondea montos a 2 decimales.&#x27;</span>
+  AI_VERIFIED_QUERIES (
+    top_marcas <span class="tk-k">AS</span> (
+      QUESTION <span class="tk-s">&#x27;Cuales son las 5 marcas con mas ventas en 2022?&#x27;</span>
+      ONBOARDING_QUESTION <span class="tk-k">TRUE</span>
+      SQL <span class="tk-s">&#x27;SELECT marca, SUM(ventas) AS ventas_totales FROM tb_101.analytics.ventas_diarias WHERE YEAR(fecha) = 2022 GROUP BY marca ORDER BY ventas_totales DESC LIMIT 5&#x27;</span>
+    ),
+    ventas_pais_mes <span class="tk-k">AS</span> (
+      QUESTION <span class="tk-s">&#x27;Como evolucionaron las ventas por mes en 2022 por pais?&#x27;</span>
+      ONBOARDING_QUESTION <span class="tk-k">TRUE</span>
+      SQL <span class="tk-s">&#x27;SELECT pais, DATE_TRUNC(&#x27;</span><span class="tk-s">&#x27;month&#x27;</span><span class="tk-s">&#x27;, fecha) AS mes, SUM(ventas) AS ventas_totales FROM tb_101.analytics.ventas_diarias WHERE YEAR(fecha) = 2022 GROUP BY pais, mes ORDER BY pais, mes&#x27;</span>
+    )
+  );</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>Semantic view SV_TASTY_BYTES successfully created.</code></p></div></div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-analyst-table-relationship.png" alt="Relaciones entre tablas logicas, como se ven en el editor de Semantic Views" loading="lazy"><figcaption>Relaciones entre tablas logicas, como se ven en el editor de Semantic Views</figcaption></figure>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-analyst-synonyms.gif" alt="Sinonimos en dimensiones y metricas (editor de Semantic Views)" loading="lazy"><figcaption>Sinonimos en dimensiones y metricas (editor de Semantic Views)</figcaption></figure>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(4)">Marcar paso 4 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-5" data-step="5">
+        <div class="step-header">
+            <div class="step-number">5</div>
+            <div class="step-info">
+                <h2 class="step-title">Consultar la SV con SQL y otorgar permisos</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge sql">SQL</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Consultamos la Semantic View con nombres de negocio y damos acceso al rol analista que usara el agente.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> <code>SHOW SEMANTIC VIEWS</code> lista <code>SV_TASTY_BYTES</code> y <code>SEMANTIC_VIEW(...)</code> devuelve ventas por pais con India primero.</div>
+<div class="step-text"><p>Revisamos la SV creada y su definicion, y la consultamos con SQL usando nombres de negocio: pides dimensiones y metricas y Snowflake escribe los JOIN y las agregaciones por ti.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Inspeccionar y consultar</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Lista las Semantic Views del esquema</span>
+<span class="tk-k">SHOW</span> <span class="tk-k">SEMANTIC</span> VIEWS <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> analytics;
+
+<span class="tk-c">-- Muestra la definicion completa de la SV</span>
+<span class="tk-k">DESCRIBE</span> <span class="tk-k">SEMANTIC</span> <span class="tk-k">VIEW</span> analytics.sv_tasty_bytes;
+
+<span class="tk-c">-- Consultar la Semantic View con SQL: metricas y dimensiones por nombre de negocio</span>
+<span class="tk-k">SELECT</span> * <span class="tk-k">FROM</span> <span class="tk-f">SEMANTIC_VIEW</span>(
+    analytics.sv_tasty_bytes
+    <span class="tk-k">DIMENSIONS</span> ciudades.pais
+    <span class="tk-k">METRICS</span> ventas.ventas_totales, ventas.numero_ordenes, ventas.ticket_promedio
+) <span class="tk-k">ORDER</span> <span class="tk-k">BY</span> ventas_totales <span class="tk-k">DESC</span>;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p><code>SHOW</code> lista <code>SV_TASTY_BYTES</code>; <code>DESCRIBE</code> muestra sus tablas, dimensiones y metricas. La consulta devuelve una fila por pais: <strong>India</strong> primero con <strong>$1,093,355,250</strong> (2019-2022).</p></div></div>
+<div class="step-text"><p>Por ultimo, damos acceso al rol <code>tb_analyst</code>, que es el que usara el agente: lectura de las tablas, de la Semantic View y uso del servicio de busqueda.</p></div>
+<div class="code-block" data-language="sql">
+  <div class="code-header"><span class="code-language">SQL<span class="code-label">Permisos para tb_analyst</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c">-- Permisos para el rol analista (el que usa el agente)</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">SELECT</span> <span class="tk-k">ON</span> <span class="tk-k">ALL</span> <span class="tk-k">TABLES</span> <span class="tk-k">IN</span> <span class="tk-k">SCHEMA</span> analytics <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+
+<span class="tk-c">-- Permite al analista consultar la Semantic View</span>
+<span class="tk-k">GRANT</span> <span class="tk-k">SELECT</span> <span class="tk-k">ON</span> <span class="tk-k">SEMANTIC</span> <span class="tk-k">VIEW</span> analytics.sv_tasty_bytes <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;
+
+<span class="tk-c">-- Permite al analista usar el servicio de busqueda</span>
+<span class="tk-k">GRANT</span> USAGE <span class="tk-k">ON</span> <span class="tk-k">CORTEX</span> <span class="tk-k">SEARCH</span> <span class="tk-k">SERVICE</span> analytics.tasty_bytes_review_search <span class="tk-k">TO</span> <span class="tk-k">ROLE</span> tb_analyst;</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Tres veces <code>Statement executed successfully.</code></p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(5)">Marcar paso 5 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-6" data-step="6">
+        <div class="step-header">
+            <div class="step-number">6</div>
+            <div class="step-info">
+                <h2 class="step-title">Probar la Semantic View en Cortex Analyst</h2>
+                <span class="step-duration">~1 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge ui">UI</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Hacemos preguntas en espanol en Cortex Analyst y comprobamos que la IA escribe el SQL correcto usando el diccionario.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Cortex Analyst responde en lenguaje natural y muestra el SQL generado sobre <code>SV_TASTY_BYTES</code>.</div>
+<div class="step-text"><p>La prueba de fuego: preguntar en espanol y ver que SQL escribe la IA usando tu diccionario.</p><ol><li>Ve a <strong>AI &amp; ML &gt; Cortex Analyst</strong>.</li><li>Selecciona la Semantic View <code>SV_TASTY_BYTES</code> (en <code>TB_101.ANALYTICS</code>).</li><li>Abre el <strong>Playground</strong>.</li><li>Pregunta: <em>"Que tipo de menu vende mas en Tokyo?"</em></li><li>Revisa el <strong>SQL generado</strong>: deberia usar la dimension <code>tipo_menu</code>, la metrica <code>ventas_totales</code> y filtrar por la ciudad Tokyo.</li><li>Prueba tambien una de las verified queries sugeridas (por ejemplo, las 5 marcas con mas ventas en 2022).</li></ol></div>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-analyst-nav.png" alt="Navegar a Cortex Analyst en Snowsight" loading="lazy"><figcaption>Navegar a Cortex Analyst en Snowsight</figcaption></figure>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-analyst-interface.png" alt="Interfaz de Cortex Analyst con la Semantic View seleccionada" loading="lazy"><figcaption>Interfaz de Cortex Analyst con la Semantic View seleccionada</figcaption></figure>
+<figure class="step-figure"><img src="img/quickstart/vignette-3/cortex-analyst-prompt1.png" alt="Pregunta en lenguaje natural y SQL generado" loading="lazy"><figcaption>Pregunta en lenguaje natural y SQL generado</figcaption></figure>
+<div class="callout callout-tip"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#10b981"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg></div><div class="callout-content"><strong class="callout-title">La IA habla tu idioma de negocio</strong><p>No escribiste un JOIN ni dijiste que columna es "tipo de menu": la Semantic View lo resolvio. Esa misma SV sera la herramienta <strong>VentasTastyBytes</strong> del agente en el LAB 8.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(6)">Marcar paso 6 como completado</button></div>
+        </div>
+    </article>
+</main>
+
+<!-- Resources -->
+<section id="resources" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Recursos Adicionales</h2>
+        <div class="prerequisites-grid">
+            <a href="https://docs.snowflake.com/en/user-guide/views-semantic/overview" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>Semantic Views</h4><p>Conceptos: tablas logicas, hechos, dimensiones y metricas.</p></div>
+            </a>
+            <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-search/cortex-search-overview" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>Cortex Search</h4><p>Busqueda hibrida sobre texto no estructurado.</p></div>
+            </a>
+            <a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-analyst" class="prereq-card" target="_blank" style="text-decoration:none;">
+                <svg class="prereq-icon" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+                <div class="prereq-info"><h4>Cortex Analyst</h4><p>Texto a SQL sobre Semantic Views.</p></div>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Completion -->
+<section class="completion-section" id="completionSection">
+    <div class="completion-container">
+        <div class="completion-icon">
+            <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+        </div>
+        <h2>Capa semantica lista!</h2>
+        <p>Tus datos ya tienen un diccionario de negocio y un buscador inteligente: son las dos herramientas principales del agente que construyes a continuacion.</p>
+        <div class="completion-summary">
+            <div class="summary-item"><span class="summary-label">Tiempo total</span><span class="summary-value" id="totalTime">--</span></div>
+            <div class="summary-item"><span class="summary-label">Pasos completados</span><span class="summary-value">6/6</span></div>
+            <div class="summary-item"><span class="summary-label">Reviews con sentimiento</span><span class="summary-value">2,000</span></div>
+        </div>
+        <div class="next-actions">
+            <h3>Siguiente laboratorio</h3>
+            <ul>
+                <li><strong><a href="lab8_agente_cowork.html" style="color:white;text-decoration:underline;">LAB 8: Agente en Snowflake CoWork &rarr;</a></strong> — combinas Analyst, Search, un custom tool de pronostico y graficas en un agente conversacional.</li>
+                <li><a href="index.html" style="color:white;text-decoration:underline;">Volver al indice del HOL</a></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="hol-footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>
+            <p>Snowflake Hands-On Labs · Zero to Snowflake</p>
+        </div>
+        <div class="footer-meta">
+            <p>LAB 7 · Capa semantica y busqueda — preparar los datos para la IA</p>
+            <p>&copy; 2026 Snowflake Inc. All Rights Reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+
+const HOLState = {
+    totalSteps: 0,
+    completedSteps: new Set(),
+    startTime: null,
+    currentStep: 1
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeHOL();
+});
+
+function initializeHOL() {
+    HOLState.totalSteps = document.querySelectorAll('.step-card').length;
+    HOLState.startTime = new Date();
+    loadProgress();
+    initStepToggles();
+    initScrollSpy();
+    initKeyboardShortcuts();
+    updateProgressUI();
+}
+
+function markStepComplete(stepNumber) {
+    HOLState.completedSteps.add(stepNumber);
+
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) {
+        stepCard.classList.add('completed');
+        const btn = stepCard.querySelector('.btn-check');
+        if (btn) {
+            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> Completado`;
+            btn.disabled = true;
+            btn.style.background = 'var(--sf-green)';
+            btn.style.color = 'white';
+        }
+    }
+
+    const navItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (navItem) { navItem.classList.add('completed'); }
+
+    saveProgress();
+    updateProgressUI();
+
+    if (HOLState.completedSteps.size === HOLState.totalSteps) {
+        showCompletion();
+    } else if (stepNumber < HOLState.totalSteps) {
+        setTimeout(() => { scrollToStep(stepNumber + 1); }, 500);
+    }
+}
+
+function updateProgressUI() {
+    const progress = (HOLState.completedSteps.size / HOLState.totalSteps) * 100;
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) { progressFill.style.width = `${progress}%`; }
+    const progressPercent = document.querySelector('.progress-percent');
+    if (progressPercent) { progressPercent.textContent = `${Math.round(progress)}%`; }
+}
+
+function saveProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const data = {
+        completedSteps: Array.from(HOLState.completedSteps),
+        startTime: HOLState.startTime.toISOString(),
+        lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem(`hol-progress-${holId}`, JSON.stringify(data));
+}
+
+function loadProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const saved = localStorage.getItem(`hol-progress-${holId}`);
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            data.completedSteps.forEach(step => {
+                HOLState.completedSteps.add(step);
+                const stepCard = document.getElementById(`step-${step}`);
+                if (stepCard) { stepCard.classList.add('completed'); }
+                const navItem = document.querySelector(`.step-nav-item[data-step="${step}"]`);
+                if (navItem) { navItem.classList.add('completed'); }
+            });
+            if (data.startTime) { HOLState.startTime = new Date(data.startTime); }
+        } catch (e) { console.error('Error loading progress:', e); }
+    }
+}
+
+function initStepToggles() {
+    document.querySelectorAll('.step-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const stepCard = this.closest('.step-card');
+            const content = stepCard.querySelector('.step-content');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed', isExpanded);
+        });
+    });
+    document.querySelectorAll('.step-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const toggle = this.querySelector('.step-toggle');
+            if (toggle) { toggle.click(); }
+        });
+    });
+}
+
+function copyCode(button) {
+    const codeBlock = button.closest('.code-block');
+    const code = codeBlock.querySelector('code');
+    const text = code.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copiado ✓';
+        setTimeout(() => { button.textContent = originalText; }, 2000);
+    }).catch(err => {
+        console.error('Error copying:', err);
+        alert('Error al copiar el código');
+    });
+}
+
+function initScrollSpy() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const stepNumber = entry.target.dataset.step;
+                updateActiveNavItem(stepNumber);
+                HOLState.currentStep = parseInt(stepNumber);
+            }
+        });
+    }, { rootMargin: '-100px 0px -50% 0px' });
+
+    document.querySelectorAll('.step-card').forEach(card => { observer.observe(card); });
+}
+
+function updateActiveNavItem(stepNumber) {
+    document.querySelectorAll('.step-nav-item').forEach(item => { item.classList.remove('active'); });
+    const activeItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (activeItem) { activeItem.classList.add('active'); }
+}
+
+function scrollToStep(stepNumber) {
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) { stepCard.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && e.key >= '1' && e.key <= '9') {
+            const stepNumber = parseInt(e.key);
+            if (stepNumber <= HOLState.totalSteps) { scrollToStep(stepNumber); e.preventDefault(); }
+        }
+        if (e.altKey && e.key === 'c') {
+            if (!HOLState.completedSteps.has(HOLState.currentStep)) { markStepComplete(HOLState.currentStep); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'n') {
+            if (HOLState.currentStep < HOLState.totalSteps) { scrollToStep(HOLState.currentStep + 1); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'p') {
+            if (HOLState.currentStep > 1) { scrollToStep(HOLState.currentStep - 1); }
+            e.preventDefault();
+        }
+    });
+}
+
+function showCompletion() {
+    const completionSection = document.getElementById('completionSection');
+    if (completionSection) {
+        completionSection.classList.add('visible');
+        completionSection.scrollIntoView({ behavior: 'smooth' });
+        const endTime = new Date();
+        const duration = endTime - HOLState.startTime;
+        const minutes = Math.floor(duration / 60000);
+        const seconds = Math.floor((duration % 60000) / 1000);
+        const totalTimeEl = document.getElementById('totalTime');
+        if (totalTimeEl) { totalTimeEl.textContent = `${minutes}m ${seconds}s`; }
+    }
+}
+
+</script>
+
+<script id="visual-layer">
+(function () {
+  // Tracker only after the hero: avoids covering the title / overview
+  var steps = document.getElementById('steps');
+  if (steps && 'IntersectionObserver' in window) {
+    var toggle = function () { document.body.classList.toggle('in-steps', steps.getBoundingClientRect().top < window.innerHeight * 0.6 && steps.getBoundingClientRect().bottom > 120); };
+    window.addEventListener('scroll', toggle, { passive: true }); toggle();
+  }
+  // Click-to-zoom figures
+  var lb = document.createElement('div'); lb.className = 'lightbox'; lb.innerHTML = '<img alt="">';
+  document.body.appendChild(lb);
+  lb.addEventListener('click', function () { lb.classList.remove('open'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') lb.classList.remove('open'); });
+  document.querySelectorAll('.step-figure img').forEach(function (img) {
+    img.addEventListener('click', function () { lb.querySelector('img').src = img.src; lb.classList.add('open'); });
+  });
+})();
+</script>
+</body>
+</html>

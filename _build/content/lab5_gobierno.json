@@ -1,0 +1,410 @@
+{
+  "lab": "lab5_gobierno.html",
+  "intro": [
+    {
+      "type": "image",
+      "src": "img/quickstart/governance_header.png",
+      "caption": "Governance with Horizon (quickstart Zero to Snowflake)"
+    },
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab5_gobierno</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>."
+    },
+    {
+      "type": "image",
+      "src": "img/quickstart/create_a_worksheet.gif",
+      "caption": "Crear un SQL File en Workspaces (quickstart Zero to Snowflake)"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Contexto y limpieza re-ejecutable",
+      "nav": "Limpieza",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Fijamos el contexto y limpiamos corridas anteriores para que el lab de gobierno se pueda repetir sin errores.",
+      "criterio": "Todas las sentencias terminan sin error, aunque sea la primera corrida.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Horizon es la capa de gobierno de Snowflake: control de acceso, clasificacion, politicas de proteccion, calidad de datos y monitoreo de seguridad. Empezamos como <code>accountadmin</code> sobre <code>tb_101</code>.</p><p>Este bloque <strong>limpia lo que dejo una corrida anterior</strong> (row access policy, masking policies del tag, rol, tabla de mapeo y perfil de clasificacion). Usa <code>IF EXISTS</code>, asi que funciona tambien la primera vez: el lab es re-ejecutable de punta a punta.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Contexto + limpieza",
+          "code": "-- Contexto: rol administrador y base de datos\nUSE ROLE accountadmin;\nUSE DATABASE tb_101;\n\n-- (Re-ejecutable) Limpia el resultado de una corrida anterior de este track\nALTER TABLE IF EXISTS raw_customer.customer_loyalty DROP ALL ROW ACCESS POLICIES;\nDROP ROLE IF EXISTS tb_data_steward;\nALTER TAG IF EXISTS governance.pii UNSET MASKING POLICY governance.mask_string_pii, MASKING POLICY governance.mask_date_pii;\nDROP MASKING POLICY IF EXISTS governance.mask_string_pii;\nDROP MASKING POLICY IF EXISTS governance.mask_date_pii;\nDROP ROW ACCESS POLICY IF EXISTS governance.customer_loyalty_policy;\nDROP TABLE IF EXISTS governance.row_policy_map;\nDROP SNOWFLAKE.DATA_PRIVACY.CLASSIFICATION_PROFILE IF EXISTS governance.tb_classification_profile;"
+        },
+        {
+          "type": "expected",
+          "html": "Mensajes <code>Statement executed successfully.</code> (o <em>does not exist, statement succeeded</em> en la primera corrida)."
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Ejecuta este bloque completo",
+          "html": "Es el unico bloque largo del lab, a proposito: la limpieza debe correr entera. Seleccionalo todo y ejecuta."
+        }
+      ]
+    },
+    {
+      "title": "RBAC: un rol de Data Steward",
+      "nav": "RBAC",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Creamos un rol de Data Steward con permisos minimos y vemos que hoy los datos personales de clientes estan expuestos.",
+      "criterio": "Se crea <code>tb_data_steward</code> y, con ese rol, ves nombres, emails y telefonos en claro.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>En Snowflake los permisos se dan a <strong>roles</strong> y los roles a usuarios (RBAC, Role-Based Access Control). Cada rol de sistema tiene su funcion: <code>useradmin</code> crea roles y usuarios; <code>securityadmin</code> administra grants.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Crear el rol",
+          "code": "-- useradmin es el rol que crea roles\nUSE ROLE useradmin;\n-- Crea el rol de Data Steward\nCREATE OR REPLACE ROLE tb_data_steward COMMENT = 'Data Steward de Tasty Bytes';"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Role TB_DATA_STEWARD successfully created.</code>"
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Gotcha real: useradmin no puede USE DATABASE",
+          "html": "useradmin no tiene acceso a la base, asi que el lab arranca con accountadmin (para el USE DATABASE y la limpieza) y solo cambia a useradmin para crear el rol."
+        },
+        {
+          "type": "text",
+          "html": "<p>Con <code>securityadmin</code> damos al steward computo (<code>tb_dev_wh</code>), acceso a la base y esquemas, lectura de los clientes y control total del esquema <code>governance</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Grants",
+          "code": "-- securityadmin administra los permisos\nUSE ROLE securityadmin;\n-- Permisos del steward: computo, base, esquemas y clientes\nGRANT OPERATE, USAGE ON WAREHOUSE tb_dev_wh TO ROLE tb_data_steward;\nGRANT USAGE ON DATABASE tb_101 TO ROLE tb_data_steward;\nGRANT USAGE ON ALL SCHEMAS IN DATABASE tb_101 TO ROLE tb_data_steward;\nGRANT SELECT ON ALL TABLES IN SCHEMA tb_101.raw_customer TO ROLE tb_data_steward;\nGRANT ALL ON SCHEMA tb_101.governance TO ROLE tb_data_steward;"
+        },
+        {
+          "type": "expected",
+          "html": "Cada grant: <code>Statement executed successfully.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Asignamos el rol a tu usuario (con una variable de sesion) y a <code>sysadmin</code>, siguiendo la buena practica de que toda jerarquia de roles cuelgue de sysadmin.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Asignar el rol",
+          "code": "-- Guarda tu usuario en una variable de sesion\nSET my_user = CURRENT_USER();\n-- Asigna el rol a tu usuario\nGRANT ROLE tb_data_steward TO USER IDENTIFIER($my_user);\n-- Cuelga el rol de sysadmin (buena practica)\nGRANT ROLE tb_data_steward TO ROLE sysadmin;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Statement executed successfully.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Usamos el nuevo rol y miramos la tabla de clientes: hoy toda la PII esta expuesta.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Ver PII en claro",
+          "code": "-- Trabaja como Data Steward con su warehouse\nUSE ROLE tb_data_steward;\nUSE WAREHOUSE tb_dev_wh;\n-- nombres, emails, telefonos en claro\nSELECT TOP 20 * FROM raw_customer.customer_loyalty;"
+        },
+        {
+          "type": "expected",
+          "html": "20 filas con <code>FIRST_NAME</code>, <code>LAST_NAME</code>, <code>E_MAIL</code>, <code>PHONE_NUMBER</code> y <code>BIRTHDAY_DATE</code> en claro."
+        }
+      ]
+    },
+    {
+      "title": "Clasificacion automatica de PII",
+      "nav": "Clasificacion",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Dejamos que Snowflake detecte y etiquete automaticamente los datos personales, sin revisar columna por columna.",
+      "criterio": "<code>TAG_REFERENCES_ALL_COLUMNS</code> lista las columnas tagueadas con <code>governance.pii</code>, incluida <code>BIRTHDAY_DATE</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Un <strong>tag</strong> es metadata que se adjunta a objetos o columnas. Como <code>accountadmin</code> creamos el tag <code>pii</code> y damos al steward los privilegios de aplicar tags y masking policies a nivel de cuenta.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Tag y privilegios de aplicar",
+          "code": "-- Vuelve a accountadmin para crear el tag\nUSE ROLE accountadmin;\n-- Crea el tag pii para marcar columnas sensibles\nCREATE OR REPLACE TAG governance.pii;\n-- Permite al steward aplicar tags y masking\nGRANT APPLY TAG ON ACCOUNT TO ROLE tb_data_steward;\nGRANT APPLY MASKING POLICY ON ACCOUNT TO ROLE tb_data_steward;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Tag PII successfully created.</code> y grants exitosos."
+        },
+        {
+          "type": "text",
+          "html": "<p>Mas privilegios: aplicar row access policies, ejecutar clasificacion automatica, el rol de base <code>CLASSIFICATION_ADMIN</code> y crear perfiles de clasificacion en <code>governance</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Privilegios de clasificacion",
+          "code": "-- Permisos de row policies y clasificacion automatica\nGRANT APPLY ROW ACCESS POLICY ON ACCOUNT TO ROLE tb_data_steward;\nGRANT EXECUTE AUTO CLASSIFICATION ON SCHEMA raw_customer TO ROLE tb_data_steward;\nGRANT DATABASE ROLE SNOWFLAKE.CLASSIFICATION_ADMIN TO ROLE tb_data_steward;\nGRANT CREATE SNOWFLAKE.DATA_PRIVACY.CLASSIFICATION_PROFILE ON SCHEMA governance TO ROLE tb_data_steward;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Statement executed successfully.</code> en los 4 grants."
+        },
+        {
+          "type": "text",
+          "html": "<p>Snowflake detecta PII (Personally Identifiable Information) por ti. Un <strong>perfil de clasificacion</strong> define como clasificar; con <code>auto_tag: true</code> aplica tags automaticamente. <code>SET_TAG_MAP</code> dice: toda columna clasificada como nombre, telefono, codigo postal, fecha de nacimiento, ciudad o email recibe el tag <code>pii</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Perfil y mapa de tags",
+          "code": "-- Vuelve al rol de Data Steward\nUSE ROLE tb_data_steward;\n-- Crea el perfil de clasificacion con auto tag\nCREATE OR REPLACE SNOWFLAKE.DATA_PRIVACY.CLASSIFICATION_PROFILE governance.tb_classification_profile(\n    {'minimum_object_age_for_classification_days': 0,\n     'maximum_classification_validity_days': 30,\n     'auto_tag': true});\n\n-- Toda columna clasificada como nombre/telefono/email/etc. recibe el tag PII\nCALL governance.tb_classification_profile!SET_TAG_MAP(\n  {'column_tag_map':[{\n      'tag_name':'tb_101.governance.pii',\n      'tag_value':'pii',\n      'semantic_categories':['NAME','PHONE_NUMBER','POSTAL_CODE','DATE_OF_BIRTH','CITY','EMAIL']}]});"
+        },
+        {
+          "type": "expected",
+          "html": "Perfil creado y el <code>CALL</code> responde sin error."
+        },
+        {
+          "type": "text",
+          "html": "<p><code>SYSTEM$CLASSIFY</code> analiza la tabla con el perfil y aplica los tags. Luego consultamos que columnas quedaron tagueadas.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Clasificar y revisar",
+          "code": "-- Clasifica la tabla de clientes y aplica tags\nCALL SYSTEM$CLASSIFY('tb_101.raw_customer.customer_loyalty', 'tb_101.governance.tb_classification_profile');\n\n-- Que encontro la IA de clasificacion?\nSELECT column_name, tag_name, tag_value, apply_method\nFROM TABLE(INFORMATION_SCHEMA.TAG_REFERENCES_ALL_COLUMNS('raw_customer.customer_loyalty', 'table'))\nORDER BY column_name;"
+        },
+        {
+          "type": "expected",
+          "html": "Filas con <code>TAG_NAME = PII</code> para las columnas sensibles (nombres, email, telefono, ciudad, codigo postal y <code>BIRTHDAY_DATE</code>)."
+        }
+      ]
+    },
+    {
+      "title": "Masking dinamico basado en tags",
+      "nav": "Masking por tag",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Ocultamos los datos personales segun el rol con una sola regla sobre el tag, que protege columnas actuales y futuras.",
+      "criterio": "Como <code>tb_analyst</code> ves <code>****MASKED****</code> y cumpleanos truncados al anio; como <code>tb_admin</code>, en claro.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Una <strong>masking policy</strong> decide en tiempo de consulta que ve cada rol. Creamos dos (texto y fecha) y las asociamos <strong>una sola vez al TAG</strong>, no columna por columna.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Policies sobre el tag",
+          "code": "-- Enmascara texto salvo para roles administradores\nCREATE OR REPLACE MASKING POLICY governance.mask_string_pii AS (val STRING) RETURNS STRING ->\n    CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN', 'TB_ADMIN') THEN val\n         ELSE '****MASKED****' END;\n\n-- Deja solo el anio de las fechas sensibles\nCREATE OR REPLACE MASKING POLICY governance.mask_date_pii AS (val DATE) RETURNS DATE ->\n    CASE WHEN CURRENT_ROLE() IN ('ACCOUNTADMIN', 'TB_ADMIN') THEN val\n         ELSE DATE_TRUNC('year', val) END;\n\n-- Una sola vez sobre el TAG: protege todas las columnas PII, hoy y manana\nALTER TAG governance.pii SET\n    MASKING POLICY governance.mask_string_pii,\n    MASKING POLICY governance.mask_date_pii;"
+        },
+        {
+          "type": "expected",
+          "html": "Dos policies creadas y <code>Statement executed successfully.</code> en el ALTER TAG."
+        },
+        {
+          "type": "text",
+          "html": "<p>La misma consulta con dos roles distintos.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Comparar roles",
+          "code": "-- Consulta como analista: veras PII enmascarada\nUSE ROLE tb_analyst;\nUSE WAREHOUSE tb_analyst_wh;\nSELECT TOP 10 customer_id, first_name, last_name, e_mail, phone_number, birthday_date, country\nFROM raw_customer.customer_loyalty;\n\n-- Misma consulta como admin: veras datos en claro\nUSE ROLE tb_admin;\nSELECT TOP 10 customer_id, first_name, last_name, e_mail, phone_number, birthday_date, country\nFROM raw_customer.customer_loyalty;"
+        },
+        {
+          "type": "expected",
+          "html": "Como <code>tb_analyst</code>: nombres/email/telefono = <code>****MASKED****</code>, cumpleanos 1953-12-01 se ve 1953-01-01. Como <code>tb_admin</code>: Rodolfo Tucker, Rodolfo.Tucker@ymail.com."
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Momento wow: masking por TAG",
+          "html": "La policy vive en el tag: protege todas las columnas PII que existen hoy y cualquier columna futura que reciba el tag, sin tocar tabla por tabla."
+        }
+      ]
+    },
+    {
+      "title": "Row Access Policy por rol",
+      "nav": "Row Access Policy",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Limitamos que filas ve cada rol segun el pais, para que cada equipo vea solo los clientes que le corresponden.",
+      "criterio": "<code>tb_data_engineer</code> solo ve United States; <code>tb_analyst</code> ve todos los paises.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Seguridad a nivel de fila: una tabla de mapeo rol &rarr; pais, creada por el steward.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Tabla de mapeo",
+          "code": "-- Contexto: steward con su warehouse\nUSE ROLE tb_data_steward;\nUSE WAREHOUSE tb_dev_wh;\n-- Tabla de mapeo rol a pais permitido\nCREATE OR REPLACE TABLE governance.row_policy_map (role STRING, country_permission STRING);\n-- El data engineer solo vera Estados Unidos\nINSERT INTO governance.row_policy_map VALUES ('TB_DATA_ENGINEER', 'United States');"
+        },
+        {
+          "type": "expected",
+          "html": "Tabla creada y <code>number of rows inserted: 1</code>."
+        },
+        {
+          "type": "text",
+          "html": "<p>La <strong>Row Access Policy</strong> devuelve TRUE/FALSE por fila: los roles administrativos y el analista ven todo; el resto, solo los paises de su mapeo. Se asocia a la columna <code>country</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Crear y asociar la policy",
+          "code": "-- Decide fila por fila que paises ve cada rol\nCREATE OR REPLACE ROW ACCESS POLICY governance.customer_loyalty_policy\nAS (country STRING) RETURNS BOOLEAN ->\n    CURRENT_ROLE() IN ('ACCOUNTADMIN', 'SYSADMIN', 'TB_ADMIN', 'TB_ANALYST')\n    OR EXISTS (SELECT 1 FROM governance.row_policy_map rp\n               WHERE rp.role = CURRENT_ROLE() AND rp.country_permission = country);\n\n-- Aplica la politica sobre la columna country\nALTER TABLE raw_customer.customer_loyalty\n    ADD ROW ACCESS POLICY governance.customer_loyalty_policy ON (country);"
+        },
+        {
+          "type": "expected",
+          "html": "Policy creada y asociada sin error."
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Comparar roles",
+          "code": "-- Prueba como data engineer\nUSE ROLE tb_data_engineer;\n-- solo US\nSELECT country, COUNT(*) AS clientes FROM raw_customer.customer_loyalty GROUP BY country;\n\n-- Prueba como analista\nUSE ROLE tb_analyst;\n-- solo US\nSELECT country, COUNT(*) AS clientes FROM raw_customer.customer_loyalty GROUP BY country;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>tb_data_engineer</code>: 1 fila, United States con 46,300 clientes. <code>tb_analyst</code>: todos los paises."
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Momento wow: RLS por rol",
+          "html": "Mismo SQL, misma tabla, resultados distintos: el filtro lo aplica Snowflake segun el rol, no la aplicacion."
+        }
+      ]
+    },
+    {
+      "title": "Calidad de datos con DMFs",
+      "nav": "DMFs",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Medimos la calidad de los datos (nulos, duplicados, emails invalidos) y dejamos un monitoreo automatico ante cada cambio.",
+      "criterio": "Obtienes % de emails nulos, IDs duplicados y emails invalidos; la DMF propia queda asociada con <code>TRIGGER_ON_CHANGES</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Las <strong>Data Metric Functions</strong> (DMF) miden la calidad de los datos. Snowflake trae DMFs de sistema en <code>SNOWFLAKE.CORE</code>. Cambiamos a <code>sysadmin</code>, el duenio de las tablas.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "DMFs de sistema",
+          "code": "-- Contexto: sysadmin con warehouse de desarrollo\nUSE ROLE sysadmin;\nUSE WAREHOUSE tb_dev_wh;\n-- DMFs de sistema\nSELECT SNOWFLAKE.CORE.NULL_PERCENT(SELECT e_mail FROM raw_customer.customer_loyalty)      AS pct_email_nulo;\n-- Cuenta ids de cliente duplicados\nSELECT SNOWFLAKE.CORE.DUPLICATE_COUNT(SELECT customer_id FROM raw_customer.customer_loyalty) AS ids_duplicados;"
+        },
+        {
+          "type": "expected",
+          "html": "Una fila con <code>PCT_EMAIL_NULO</code> y otra con <code>IDS_DUPLICADOS</code>."
+        },
+        {
+          "type": "text",
+          "html": "<p>Tambien puedes crear una DMF propia: esta cuenta emails con formato invalido usando una expresion regular.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "DMF propia",
+          "code": "-- DMF propia: emails con formato invalido\nCREATE OR REPLACE DATA METRIC FUNCTION governance.invalid_email_count(t TABLE(email STRING))\nRETURNS NUMBER AS\n'SELECT COUNT_IF(email IS NOT NULL AND NOT REGEXP_LIKE(email, ''^[^@]+@[^@]+\\\\.[^@]+$'')) FROM t';\n\n-- Ejecuta la DMF propia sobre los emails\nSELECT governance.invalid_email_count(SELECT e_mail FROM raw_customer.customer_loyalty) AS emails_invalidos;"
+        },
+        {
+          "type": "expected",
+          "html": "Funcion creada y una fila con <code>EMAILS_INVALIDOS</code>."
+        },
+        {
+          "type": "text",
+          "html": "<p>Para monitoreo continuo, programamos la tabla para evaluar sus DMFs cada vez que cambie y le asociamos la nuestra sobre <code>e_mail</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Monitoreo automatico",
+          "code": "-- Monitoreo automatico cada vez que cambie la tabla\nALTER TABLE raw_customer.customer_loyalty SET DATA_METRIC_SCHEDULE = 'TRIGGER_ON_CHANGES';\n-- Asocia la DMF de emails a la columna e_mail\nALTER TABLE raw_customer.customer_loyalty\n    ADD DATA METRIC FUNCTION governance.invalid_email_count ON (e_mail);"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Statement executed successfully.</code> en ambos."
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Gotcha real: asociar DMFs requiere OWNERSHIP",
+          "html": "Asociar una DMF a una tabla exige ser duenio de la tabla. Por eso esta parte corre con <code>sysadmin</code>, el duenio de las tablas."
+        },
+        {
+          "type": "callout",
+          "kind": "info",
+          "title": "Verlo en la UI",
+          "html": "Revisa los resultados en <strong>Catalog &gt; TB_101 &gt; RAW_CUSTOMER &gt; CUSTOMER_LOYALTY</strong>, pestana <strong>Data Quality</strong>."
+        }
+      ]
+    },
+    {
+      "title": "Trust Center: seguridad de la cuenta",
+      "nav": "Trust Center",
+      "minutes": 1,
+      "badge": "UI",
+      "resumen": "Activamos el Trust Center para detectar riesgos de seguridad de la cuenta, como usuarios sin MFA, y ver como corregirlos.",
+      "criterio": "Habilitas un scanner package y abres el detalle de un hallazgo en <em>Findings</em>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>El <strong>Trust Center</strong> es un dashboard central de riesgos de seguridad: scanners programados detectan, por ejemplo, usuarios sin MFA, roles con exceso de privilegios o usuarios inactivos, y proponen como remediarlo. Hazlo con el rol <code>ACCOUNTADMIN</code> en Snowsight.</p><ol><li>En el menu izquierdo ve a <strong>Governance &amp; Security &gt; Trust Center</strong>.</li><li>Abre la pestana <strong>Scanner Packages</strong> y haz clic en <strong>CIS Benchmarks</strong>.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-4/trust_center_scanner_packages.png",
+          "caption": "Pestana Scanner Packages del Trust Center"
+        },
+        {
+          "type": "text",
+          "html": "<ol start=\"3\"><li>Pulsa <strong>Enable Package</strong>.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-4/trust_center_cis_scanner_package.png",
+          "caption": "Paquete CIS Benchmarks"
+        },
+        {
+          "type": "text",
+          "html": "<ol start=\"4\"><li>En el modal, deja <strong>Frequency</strong> en <code>Monthly</code> y pulsa <strong>Continue</strong>. Opcional: repite con <strong>Threat Intelligence</strong>.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-4/enable_scanner_package.png",
+          "caption": "Habilitar un scanner package"
+        },
+        {
+          "type": "text",
+          "html": "<ol start=\"5\"><li>Tras unos minutos vuelve a la pestana <strong>Findings</strong>: veras las violaciones por severidad. Haz clic en una para ver su resumen y la remediacion recomendada.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-4/trust_center_findings.png",
+          "caption": "Dashboard de Findings"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-4/trust_center_violation_detail_pane.png",
+          "caption": "Detalle de una violacion con la remediacion recomendada"
+        },
+        {
+          "type": "callout",
+          "kind": "info",
+          "title": "Si aun no hay hallazgos",
+          "html": "Los scanners tardan un poco en correr la primera vez. Si no aparecen en el tiempo del lab, revisalo despues: el paquete queda habilitado."
+        }
+      ]
+    }
+  ]
+}

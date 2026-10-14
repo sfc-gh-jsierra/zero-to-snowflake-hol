@@ -1,0 +1,351 @@
+{
+  "lab": "lab0_setup.html",
+  "intro": [
+    {
+      "type": "image",
+      "src": "img/quickstart/whoistb.png",
+      "caption": "Tasty Bytes: la empresa ficticia de food trucks de este workshop"
+    },
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab0_setup</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Ejecuta los bloques en orden: cada uno depende del anterior."
+    },
+    {
+      "type": "callout",
+      "kind": "tip",
+      "title": "Datos de ejemplo",
+      "html": "Tasty Bytes es una empresa ficticia de Snowflake; los datos son sinteticos y publicos (<code>s3://sfquickstarts/frostbyte_tastybytes/</code>)."
+    }
+  ],
+  "steps": [
+    {
+      "title": "Crear tu SQL File y crear la base TB_101",
+      "nav": "SQL File y base TB_101",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Creamos la base TB_101, los roles y los warehouses de la demo con sus permisos para que cada rol vea solo lo suyo.",
+      "criterio": "Tienes el SQL File <code>lab0_setup</code> abierto y la base <code>TB_101</code> con sus 7 esquemas.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<ol><li>Inicia sesion en la cuenta Snowflake que te entrego el instructor.</li><li>Ubicate en <strong>Projects &gt; Workspaces</strong>.</li><li>Haz clic en <strong>+ Add new &gt; SQL File</strong> y nombralo <code>lab0_setup</code>.</li><li>Verifica en el selector de contexto que el rol activo sea <strong>ACCOUNTADMIN</strong> (el script cambia de rol cuando lo necesita).</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/create_a_worksheet.gif",
+          "caption": "Crear un SQL File en Workspaces (quickstart Zero to Snowflake)"
+        },
+        {
+          "type": "text",
+          "html": "<p>Empezamos con el rol <strong>SYSADMIN</strong>, el rol pensado para crear objetos (bases, warehouses). El <em>query tag</em> etiqueta cada query de esta sesion para poder rastrearla luego en el historial.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Rol y query tag",
+          "code": "-- raw_pos table build\nUSE ROLE sysadmin;\n\n-- assign Query Tag to Session\nALTER SESSION SET query_tag = '{\"origin\":\"sf_sit-is\",\"name\":\"tb_zts\",\"version\":{\"major\":1, \"minor\":1},\"attributes\":{\"is_quickstart\":1, \"source\":\"sql\", \"vignette\": \"setup\"}}';"
+        },
+        {
+          "type": "text",
+          "html": "<p>Una <strong>base de datos</strong> agrupa <strong>esquemas</strong>, y cada esquema agrupa tablas y vistas. Organizamos Tasty Bytes por capas: <code>raw_*</code> (datos crudos tal como llegan), <code>harmonized</code> (datos unidos y limpios), <code>analytics</code> (listos para consumo), mas <code>governance</code> y <code>semantic_layer</code> para los labs de gobierno y semantica.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Base y esquemas",
+          "code": "-- Crea la base de datos TB_101\nCREATE OR REPLACE DATABASE tb_101;\n\n-- create raw_pos schema\nCREATE OR REPLACE SCHEMA tb_101.raw_pos;\n\n-- create raw_customer schema\nCREATE OR REPLACE SCHEMA tb_101.raw_customer;\n\n-- create harmonized schema\nCREATE OR REPLACE SCHEMA tb_101.harmonized;\n\n-- create analytics schema\nCREATE OR REPLACE SCHEMA tb_101.analytics;\n\n-- create governance schema\nCREATE OR REPLACE SCHEMA tb_101.governance;\n\n-- create raw_support\nCREATE OR REPLACE SCHEMA tb_101.raw_support;\n\n-- Create schema for the Semantic Layer\nCREATE OR REPLACE SCHEMA tb_101.semantic_layer\nCOMMENT = 'Schema for the business-friendly semantic layer, optimized for analytical consumption.';"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Database TB_101 successfully created.</code> y un mensaje <code>Schema ... successfully created.</code> por cada uno de los 7 esquemas."
+        }
+      ]
+    },
+    {
+      "title": "Warehouses, roles y privilegios",
+      "nav": "Warehouses y roles",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Creamos los warehouses, los roles y los privilegios que separan las funciones de administrador, ingeniero, desarrollador y analista.",
+      "criterio": "Existen los 4 warehouses <code>TB_*_WH</code> y los 4 roles <code>TB_*</code> con sus grants.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Un <strong>virtual warehouse</strong> es computo independiente del almacenamiento. Creamos uno por tipo de carga: <code>tb_de_wh</code> para ingenieria de datos (en <strong>XLARGE</strong> solo para la carga inicial; al final lo bajamos a XSMALL), <code>tb_dev_wh</code> para desarrollo, <code>tb_analyst_wh</code> multi-cluster para analistas y <code>tb_cortex_wh</code> para cargas de IA. Todos nacen suspendidos y se apagan solos tras 60 s sin uso: solo pagas por segundo de uso.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Warehouses",
+          "code": "-- create warehouses\nCREATE OR REPLACE WAREHOUSE tb_de_wh\n    WAREHOUSE_SIZE = 'xlarge' -- XLarge para la carga inicial; se reduce a XSmall al final\n    WAREHOUSE_TYPE = 'standard'\n    AUTO_SUSPEND = 60\n    AUTO_RESUME = TRUE\n    INITIALLY_SUSPENDED = TRUE\nCOMMENT = 'data engineering warehouse for tasty bytes';\n\n-- Crea el warehouse de la demo\nCREATE OR REPLACE WAREHOUSE tb_dev_wh\n    WAREHOUSE_SIZE = 'xsmall'\n    WAREHOUSE_TYPE = 'standard'\n    AUTO_SUSPEND = 60\n    AUTO_RESUME = TRUE\n    INITIALLY_SUSPENDED = TRUE\nCOMMENT = 'developer warehouse for tasty bytes';\n\n-- create analyst warehouse\nCREATE OR REPLACE WAREHOUSE tb_analyst_wh\n    COMMENT = 'TastyBytes Analyst Warehouse'\n    WAREHOUSE_TYPE = 'standard'\n    WAREHOUSE_SIZE = 'large'\n    MIN_CLUSTER_COUNT = 1\n    MAX_CLUSTER_COUNT = 2\n    SCALING_POLICY = 'standard'\n    AUTO_SUSPEND = 60\n    INITIALLY_SUSPENDED = true,\n    AUTO_RESUME = true;\n\n-- Create a dedicated large warehouse for analytical workloads\nCREATE OR REPLACE WAREHOUSE tb_cortex_wh\n    WAREHOUSE_SIZE = 'LARGE'\n    WAREHOUSE_TYPE = 'STANDARD'\n    AUTO_SUSPEND = 60\n    AUTO_RESUME = TRUE\n    INITIALLY_SUSPENDED = TRUE\nCOMMENT = 'Dedicated large warehouse for Cortex Analyst and other analytical tools.';"
+        },
+        {
+          "type": "text",
+          "html": "<p>Snowflake usa <strong>control de acceso basado en roles (RBAC)</strong>: los privilegios se dan a roles y los roles a usuarios. Con <strong>SECURITYADMIN</strong> creamos 4 roles funcionales y los encadenamos en una jerarquia: <code>tb_analyst</code> y <code>tb_dev</code> heredan hacia <code>tb_data_engineer</code>, este hacia <code>tb_admin</code> y este hacia <code>sysadmin</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Roles y jerarquia",
+          "code": "-- create roles\nUSE ROLE securityadmin;\n\n-- functional roles\nCREATE ROLE IF NOT EXISTS tb_admin\n    COMMENT = 'admin for tasty bytes';\n    \n-- Crea el rol\nCREATE ROLE IF NOT EXISTS tb_data_engineer\n    COMMENT = 'data engineer for tasty bytes';\n    \n-- Crea el rol\nCREATE ROLE IF NOT EXISTS tb_dev\n    COMMENT = 'developer for tasty bytes';\n    \n-- Crea el rol\nCREATE ROLE IF NOT EXISTS tb_analyst\n    COMMENT = 'analyst for tasty bytes';\n    \n-- role hierarchy\nGRANT ROLE tb_admin TO ROLE sysadmin;\nGRANT ROLE tb_data_engineer TO ROLE tb_admin;\nGRANT ROLE tb_dev TO ROLE tb_data_engineer;\nGRANT ROLE tb_analyst TO ROLE tb_data_engineer;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Ahora los privilegios. Con ACCOUNTADMIN damos acceso a la base compartida <code>SNOWFLAKE</code> (historial de uso) y el permiso de crear warehouses. Luego, con SECURITYADMIN, damos <code>USAGE</code> sobre la base y esquemas y <code>ALL</code> sobre cada esquema a los roles del equipo.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Privilegios sobre base y esquemas",
+          "code": "-- privilege grants\nUSE ROLE accountadmin;\n\n-- Da acceso a las vistas de metadatos de Snowflake\nGRANT IMPORTED PRIVILEGES ON DATABASE snowflake TO ROLE tb_data_engineer;\n\n-- Permite crear warehouses al rol admin\nGRANT CREATE WAREHOUSE ON ACCOUNT TO ROLE tb_admin;\n\n-- create roles\nUSE ROLE securityadmin;\n\n-- Da uso de la base a los roles\nGRANT USAGE ON DATABASE tb_101 TO ROLE tb_admin;\nGRANT USAGE ON DATABASE tb_101 TO ROLE tb_data_engineer;\nGRANT USAGE ON DATABASE tb_101 TO ROLE tb_dev;\n\n-- Da uso de todos los esquemas a los roles\nGRANT USAGE ON ALL SCHEMAS IN DATABASE tb_101 TO ROLE tb_admin;\nGRANT USAGE ON ALL SCHEMAS IN DATABASE tb_101 TO ROLE tb_data_engineer;\nGRANT USAGE ON ALL SCHEMAS IN DATABASE tb_101 TO ROLE tb_dev;\n\n-- Da todos los permisos sobre los esquemas\nGRANT ALL ON SCHEMA tb_101.raw_support TO ROLE tb_admin;\nGRANT ALL ON SCHEMA tb_101.raw_support TO ROLE tb_data_engineer;\nGRANT ALL ON SCHEMA tb_101.raw_support TO ROLE tb_dev;\n\n-- Da todos los permisos sobre los esquemas\nGRANT ALL ON SCHEMA tb_101.raw_pos TO ROLE tb_admin;\nGRANT ALL ON SCHEMA tb_101.raw_pos TO ROLE tb_data_engineer;\nGRANT ALL ON SCHEMA tb_101.raw_pos TO ROLE tb_dev;\n\n-- Da todos los permisos sobre los esquemas\nGRANT ALL ON SCHEMA tb_101.harmonized TO ROLE tb_admin;\nGRANT ALL ON SCHEMA tb_101.harmonized TO ROLE tb_data_engineer;\nGRANT ALL ON SCHEMA tb_101.harmonized TO ROLE tb_dev;\n\n-- Da todos los permisos sobre los esquemas\nGRANT ALL ON SCHEMA tb_101.analytics TO ROLE tb_admin;\nGRANT ALL ON SCHEMA tb_101.analytics TO ROLE tb_data_engineer;\nGRANT ALL ON SCHEMA tb_101.analytics TO ROLE tb_dev;\n\n-- Da todos los permisos sobre los esquemas\nGRANT ALL ON SCHEMA tb_101.governance TO ROLE tb_admin;\nGRANT ALL ON SCHEMA tb_101.governance TO ROLE tb_data_engineer;\nGRANT ALL ON SCHEMA tb_101.governance TO ROLE tb_dev;\n\n-- Da todos los permisos sobre los esquemas\nGRANT ALL ON SCHEMA tb_101.semantic_layer TO ROLE tb_admin;\nGRANT ALL ON SCHEMA tb_101.semantic_layer TO ROLE tb_data_engineer;\nGRANT ALL ON SCHEMA tb_101.semantic_layer TO ROLE tb_dev;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Grants sobre warehouses (incluida la propiedad de <code>tb_de_wh</code> para <code>tb_admin</code>) y <strong>future grants</strong>: privilegios que se aplican automaticamente a las tablas y vistas que se creen <em>despues</em> en esos esquemas, sin tener que volver a otorgarlos.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Warehouses y future grants",
+          "code": "-- warehouse grants\nGRANT OWNERSHIP ON WAREHOUSE tb_de_wh TO ROLE tb_admin COPY CURRENT GRANTS;\n-- Da permisos sobre los warehouses a los roles\nGRANT ALL ON WAREHOUSE tb_de_wh TO ROLE tb_admin;\nGRANT ALL ON WAREHOUSE tb_de_wh TO ROLE tb_data_engineer;\n\n-- Da permisos sobre los warehouses a los roles\nGRANT ALL ON WAREHOUSE tb_dev_wh TO ROLE tb_admin;\nGRANT ALL ON WAREHOUSE tb_dev_wh TO ROLE tb_data_engineer;\nGRANT ALL ON WAREHOUSE tb_dev_wh TO ROLE tb_dev;\n\n-- Da permisos sobre los warehouses a los roles\nGRANT ALL ON WAREHOUSE tb_analyst_wh TO ROLE tb_admin;\nGRANT ALL ON WAREHOUSE tb_analyst_wh TO ROLE tb_data_engineer;\nGRANT ALL ON WAREHOUSE tb_analyst_wh TO ROLE tb_dev;\n\n-- Da permisos sobre los warehouses a los roles\nGRANT ALL ON WAREHOUSE tb_cortex_wh TO ROLE tb_admin;\nGRANT ALL ON WAREHOUSE tb_cortex_wh TO ROLE tb_data_engineer;\nGRANT ALL ON WAREHOUSE tb_cortex_wh TO ROLE tb_dev;\n\n-- future grants\nGRANT ALL ON FUTURE TABLES IN SCHEMA tb_101.raw_pos TO ROLE tb_admin;\nGRANT ALL ON FUTURE TABLES IN SCHEMA tb_101.raw_pos TO ROLE tb_data_engineer;\nGRANT ALL ON FUTURE TABLES IN SCHEMA tb_101.raw_pos TO ROLE tb_dev;\n\n-- Da permisos sobre objetos futuros de los esquemas\nGRANT ALL ON FUTURE TABLES IN SCHEMA tb_101.raw_customer TO ROLE tb_admin;\nGRANT ALL ON FUTURE TABLES IN SCHEMA tb_101.raw_customer TO ROLE tb_data_engineer;\nGRANT ALL ON FUTURE TABLES IN SCHEMA tb_101.raw_customer TO ROLE tb_dev;\n\n-- Da permisos sobre objetos futuros de los esquemas\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.harmonized TO ROLE tb_admin;\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.harmonized TO ROLE tb_data_engineer;\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.harmonized TO ROLE tb_dev;\n\n-- Da permisos sobre objetos futuros de los esquemas\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.analytics TO ROLE tb_admin;\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.analytics TO ROLE tb_data_engineer;\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.analytics TO ROLE tb_dev;\n\n-- Da permisos sobre objetos futuros de los esquemas\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.governance TO ROLE tb_admin;\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.governance TO ROLE tb_data_engineer;\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.governance TO ROLE tb_dev;\n\n-- Da permisos sobre objetos futuros de los esquemas\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.semantic_layer TO ROLE tb_admin;\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.semantic_layer TO ROLE tb_data_engineer;\nGRANT ALL ON FUTURE VIEWS IN SCHEMA tb_101.semantic_layer TO ROLE tb_dev;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Privilegios especiales para labs posteriores: aplicar <strong>masking policies</strong> (lab de gobierno), ejecutar <strong>data metric functions</strong> (calidad de datos), acceso del analista a su warehouse y el rol de base de datos <code>SNOWFLAKE.CORTEX_USER</code> para usar las funciones de IA.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Masking, DMF, analista y Cortex",
+          "code": "-- privilege grants\nUSE ROLE accountadmin;\n-- Permite aplicar politicas de enmascaramiento\nGRANT APPLY MASKING POLICY ON ACCOUNT TO ROLE tb_admin;\nGRANT APPLY MASKING POLICY ON ACCOUNT TO ROLE tb_data_engineer;\n  \n-- Grants for tb_admin\nGRANT EXECUTE DATA METRIC FUNCTION ON ACCOUNT TO ROLE tb_admin;\n\n-- Grants for tb_analyst\nGRANT ALL ON SCHEMA harmonized TO ROLE tb_analyst;\nGRANT ALL ON SCHEMA analytics TO ROLE tb_analyst;\n-- Permite al analista usar su warehouse\nGRANT OPERATE, USAGE ON WAREHOUSE tb_analyst_wh TO ROLE tb_analyst;\n\n-- Grants for cortex search service\nGRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE TB_DEV;\n-- Da uso del esquema al rol\nGRANT USAGE ON SCHEMA TB_101.HARMONIZED TO ROLE TB_DEV;\nGRANT USAGE ON WAREHOUSE TB_DE_WH TO ROLE TB_DEV;"
+        },
+        {
+          "type": "expected",
+          "html": "Cada sentencia devuelve <code>Statement executed successfully.</code> (o <code>... successfully created.</code> para warehouses y roles)."
+        }
+      ]
+    },
+    {
+      "title": "File format, stages S3 y tablas raw",
+      "nav": "Stages y tablas raw",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Definimos el formato de archivo, los stages hacia S3 y las tablas raw donde aterrizan los datos de Tasty Bytes.",
+      "criterio": "Existen el file format <code>csv_ff</code>, 3 stages y 9 tablas raw vacias.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Volvemos a SYSADMIN y activamos <code>tb_de_wh</code>. Un <strong>file format</strong> describe como leer los archivos (aqui CSV). Un <strong>stage externo</strong> es un puntero a una ubicacion en la nube (un bucket S3 publico con los datos de Tasty Bytes) desde donde Snowflake carga datos. Tambien creamos un stage interno con <em>directory table</em> para los modelos semanticos YAML.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "File format y stages",
+          "code": "-- raw_pos table build\nUSE ROLE sysadmin;\n-- Setup truck details\nUSE WAREHOUSE tb_de_wh;\n\n-- Crea el formato de archivo CSV\nCREATE OR REPLACE FILE FORMAT tb_101.public.csv_ff \ntype = 'csv';\n\n-- Crea el stage externo apuntando a S3\nCREATE OR REPLACE STAGE tb_101.public.s3load\nCOMMENT = 'Quickstarts S3 Stage Connection'\nurl = 's3://sfquickstarts/frostbyte_tastybytes/'\nfile_format = tb_101.public.csv_ff;\n\n-- Crea el stage externo apuntando a S3\nCREATE OR REPLACE STAGE tb_101.public.truck_reviews_s3load\nCOMMENT = 'Truck Reviews Stage'\nurl = 's3://sfquickstarts/tastybytes-voc/'\nfile_format = tb_101.public.csv_ff;\n\n-- This stage will be used to upload your YAML files.\nCREATE OR REPLACE STAGE tb_101.semantic_layer.semantic_model_stage\n  DIRECTORY = (ENABLE = TRUE)\n  COMMENT = 'Internal stage for uploading Cortex Analyst semantic model YAML files.';"
+        },
+        {
+          "type": "text",
+          "html": "<p>Creamos las tablas de la capa raw con su esquema explicito: paises, franquicias, ubicaciones, menu (con una columna <code>VARIANT</code> para JSON semiestructurado), camiones, cabecera y detalle de ordenes, clientes del programa de lealtad y resenas de los food trucks. Son tablas vacias: las llenamos en el paso 5.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Tablas raw",
+          "code": "-- Crea la tabla\nCREATE OR REPLACE TABLE tb_101.raw_pos.country\n(\n    country_id NUMBER(18,0),\n    country VARCHAR(16777216),\n    iso_currency VARCHAR(3),\n    iso_country VARCHAR(2),\n    city_id NUMBER(19,0),\n    city VARCHAR(16777216),\n    city_population VARCHAR(16777216)\n);\n\n-- franchise table build\nCREATE OR REPLACE TABLE tb_101.raw_pos.franchise \n(\n    franchise_id NUMBER(38,0),\n    first_name VARCHAR(16777216),\n    last_name VARCHAR(16777216),\n    city VARCHAR(16777216),\n    country VARCHAR(16777216),\n    e_mail VARCHAR(16777216),\n    phone_number VARCHAR(16777216) \n);\n\n-- location table build\nCREATE OR REPLACE TABLE tb_101.raw_pos.location\n(\n    location_id NUMBER(19,0),\n    placekey VARCHAR(16777216),\n    location VARCHAR(16777216),\n    city VARCHAR(16777216),\n    region VARCHAR(16777216),\n    iso_country_code VARCHAR(16777216),\n    country VARCHAR(16777216)\n);\n\n-- menu table build\nCREATE OR REPLACE TABLE tb_101.raw_pos.menu\n(\n    menu_id NUMBER(19,0),\n    menu_type_id NUMBER(38,0),\n    menu_type VARCHAR(16777216),\n    truck_brand_name VARCHAR(16777216),\n    menu_item_id NUMBER(38,0),\n    menu_item_name VARCHAR(16777216),\n    item_category VARCHAR(16777216),\n    item_subcategory VARCHAR(16777216),\n    cost_of_goods_usd NUMBER(38,4),\n    sale_price_usd NUMBER(38,4),\n    menu_item_health_metrics_obj VARIANT\n);\n\n-- truck table build\nCREATE OR REPLACE TABLE tb_101.raw_pos.truck\n(\n    truck_id NUMBER(38,0),\n    menu_type_id NUMBER(38,0),\n    primary_city VARCHAR(16777216),\n    region VARCHAR(16777216),\n    iso_region VARCHAR(16777216),\n    country VARCHAR(16777216),\n    iso_country_code VARCHAR(16777216),\n    franchise_flag NUMBER(38,0),\n    year NUMBER(38,0),\n    make VARCHAR(16777216),\n    model VARCHAR(16777216),\n    ev_flag NUMBER(38,0),\n    franchise_id NUMBER(38,0),\n    truck_opening_date DATE\n);\n\n-- order_header table build\nCREATE OR REPLACE TABLE tb_101.raw_pos.order_header\n(\n    order_id NUMBER(38,0),\n    truck_id NUMBER(38,0),\n    location_id FLOAT,\n    customer_id NUMBER(38,0),\n    discount_id VARCHAR(16777216),\n    shift_id NUMBER(38,0),\n    shift_start_time TIME(9),\n    shift_end_time TIME(9),\n    order_channel VARCHAR(16777216),\n    order_ts TIMESTAMP_NTZ(9),\n    served_ts VARCHAR(16777216),\n    order_currency VARCHAR(3),\n    order_amount NUMBER(38,4),\n    order_tax_amount VARCHAR(16777216),\n    order_discount_amount VARCHAR(16777216),\n    order_total NUMBER(38,4)\n);\n\n-- order_detail table build\nCREATE OR REPLACE TABLE tb_101.raw_pos.order_detail \n(\n    order_detail_id NUMBER(38,0),\n    order_id NUMBER(38,0),\n    menu_item_id NUMBER(38,0),\n    discount_id VARCHAR(16777216),\n    line_number NUMBER(38,0),\n    quantity NUMBER(5,0),\n    unit_price NUMBER(38,4),\n    price NUMBER(38,4),\n    order_item_discount_amount VARCHAR(16777216)\n);\n\n-- customer loyalty table build\nCREATE OR REPLACE TABLE tb_101.raw_customer.customer_loyalty\n(\n    customer_id NUMBER(38,0),\n    first_name VARCHAR(16777216),\n    last_name VARCHAR(16777216),\n    city VARCHAR(16777216),\n    country VARCHAR(16777216),\n    postal_code VARCHAR(16777216),\n    preferred_language VARCHAR(16777216),\n    gender VARCHAR(16777216),\n    favourite_brand VARCHAR(16777216),\n    marital_status VARCHAR(16777216),\n    children_count VARCHAR(16777216),\n    sign_up_date DATE,\n    birthday_date DATE,\n    e_mail VARCHAR(16777216),\n    phone_number VARCHAR(16777216)\n);\n\n-- Crea la tabla\nCREATE OR REPLACE TABLE tb_101.raw_support.truck_reviews\n(\n    order_id NUMBER(38,0),\n    language VARCHAR(16777216),\n    source VARCHAR(16777216),\n    review VARCHAR(16777216),\n    review_id NUMBER(38,0)  \n);"
+        },
+        {
+          "type": "expected",
+          "html": "<code>File format CSV_FF successfully created.</code>, <code>Stage area ... successfully created.</code> (x3) y <code>Table ... successfully created.</code> por cada una de las 9 tablas."
+        }
+      ]
+    },
+    {
+      "title": "Vistas harmonized, analytics y semantic layer",
+      "nav": "Vistas",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Armamos las vistas por capas (harmonized, analytics, semantic layer) que luego consumen los analistas y la IA.",
+      "criterio": "Existen las vistas en <code>harmonized</code>, <code>analytics</code> y <code>semantic_layer</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Una <strong>vista</strong> es una consulta guardada: no copia datos, se calcula al consultarla. En <code>harmonized</code> unimos las tablas raw: <code>orders_v</code> junta ordenes, camiones, menu, franquicias, ubicaciones y clientes; <code>customer_loyalty_metrics_v</code> resume ventas por cliente; <code>truck_reviews_v</code> enriquece las resenas.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Vistas harmonized",
+          "code": "-- Crea la vista\nCREATE OR REPLACE VIEW tb_101.harmonized.orders_v\n    AS\nSELECT \n    oh.order_id,\n    oh.truck_id,\n    oh.order_ts,\n    od.order_detail_id,\n    od.line_number,\n    m.truck_brand_name,\n    m.menu_type,\n    t.primary_city,\n    t.region,\n    t.country,\n    t.franchise_flag,\n    t.franchise_id,\n    f.first_name AS franchisee_first_name,\n    f.last_name AS franchisee_last_name,\n    l.location_id,\n    cl.customer_id,\n    cl.first_name,\n    cl.last_name,\n    cl.e_mail,\n    cl.phone_number,\n    cl.children_count,\n    cl.gender,\n    cl.marital_status,\n    od.menu_item_id,\n    m.menu_item_name,\n    od.quantity,\n    od.unit_price,\n    od.price,\n    oh.order_amount,\n    oh.order_tax_amount,\n    oh.order_discount_amount,\n    oh.order_total\nFROM tb_101.raw_pos.order_detail od\nJOIN tb_101.raw_pos.order_header oh\n    ON od.order_id = oh.order_id\nJOIN tb_101.raw_pos.truck t\n    ON oh.truck_id = t.truck_id\nJOIN tb_101.raw_pos.menu m\n    ON od.menu_item_id = m.menu_item_id\nJOIN tb_101.raw_pos.franchise f\n    ON t.franchise_id = f.franchise_id\nJOIN tb_101.raw_pos.location l\n    ON oh.location_id = l.location_id\nLEFT JOIN tb_101.raw_customer.customer_loyalty cl\n    ON oh.customer_id = cl.customer_id;\n\n-- loyalty_metrics_v view\nCREATE OR REPLACE VIEW tb_101.harmonized.customer_loyalty_metrics_v\n    AS\nSELECT \n    cl.customer_id,\n    cl.city,\n    cl.country,\n    cl.first_name,\n    cl.last_name,\n    cl.phone_number,\n    cl.e_mail,\n    SUM(oh.order_total) AS total_sales,\n    ARRAY_AGG(DISTINCT oh.location_id) AS visited_location_ids_array\nFROM tb_101.raw_customer.customer_loyalty cl\nJOIN tb_101.raw_pos.order_header oh\nON cl.customer_id = oh.customer_id\nGROUP BY cl.customer_id, cl.city, cl.country, cl.first_name,\ncl.last_name, cl.phone_number, cl.e_mail;\n\n  -- truck_reviews_v view\n  CREATE OR REPLACE VIEW tb_101.harmonized.truck_reviews_v\n      AS\n  SELECT DISTINCT\n      r.review_id,\n      r.order_id,\n      oh.truck_id,\n      r.language,\n      source,\n      r.review,\n      t.primary_city,\n      oh.customer_id,\n      TO_DATE(oh.order_ts) AS date,\n      m.truck_brand_name\n  FROM raw_support.truck_reviews r\n  JOIN raw_pos.order_header oh\n      ON oh.order_id = r.order_id\n  JOIN raw_pos.truck t\n      ON t.truck_id = oh.truck_id\n  JOIN raw_pos.menu m\n      ON m.menu_type_id = t.menu_type_id;"
+        },
+        {
+          "type": "text",
+          "html": "<p>La capa <code>analytics</code> expone esas vistas para consumo (agregando la columna <code>date</code>), da acceso a <code>tb_admin</code> sobre las resenas y crea una vista de ventas de Japon en febrero 2022 que usa la app de Streamlit.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Vistas analytics",
+          "code": "-- Crea la vista\nCREATE OR REPLACE VIEW tb_101.analytics.orders_v\nCOMMENT = 'Tasty Bytes Order Detail View'\n    AS\nSELECT DATE(o.order_ts) AS date, * FROM tb_101.harmonized.orders_v o;\n\n-- customer_loyalty_metrics_v view\nCREATE OR REPLACE VIEW tb_101.analytics.customer_loyalty_metrics_v\nCOMMENT = 'Tasty Bytes Customer Loyalty Member Metrics View'\n    AS\nSELECT * FROM tb_101.harmonized.customer_loyalty_metrics_v;\n\n-- truck_reviews_v view\nCREATE OR REPLACE VIEW tb_101.analytics.truck_reviews_v \n    AS\nSELECT * FROM harmonized.truck_reviews_v;\n-- Da uso del esquema al rol\nGRANT USAGE ON SCHEMA raw_support to ROLE tb_admin;\n-- Da lectura del objeto al rol\nGRANT SELECT ON TABLE raw_support.truck_reviews TO ROLE tb_admin;\n\n-- view for streamlit app\nCREATE OR REPLACE VIEW tb_101.analytics.japan_menu_item_sales_feb_2022\nAS\nSELECT\n    DISTINCT menu_item_name,\n    date,\n    order_total\nFROM analytics.orders_v\nWHERE country = 'Japan'\n    AND YEAR(date) = '2022'\n    AND MONTH(date) = '2'\nGROUP BY ALL\nORDER BY date;"
+        },
+        {
+          "type": "text",
+          "html": "<p>La <strong>capa semantica</strong> ofrece vistas \"amigables para el negocio\": IDs como texto, solo clientes y ciudades conocidos. Sobre ellas trabajaran Cortex Analyst y el agente en los labs 7 y 8.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Vistas semantic_layer",
+          "code": "-- Orders view for the Semantic Layer\nCREATE OR REPLACE VIEW tb_101.semantic_layer.orders_v\nCOMMENT = 'Provides a clean, business-friendly view of order data, filtered to include only orders from known customers and locations.'\nAS\nSELECT\n    order_id::VARCHAR AS order_id,\n    truck_id::VARCHAR AS truck_id,\n    order_detail_id::VARCHAR AS order_detail_id,\n    truck_brand_name,\n    menu_type,\n    primary_city,\n    region,\n    country,\n    franchise_flag,\n    franchise_id::VARCHAR AS franchise_id,\n    location_id::VARCHAR AS location_id,\n    customer_id::VARCHAR AS customer_id,\n    gender,\n    marital_status,\n    menu_item_id::VARCHAR AS menu_item_id,\n    menu_item_name,\n    quantity,\n    order_total,\n    DATE(order_ts) AS order_date\nFROM \n    tb_101.harmonized.orders_v\nWHERE\n    customer_id IS NOT NULL \n    AND primary_city IS NOT NULL;\n\n-- Customer Loyalty Metrics view for the Semantic Layer\nCREATE OR REPLACE VIEW tb_101.semantic_layer.customer_loyalty_metrics_v\nAS\nSELECT\n    cl.customer_id::VARCHAR AS customer_id,\n    cl.city,\n    cl.country,\n    SUM(o.order_total) AS total_sales,\n    ARRAY_AGG(DISTINCT o.location_id::VARCHAR) WITHIN GROUP (ORDER BY o.location_id::VARCHAR) AS visited_location_ids_array\n    FROM tb_101.harmonized.customer_loyalty_metrics_v AS cl\n    JOIN tb_101.harmonized.orders_v AS o\n        ON cl.customer_id = o.customer_id\n    GROUP BY\n        cl.customer_id,\n        cl.city,\n        cl.country;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>View ... successfully created.</code> por cada vista. Aun no devuelven filas porque las tablas estan vacias."
+        }
+      ]
+    },
+    {
+      "title": "Cargar datos desde S3 y configurar IA",
+      "nav": "COPY INTO y config IA",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Cargamos las resenas desde S3 y dejamos listos los permisos de IA y el stage donde viviran los archivos multimodales.",
+      "criterio": "Los <code>COPY INTO</code> terminan con <code>LOADED</code>, existe el servicio <code>tasty_bytes_review_search</code> y tus roles TB_* estan asignados.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p><strong>COPY INTO</strong> es el comando de carga masiva: lee en paralelo los archivos del stage y los inserta en la tabla. Por eso <code>tb_de_wh</code> esta en XLARGE: <code>order_detail</code> tiene ~670 millones de filas. Este es el bloque mas lento del setup; mientras corre, el instructor presenta la arquitectura del workshop. No cierres la pestana.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "COPY INTO",
+          "code": "-- Carga los datos desde el stage a la tabla\nCOPY INTO tb_101.raw_support.truck_reviews\nFROM @tb_101.public.truck_reviews_s3load/raw_support/truck_reviews/;\n\n-- country table load\nCOPY INTO tb_101.raw_pos.country\nFROM @tb_101.public.s3load/raw_pos/country/;\n\n-- franchise table load\nCOPY INTO tb_101.raw_pos.franchise\nFROM @tb_101.public.s3load/raw_pos/franchise/;\n\n-- location table load\nCOPY INTO tb_101.raw_pos.location\nFROM @tb_101.public.s3load/raw_pos/location/;\n\n-- menu table load\nCOPY INTO tb_101.raw_pos.menu\nFROM @tb_101.public.s3load/raw_pos/menu/;\n\n-- truck table load\nCOPY INTO tb_101.raw_pos.truck\nFROM @tb_101.public.s3load/raw_pos/truck/;\n\n-- customer_loyalty table load\nCOPY INTO tb_101.raw_customer.customer_loyalty\nFROM @tb_101.public.s3load/raw_customer/customer_loyalty/;\n\n-- order_header table load\nCOPY INTO tb_101.raw_pos.order_header\nFROM @tb_101.public.s3load/raw_pos/order_header/;\n\n-- Setup truck details\nUSE WAREHOUSE tb_de_wh;\n\n-- order_detail table load\nCOPY INTO tb_101.raw_pos.order_detail\nFROM @tb_101.public.s3load/raw_pos/order_detail/;"
+        },
+        {
+          "type": "expected",
+          "html": "Una fila por archivo cargado con <code>status = LOADED</code> y <code>rows_loaded</code> en cada COPY. Sin errores."
+        },
+        {
+          "type": "text",
+          "html": "<p>Preparamos datos para el lab de pipeline: agregamos a <code>truck</code> una columna <code>OBJECT</code> con anio, marca y modelo, <em>ensuciamos a proposito</em> la marca (<code>Ford_</code> vs <code>Ford</code>) en la mitad de los camiones, y creamos <code>truck_details</code>.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "truck_build y truck_details",
+          "code": "-- add truck_build column\nALTER TABLE tb_101.raw_pos.truck\nADD COLUMN truck_build OBJECT;\n\n-- construct an object from year, make, model and store on truck_build column\nUPDATE tb_101.raw_pos.truck\n    SET truck_build = OBJECT_CONSTRUCT(\n        'year', year,\n        'make', make,\n        'model', model\n    );\n\n-- Messing up make data in truck_build object\nUPDATE tb_101.raw_pos.truck\nSET truck_build = OBJECT_INSERT(\n    truck_build,\n    'make',\n    'Ford',\n    TRUE\n)\nWHERE \n    truck_build:make::STRING = 'Ford_'\n    AND \n    truck_id % 2 = 0;\n\n-- truck_details table build\nCREATE OR REPLACE TABLE tb_101.raw_pos.truck_details\nAS \nSELECT * EXCLUDE (year, make, model)\nFROM tb_101.raw_pos.truck;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Creamos un servicio de <strong>Cortex Search</strong> sobre el texto de las resenas: indexa la columna <code>REVIEW</code> para busqueda semantica y se refresca cada hora (<code>TARGET_LAG</code>). Lo usara el agente.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Cortex Search",
+          "code": "-- Create or replace the Cortex Search Service named 'tasty_bytes_review_search'. --\nCREATE OR REPLACE CORTEX SEARCH SERVICE tb_101.harmonized.tasty_bytes_review_search\nON REVIEW \nATTRIBUTES LANGUAGE, ORDER_ID, REVIEW_ID, TRUCK_BRAND_NAME, PRIMARY_CITY, DATE, SOURCE \nWAREHOUSE = tb_de_wh\nTARGET_LAG = '1 hour' \nAS (\n    SELECT\n        REVIEW,             \n        LANGUAGE,           \n        ORDER_ID,           \n        REVIEW_ID,          \n        TRUCK_BRAND_NAME,  \n        PRIMARY_CITY,       \n        DATE,               \n        SOURCE             \n    FROM\n        tb_101.harmonized.truck_reviews_v \n    WHERE\n        REVIEW IS NOT NULL \n);"
+        },
+        {
+          "type": "text",
+          "html": "<p>Grants sobre la capa semantica y su stage, habilitamos <strong>cross-region</strong> para que Cortex pueda usar modelos de otra region si no estan en la tuya, y creamos la base <code>snowflake_intelligence.agents</code> donde viviran los agentes.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Semantic layer y Snowflake Intelligence",
+          "code": "-- create roles\nUSE ROLE securityadmin;\n-- Additional Grants on semantic layer\nGRANT SELECT ON VIEW tb_101.semantic_layer.orders_v TO ROLE PUBLIC;\nGRANT SELECT ON VIEW tb_101.semantic_layer.customer_loyalty_metrics_v TO ROLE PUBLIC;\n-- Da permisos sobre el stage al rol\nGRANT READ ON STAGE tb_101.semantic_layer.semantic_model_stage TO ROLE tb_admin;\n-- Da permisos sobre el stage al rol\nGRANT WRITE ON STAGE tb_101.semantic_layer.semantic_model_stage TO ROLE tb_admin;\n\n-- privilege grants\nUSE ROLE ACCOUNTADMIN;\n\n-- ability to run across cloud if claude is not in your region:\nALTER ACCOUNT SET CORTEX_ENABLED_CROSS_REGION = 'ANY_REGION';\n \n-- Create a database\nCREATE DATABASE IF NOT EXISTS snowflake_intelligence;\n-- Crea el esquema para los agentes\nCREATE SCHEMA IF NOT EXISTS snowflake_intelligence.agents;\n\n-- create a schema to store the agents\nGRANT USAGE ON DATABASE snowflake_intelligence TO ROLE TB_DEV;\nGRANT USAGE ON SCHEMA snowflake_intelligence.agents TO ROLE TB_DEV;\n\n-- Grant the CREATE AGENT privilege on the agents schema\nGRANT CREATE AGENT ON SCHEMA snowflake_intelligence.agents TO ROLE TB_DEV;"
+        },
+        {
+          "type": "text",
+          "html": "<p><strong>Ajustes del HOL</strong> sobre el setup oficial: grants que le faltaban a <code>tb_analyst</code> y <code>tb_data_engineer</code>, y asignacion de los roles <code>tb_admin</code>, <code>tb_analyst</code> y <code>tb_dev</code> a <em>tu</em> usuario (con <code>CURRENT_USER()</code>). Luego creamos el stage interno <code>archivos</code> (cifrado del lado del servidor y con directory table) para los archivos multimodales, y bajamos <code>tb_de_wh</code> a XSMALL.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Ajustes HOL, roles y stage archivos",
+          "code": "-- create roles\nUSE ROLE securityadmin;\n-- Da uso de la base a los roles\nGRANT USAGE ON DATABASE tb_101 TO ROLE tb_analyst;\nGRANT USAGE ON ALL SCHEMAS IN DATABASE tb_101 TO ROLE tb_analyst;\n-- Da lectura de todas las tablas o vistas al analista\nGRANT SELECT ON ALL TABLES IN SCHEMA tb_101.raw_pos TO ROLE tb_analyst;\nGRANT SELECT ON ALL TABLES IN SCHEMA tb_101.raw_customer TO ROLE tb_analyst;\nGRANT SELECT ON ALL VIEWS IN DATABASE tb_101 TO ROLE tb_analyst;\n-- Da acceso a las funciones Cortex AI\nGRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER TO ROLE tb_analyst;\n-- Da uso del esquema al rol\nGRANT USAGE ON SCHEMA tb_101.public TO ROLE tb_data_engineer;\nGRANT USAGE ON FILE FORMAT tb_101.public.csv_ff TO ROLE tb_data_engineer;\n\n-- Guarda tu usuario actual en una variable\nSET my_user = CURRENT_USER();\n-- Asigna los roles a tu usuario\nGRANT ROLE tb_admin   TO USER IDENTIFIER($my_user);\nGRANT ROLE tb_analyst TO USER IDENTIFIER($my_user);\nGRANT ROLE tb_dev     TO USER IDENTIFIER($my_user);\n\n-- privilege grants\nUSE ROLE accountadmin;\n-- Crea el stage interno para archivos multimodales\nCREATE OR REPLACE STAGE tb_101.public.archivos\n    DIRECTORY = (ENABLE = TRUE)\n    ENCRYPTION = (TYPE = 'SNOWFLAKE_SSE')\n    COMMENT = 'Archivos multimodales del HOL (audio, docx, imagenes)';\n-- Da permisos sobre el stage al rol\nGRANT READ, WRITE ON STAGE tb_101.public.archivos TO ROLE tb_admin;\n-- Da permisos sobre el stage al rol\nGRANT READ ON STAGE tb_101.public.archivos TO ROLE tb_analyst;\n\n-- Devuelve el warehouse a XSmall\nALTER WAREHOUSE tb_de_wh SET WAREHOUSE_SIZE = 'xsmall';"
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Bug real: 3 errores del setup oficial que aqui ya vienen corregidos",
+          "html": "<code>tb_data_engineer</code> no tenia USAGE sobre <code>public.csv_ff</code>, por lo que fallaba el stage del menu (lab 2). <code>tb_analyst</code> no tenia SELECT sobre <code>raw_customer</code> ni el rol CORTEX_USER. El grant correcto es <code>GRANT DATABASE ROLE SNOWFLAKE.CORTEX_USER</code> (no <code>GRANT SNOWFLAKE.CORTEX_USER</code>)."
+        },
+        {
+          "type": "expected",
+          "html": "<code>Cortex search service TASTY_BYTES_REVIEW_SEARCH successfully created.</code>, <code>Stage area ARCHIVOS successfully created.</code> y el resto <code>Statement executed successfully.</code>"
+        }
+      ]
+    },
+    {
+      "title": "Subir los archivos multimodales al stage ARCHIVOS",
+      "nav": "Subir archivos",
+      "minutes": 1,
+      "badge": "UI",
+      "resumen": "Subimos por la interfaz los archivos de ejemplo al stage ARCHIVOS para usarlos mas adelante con funciones de IA.",
+      "criterio": "El stage <code>@tb_101.public.archivos</code> muestra los 7 archivos.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Estos audios, documentos e imagenes se usan en el lab 4 (IA multimodal).</p><ol><li>Ubicate en <strong>Catalog &gt; Database Explorer &gt; TB_101 &gt; PUBLIC &gt; Stages &gt; ARCHIVOS</strong>.</li><li>Haz clic en <strong>+ Files</strong> y arrastra los 7 archivos de la carpeta <code>archivos/</code> que te entrego el instructor:<ul><li><code>CONTRATO_ARRENDAMIENTO_01.docx</code></li><li><code>CONTRATO_ARRENDAMIENTO_02.docx</code></li><li><code>TELCO.png</code></li><li><code>cedula.jpg</code></li><li><code>choque.png</code></li><li><code>ofreciendo-producto.mp3</code></li><li><code>problema-servicio.mp3</code></li></ul></li><li>Confirma con <strong>Upload</strong>.</li></ol>"
+        },
+        {
+          "type": "expected",
+          "html": "La pestana <strong>Files</strong> del stage ARCHIVOS lista los 7 archivos."
+        }
+      ]
+    },
+    {
+      "title": "Capa de negocio y verificacion de la carga",
+      "nav": "Capa de negocio y verificacion",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Construimos la capa de negocio y verificamos que la carga quedo completa con conteos de filas.",
+      "criterio": "Existen <code>ventas_diarias</code>, <code>ventas_items_mes</code> y <code>ventas_hora_ciudad</code>, y los conteos coinciden con las cifras verificadas.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Resumimos ~670M lineas de detalle en <strong>tablas compactas de negocio</strong> que usan el lab 7, el agente y las apps. Subimos temporalmente <code>tb_de_wh</code> a XLARGE para que el calculo sea rapido. <code>CREATE TABLE ... AS SELECT</code> (CTAS) crea y llena la tabla en un solo paso. La primera tiene grano dia x camion.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Warehouse XLARGE y ventas_diarias",
+          "code": "-- privilege grants\nUSE ROLE accountadmin;\n-- Escala el warehouse a XLarge\nALTER WAREHOUSE tb_de_wh SET WAREHOUSE_SIZE = 'xlarge';\n-- Setup truck details\nUSE WAREHOUSE tb_de_wh;\n\n-- Grano: dia x camion  (ordenes y ticket promedio exactos)\nCREATE OR REPLACE TABLE tb_101.analytics.ventas_diarias\nCOMMENT = 'Ventas diarias por food truck (USD)'\nAS\nSELECT\n    DATE(oh.order_ts)               AS fecha,\n    t.truck_id,\n    m.truck_brand_name              AS marca,\n    m.menu_type                     AS tipo_menu,\n    t.primary_city                  AS ciudad,\n    t.country                       AS pais,\n    t.franchise_flag = 1            AS es_franquicia,\n    SUM(od.price)                   AS ventas,\n    SUM(od.quantity)                AS unidades,\n    COUNT(DISTINCT oh.order_id)     AS ordenes\nFROM tb_101.raw_pos.order_detail od\nJOIN tb_101.raw_pos.order_header oh ON oh.order_id = od.order_id\nJOIN tb_101.raw_pos.truck t         ON t.truck_id = oh.truck_id\nJOIN tb_101.raw_pos.menu m          ON m.menu_item_id = od.menu_item_id\nGROUP BY ALL;"
+        },
+        {
+          "type": "text",
+          "html": "<p><code>ventas_items_mes</code> tiene grano mes x camion x item del menu (preguntas por producto). <code>ventas_hora_ciudad</code> es el pulso horario 2022 por ciudad y marca (pestana \"Ciudad viva\" de las apps). Al final volvemos <code>tb_de_wh</code> a XSMALL y damos SELECT al analista.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "ventas_items_mes, ventas_hora_ciudad y grants",
+          "code": "-- Grano: mes x camion x item del menu  (preguntas por producto)\nCREATE OR REPLACE TABLE tb_101.analytics.ventas_items_mes\nCOMMENT = 'Ventas mensuales por item del menu y food truck (USD)'\nAS\nSELECT\n    DATE_TRUNC('month', oh.order_ts)::DATE AS mes,\n    t.truck_id,\n    m.truck_brand_name              AS marca,\n    m.menu_type                     AS tipo_menu,\n    m.menu_item_name                AS item_menu,\n    m.item_category                 AS categoria_item,\n    t.primary_city                  AS ciudad,\n    t.country                       AS pais,\n    SUM(od.price)                   AS ventas,\n    SUM(od.quantity)                AS unidades\nFROM tb_101.raw_pos.order_detail od\nJOIN tb_101.raw_pos.order_header oh ON oh.order_id = od.order_id\nJOIN tb_101.raw_pos.truck t         ON t.truck_id = oh.truck_id\nJOIN tb_101.raw_pos.menu m          ON m.menu_item_id = od.menu_item_id\nGROUP BY ALL;\n\n-- Grano: ciudad x hora x marca, 2022  (pestana \"Ciudad viva\" de las apps)\nCREATE OR REPLACE TABLE tb_101.analytics.ventas_hora_ciudad\nCOMMENT = 'Pulso horario 2022 por ciudad y marca (USD)'\nAS\nSELECT\n    t.primary_city                  AS ciudad,\n    HOUR(oh.order_ts)               AS hora,\n    m.truck_brand_name              AS marca,\n    COUNT(DISTINCT oh.order_id)     AS ordenes,\n    SUM(od.price)                   AS ventas,\n    COUNT(DISTINCT oh.location_id)  AS ubicaciones,\n    COUNT(DISTINCT t.truck_id)      AS camiones\nFROM tb_101.raw_pos.order_detail od\nJOIN tb_101.raw_pos.order_header oh ON oh.order_id = od.order_id\nJOIN tb_101.raw_pos.truck t         ON t.truck_id = oh.truck_id\nJOIN tb_101.raw_pos.menu m          ON m.menu_item_id = od.menu_item_id\nWHERE YEAR(oh.order_ts) = 2022\nGROUP BY ALL;\n\n-- Devuelve el warehouse a XSmall\nALTER WAREHOUSE tb_de_wh SET WAREHOUSE_SIZE = 'xsmall';\n-- Da lectura de todas las tablas o vistas al analista\nGRANT SELECT ON ALL TABLES IN SCHEMA tb_101.analytics TO ROLE tb_analyst;"
+        },
+        {
+          "type": "callout",
+          "kind": "info",
+          "title": "Resultado verificado",
+          "html": "La capa de negocio sobre ~670M lineas tarda ~17 s en XLARGE (Gen2). El setup completo tomo 5 min 27 s en la ejecucion de validacion."
+        },
+        {
+          "type": "text",
+          "html": "<p>Por ultimo, contamos filas de las tablas principales para confirmar que la carga desde S3 fue completa.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Verificacion",
+          "code": "-- Verificacion de la carga\nSELECT 'order_header' AS tabla, COUNT(*) AS filas FROM tb_101.raw_pos.order_header\nUNION ALL SELECT 'order_detail', COUNT(*) FROM tb_101.raw_pos.order_detail\nUNION ALL SELECT 'customer_loyalty', COUNT(*) FROM tb_101.raw_customer.customer_loyalty\nUNION ALL SELECT 'truck_reviews', COUNT(*) FROM tb_101.raw_support.truck_reviews\nUNION ALL SELECT 'truck', COUNT(*) FROM tb_101.raw_pos.truck;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>order_header</code> 248,201,269 · <code>order_detail</code> 673,655,465 · <code>customer_loyalty</code> 222,540 · <code>truck_reviews</code> 124,593 · <code>truck</code> 450. Ademas <code>analytics.ventas_diarias</code>: 261,847 filas, de 2019-01-01 a 2022-11-01, ventas totales $10,110,817,820."
+        }
+      ]
+    }
+  ]
+}

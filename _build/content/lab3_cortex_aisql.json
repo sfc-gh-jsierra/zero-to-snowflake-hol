@@ -1,0 +1,251 @@
+{
+  "lab": "lab3_cortex_aisql.html",
+  "intro": [
+    {
+      "type": "image",
+      "src": "img/quickstart/cortex_playground_header.png",
+      "caption": "Snowflake Cortex AI (quickstart Zero to Snowflake)"
+    },
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Empiezas en la UI (Cortex Playground) y luego pasas a SQL. Para la parte SQL abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab3_cortex_aisql</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>."
+    }
+  ],
+  "steps": [
+    {
+      "title": "Comparar modelos en Cortex Playground",
+      "nav": "Cortex Playground",
+      "minutes": 2,
+      "badge": "UI",
+      "resumen": "Comparamos modelos de lenguaje lado a lado en el Playground para elegir el mas adecuado a cada caso.",
+      "criterio": "Ves dos respuestas lado a lado, de dos LLM distintos, sobre la misma review de un food truck.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Antes de escribir SQL, prueba la IA generativa sin codigo. <strong>Cortex Playground</strong> te deja comparar LLM (Large Language Model) de distintos proveedores sobre los datos de tu cuenta, sin que salgan de Snowflake, para elegir el modelo adecuado para cada tarea de Tasty Bytes.</p><ol><li>En Snowsight ve a <strong>AI &amp; ML &gt; Studio &gt; Cortex Playground</strong>.</li><li>Haz clic en <strong>+ Connect your data</strong> y elige <strong>TB_101 &gt; HARMONIZED &gt; TRUCK_REVIEWS_V</strong>; pulsa <strong>Let's go</strong>.</li><li>Columna de texto: <strong>REVIEW</strong>; columna de filtro: <strong>TRUCK_BRAND_NAME</strong>; pulsa <strong>Done</strong>.</li><li>Filtra por una marca (por ejemplo <em>Better Off Bread</em>) para elegir una review.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-playground-connect.gif",
+          "caption": "Conectar TRUCK_REVIEWS_V en Cortex Playground"
+        },
+        {
+          "type": "text",
+          "html": "<ol start=\"5\"><li>Haz clic en <strong>Compare</strong> y elige un modelo distinto en cada panel (por ejemplo <code>claude-sonnet-4-5</code> y un modelo <code>llama</code>).</li><li>Pide a ambos: <em>\"Resume esta review en una frase y di si el cliente volveria\"</em>.</li><li>Compara estilo, precision y largo de las dos respuestas.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-playground-compare-two-model.png",
+          "caption": "Comparacion lado a lado de dos modelos"
+        },
+        {
+          "type": "text",
+          "html": "<p>Cada respuesta del Playground esta respaldada por SQL: haz clic en <strong>View Code</strong> y veras la llamada a <code>AI_COMPLETE</code> con tus parametros (modelo, temperature), lista para un SQL File.</p>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/cortex-playground-view-code.png",
+          "caption": "View Code: el SQL detras del Playground"
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Tip",
+          "html": "Lo que pruebes aqui se traduce directo a <code>AI_COMPLETE('&lt;modelo&gt;', ...)</code> en SQL, que es lo que haras en los siguientes pasos."
+        }
+      ]
+    },
+    {
+      "title": "Preguntas libres a un LLM con AI_COMPLETE",
+      "nav": "AI_COMPLETE",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Hacemos una pregunta de negocio a un LLM directamente desde SQL con AI_COMPLETE.",
+      "criterio": "La consulta devuelve una columna <code>RESPUESTA</code> con 3 bullets generados por <code>claude-sonnet-4-5</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Pasamos a SQL como <code>tb_analyst</code> (el setup ya le otorgo <code>SNOWFLAKE.CORTEX_USER</code>). <code>AI_COMPLETE</code> es la funcion detras del Playground: llama a un LLM desde SQL, sin APIs, sin llaves y sin mover los datos fuera de Snowflake.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Contexto y AI_COMPLETE",
+          "code": "-- Cambia al rol de trabajo\nUSE ROLE tb_analyst;\nUSE DATABASE tb_101;\nUSE WAREHOUSE tb_analyst_wh;\n\n-- Consulta al LLM directamente desde SQL\nSELECT AI_COMPLETE('claude-sonnet-4-5',\n  'En 3 bullets: que debe medir una cadena de food trucks para crecer?') AS respuesta;"
+        },
+        {
+          "type": "expected",
+          "html": "Una fila con la columna <code>RESPUESTA</code>: 3 bullets en espanol (por ejemplo ticket promedio, ventas por ubicacion, satisfaccion del cliente)."
+        }
+      ]
+    },
+    {
+      "title": "AI_SENTIMENT por marca y por aspecto",
+      "nav": "AI_SENTIMENT",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Medimos el sentimiento de las resenas por marca y por aspecto para ver donde estan las fortalezas y los problemas.",
+      "criterio": "Una tabla por marca con <code>positivas</code>, <code>negativas</code>, <code>neutras_mixtas</code> y <code>pct_positivas</code>; y 5 reviews con sentimiento por aspecto.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Como se sienten los clientes con cada marca? <code>AI_SENTIMENT</code> devuelve un OBJECT; <code>categories[0]:sentiment</code> trae el sentimiento global (<code>positive</code>, <code>negative</code>, <code>neutral</code> o <code>mixed</code>). Contamos cada clase por marca sobre una muestra de 50 reviews en ingles.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Sentimiento por marca",
+          "code": "-- Analiza una muestra de resenas con funciones de IA\nWITH muestra AS (\n    SELECT truck_brand_name, review\n    FROM harmonized.truck_reviews_v\n    WHERE language ILIKE '%en%' AND review IS NOT NULL\n    LIMIT 50   -- muestra para el lab (~25 s); en produccion se corre sobre todo\n)\nSELECT\n    truck_brand_name,\n    COUNT(*) AS reviews,\n    COUNT_IF(s = 'positive') AS positivas,\n    COUNT_IF(s = 'negative') AS negativas,\n    COUNT_IF(s IN ('neutral','mixed')) AS neutras_mixtas,\n    ROUND(100 * positivas / reviews, 1) AS pct_positivas\nFROM (\n    SELECT truck_brand_name,\n           AI_SENTIMENT(review):categories[0]:sentiment::STRING AS s\n    FROM muestra\n)\nGROUP BY truck_brand_name\nORDER BY pct_positivas DESC;"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/sentiment.png",
+          "caption": "Analisis de sentimiento de reviews (quickstart)"
+        },
+        {
+          "type": "expected",
+          "html": "Una fila por marca con <code>REVIEWS</code>, <code>POSITIVAS</code>, <code>NEGATIVAS</code>, <code>NEUTRAS_MIXTAS</code> y <code>PCT_POSITIVAS</code>, ordenada de mayor a menor. Tarda unos ~25 s."
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Bug real: la IA en el WHERE junto a un LIMIT tardo 303 s",
+          "html": "En la validacion, poner <code>AI_SENTIMENT(...)</code> en el <code>WHERE</code> junto a un <code>LIMIT</code> hizo que la IA se evaluara sobre muchas filas (303 s). La solucion es tomar la muestra en un CTE primero (<code>WITH muestra AS (... LIMIT 50)</code>) y aplicar la IA solo sobre esa muestra. Por eso este lab muestrea siempre en un CTE: el LIMIT va ANTES de llamar a la IA."
+        },
+        {
+          "type": "text",
+          "html": "<p>Si le pasas una lista de <strong>aspectos</strong>, <code>AI_SENTIMENT</code> mide cada dimension del negocio por separado: una review puede ser positiva en comida y negativa en tiempo de espera.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Sentimiento por aspecto",
+          "code": "-- Sentimiento por ASPECTO del negocio\nSELECT\n    review,\n    AI_SENTIMENT(review, ['comida', 'precio', 'servicio', 'tiempo de espera']) AS sentimiento_por_aspecto\nFROM harmonized.truck_reviews_v\nWHERE language ILIKE '%en%' AND review IS NOT NULL\nLIMIT 5;"
+        },
+        {
+          "type": "expected",
+          "html": "5 reviews; <code>SENTIMIENTO_POR_ASPECTO</code> es un JSON con <code>categories</code>: el <code>overall</code> mas una entrada por <code>comida</code>, <code>precio</code>, <code>servicio</code> y <code>tiempo de espera</code>, cada una con su sentimiento."
+        }
+      ]
+    },
+    {
+      "title": "AI_CLASSIFY: de que hablan los clientes",
+      "nav": "AI_CLASSIFY",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Clasificamos automaticamente las resenas por tema para saber de que hablan los clientes sin leerlas una a una.",
+      "criterio": "Conteos de reviews por marca y categoria (Calidad de comida, Precio, Experiencia de servicio, Actitud del personal).",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Clasificar texto libre en categorias de negocio sin entrenar ningun modelo: le das las etiquetas y <code>AI_CLASSIFY</code> elige la mejor para cada review (<code>labels[0]</code>). Asi sabes que tema domina en cada marca.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Clasificar reviews",
+          "code": "-- Analiza una muestra de resenas con funciones de IA\nWITH clasificadas AS (\n    SELECT\n        truck_brand_name,\n        AI_CLASSIFY(review, ['Calidad de comida', 'Precio', 'Experiencia de servicio', 'Actitud del personal']):labels[0]::STRING AS categoria\n    FROM harmonized.truck_reviews_v\n    WHERE language ILIKE '%en%' AND review IS NOT NULL AND LENGTH(review) > 30\n    LIMIT 150\n)\nSELECT truck_brand_name, categoria, COUNT(*) AS reviews\nFROM clasificadas\nGROUP BY ALL\nORDER BY truck_brand_name, reviews DESC;"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/classify.png",
+          "caption": "Clasificacion de reviews en categorias (quickstart)"
+        },
+        {
+          "type": "expected",
+          "html": "Filas <code>TRUCK_BRAND_NAME</code> / <code>CATEGORIA</code> / <code>REVIEWS</code>, con la categoria mas frecuente primero dentro de cada marca."
+        }
+      ]
+    },
+    {
+      "title": "AI_EXTRACT: datos puntuales desde texto libre",
+      "nav": "AI_EXTRACT",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Extraemos datos puntuales desde texto libre de las resenas y los dejamos como columnas estructuradas.",
+      "criterio": "Cada una de las 8 reviews trae una columna <code>EXTRACCION</code> con <code>queja_principal</code>, <code>plato_mencionado</code> y <code>volveria</code>.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p><code>AI_EXTRACT</code> convierte texto en campos estructurados: en <code>responseFormat</code> defines cada campo con una pregunta en lenguaje natural. Elegimos reviews que hablan de comida fria, esperas o decepcion. De nuevo, la muestra se toma <strong>antes</strong> de llamar a la IA.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Extraer campos",
+          "code": "-- Analiza una muestra de resenas con funciones de IA\nWITH muestra AS (\n    SELECT truck_brand_name, review\n    FROM harmonized.truck_reviews_v\n    WHERE language ILIKE '%en%' AND review IS NOT NULL\n      AND (review ILIKE '%cold%' OR review ILIKE '%wait%' OR review ILIKE '%disappoint%')\n    LIMIT 8\n)\nSELECT\n    truck_brand_name,\n    review,\n    AI_EXTRACT(\n        text => review,\n        responseFormat => {\n            'queja_principal': 'Cual es la queja principal del cliente? Responde en espanol',\n            'plato_mencionado': 'Que plato o producto menciona?',\n            'volveria': 'El cliente volveria? (SI / NO / NO SE)'\n        }\n    ):response AS extraccion\nFROM muestra;"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/extract.png",
+          "caption": "Extraccion de informacion desde reviews (quickstart)"
+        },
+        {
+          "type": "expected",
+          "html": "8 filas; <code>EXTRACCION</code> es un JSON con <code>queja_principal</code> (en espanol), <code>plato_mencionado</code> y <code>volveria</code>."
+        }
+      ]
+    },
+    {
+      "title": "Resumen ejecutivo con AI_SUMMARIZE_AGG + AI_TRANSLATE",
+      "nav": "Resumen ejecutivo",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Resumimos todas las resenas de cada marca y las traducimos al espanol para entregar un resumen ejecutivo.",
+      "criterio": "Una fila por marca (Freezing Point, Better Off Bread, Kitakata Ramen Bar) con un resumen ejecutivo en espanol.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p><code>AI_SUMMARIZE_AGG</code> es una funcion de <strong>agregacion</strong>: igual que <code>SUM</code>, resume muchas filas, pero produce un solo texto por grupo. <code>AI_TRANSLATE</code> lo lleva del ingles al espanol para el comite directivo.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Resumen por marca",
+          "code": "-- Resume las resenas por marca y las traduce\nSELECT\n    truck_brand_name,\n    AI_TRANSLATE(AI_SUMMARIZE_AGG(review), 'en', 'es') AS resumen_ejecutivo\nFROM (\n    SELECT truck_brand_name, review\n    FROM harmonized.truck_reviews_v\n    WHERE truck_brand_name IN ('Freezing Point', 'Better Off Bread', 'Kitakata Ramen Bar')\n      AND language ILIKE '%en%' AND review IS NOT NULL\n    LIMIT 90\n)\nGROUP BY truck_brand_name;"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/summarize.png",
+          "caption": "Resumen de reviews por marca (quickstart)"
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Momento wow",
+          "html": "Decenas de reviews en ingles convertidas en un resumen ejecutivo en espanol por marca, con una sola consulta SQL y un <code>GROUP BY</code>."
+        },
+        {
+          "type": "expected",
+          "html": "3 filas, una por marca, con <code>RESUMEN_EJECUTIVO</code> en espanol (fortalezas y quejas recurrentes)."
+        }
+      ]
+    },
+    {
+      "title": "Bonus: Cortex Code cruza sentimiento y ventas",
+      "nav": "Bonus Cortex Code",
+      "minutes": 1,
+      "badge": "UI",
+      "resumen": "Usamos Cortex Code para cruzar el sentimiento de los clientes con las ventas mediante lenguaje natural.",
+      "criterio": "Cortex Code genera y ejecuta el SQL que relaciona sentimiento con ventas por marca y te muestra una grafica.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p><strong>Cortex Code (CoCo)</strong> es el asistente agentico de Snowflake: escribe, ejecuta y explica SQL por ti sobre tus propios datos.</p><ol><li>Abre <strong>Cortex Code</strong> en el panel derecho de Snowsight.</li><li>Pega el prompt de abajo.</li><li>Revisa el SQL que propone, apruebalo y mira la grafica.</li></ol>"
+        },
+        {
+          "type": "callout",
+          "kind": "info",
+          "title": "Prompt para Cortex Code",
+          "html": "<em>Analiza si el sentimiento de las reviews se relaciona con las ventas por marca en TB_101 y muestrame una grafica</em>"
+        },
+        {
+          "type": "expected",
+          "html": "CoCo une las reviews (<code>TRUCK_REVIEWS_V</code>) con las ventas por marca, muestra una tabla con sentimiento y ventas, y una grafica comparativa."
+        }
+      ]
+    }
+  ]
+}

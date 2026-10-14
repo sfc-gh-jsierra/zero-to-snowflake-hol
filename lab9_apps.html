@@ -1,0 +1,1479 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LAB 9: Del agente a tus apps: Streamlit + React | Zero to Snowflake HOL</title>
+<style>
+
+:root {
+    --sf-accent: #29B5E8;
+    --sf-headers: #11567F;
+    --sf-headers-dark: #0c3f5c;
+    --sf-green: #2fb380;
+    --sf-red: #e5484d;
+    --sf-orange: #ff922b;
+    --sf-yellow: #ffb703;
+
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-500: #64748b;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --gray-900: #0f172a;
+
+    --font-head: 'Montserrat', 'Segoe UI', Arial, sans-serif;
+    --font-body: 'Lato', 'Segoe UI', Helvetica, Arial, sans-serif;
+    --font-mono: 'SFMono-Regular', 'Consolas', 'Menlo', monospace;
+
+    --space-xs: 0.25rem;
+    --space-sm: 0.5rem;
+    --space-md: 1rem;
+    --space-lg: 1.5rem;
+    --space-xl: 2rem;
+    --space-2xl: 3rem;
+    --space-3xl: 4rem;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-full: 9999px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 10px -2px rgba(17,86,127,0.15);
+    --shadow-lg: 0 10px 20px -4px rgba(17,86,127,0.20);
+
+    --header-height: 64px;
+    --sidebar-width: 270px;
+    --content-max-width: 880px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-height) + var(--space-lg)); }
+body {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    color: var(--gray-800);
+    background-color: var(--gray-50);
+    -webkit-font-smoothing: antialiased;
+}
+h1, h2, h3, h4 {
+    font-family: var(--font-head);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-900);
+}
+a { color: var(--sf-accent); text-decoration: none; }
+a:hover { color: var(--sf-headers); }
+code { font-family: var(--font-mono); }
+
+/* Header */
+.hol-header {
+    position: fixed; top: 0; left: 0; right: 0; height: var(--header-height);
+    background: white; border-bottom: 1px solid var(--gray-200); z-index: 100; box-shadow: var(--shadow-sm);
+}
+.header-container {
+    max-width: 1400px; margin: 0 auto; height: 100%;
+    display: flex; align-items: center; justify-content: space-between; padding: 0 var(--space-xl);
+}
+.logo-section { display: flex; align-items: center; gap: var(--space-md); }
+.sf-logo-mark { width: 32px; height: 32px; }
+.brand-name { font-family: var(--font-head); font-weight: 700; font-size: 1rem; color: var(--sf-headers); letter-spacing: 0.5px; }
+.logo-divider { width: 1px; height: 24px; background: var(--gray-300); }
+.hol-badge {
+    background: linear-gradient(135deg, var(--sf-accent), var(--sf-headers));
+    color: white; padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+}
+.header-nav { display: flex; gap: var(--space-lg); }
+.header-nav a { color: var(--gray-600); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+/* Hero */
+.hero-section {
+    margin-top: var(--header-height);
+    background: linear-gradient(135deg, var(--sf-headers-dark) 0%, var(--sf-headers) 100%);
+    padding: var(--space-3xl) 0; color: white;
+}
+.hero-container {
+    max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl);
+    display: grid; grid-template-columns: 1.3fr 1fr; gap: var(--space-3xl); align-items: center;
+}
+.industry-tag {
+    display: inline-block; background: rgba(41,181,232,0.25); color: #bfe9f9;
+    padding: var(--space-xs) var(--space-md); border-radius: var(--radius-full);
+    font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: var(--space-md);
+}
+.hero-title { font-family: var(--font-head); font-size: 2.3rem; font-weight: 800; line-height: 1.25; margin-bottom: var(--space-md); text-transform: none; color: white; }
+.hero-subtitle { font-family: var(--font-body); font-size: 1.05rem; color: #dceefa; margin-bottom: var(--space-xl); line-height: 1.7; text-transform: none; }
+.hero-meta { display: flex; gap: var(--space-xl); margin-bottom: var(--space-xl); flex-wrap: wrap; }
+.meta-item { display: flex; align-items: center; gap: var(--space-sm); color: #cfe6f2; font-size: 0.875rem; }
+.meta-icon { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+.hero-cta {
+    display: inline-flex; align-items: center; gap: var(--space-sm);
+    background: var(--sf-accent); color: white; padding: var(--space-md) var(--space-xl);
+    border-radius: var(--radius-md); font-family: var(--font-head); font-weight: 700; letter-spacing: 0.5px;
+    box-shadow: var(--shadow-lg);
+}
+.hero-cta:hover { background: white; color: var(--sf-headers); }
+.architecture-preview {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+    border-radius: var(--radius-lg); padding: var(--space-xl); backdrop-filter: blur(6px);
+    font-family: var(--font-mono); font-size: 0.8rem; color: #cfe6f2; line-height: 1.9;
+}
+.arch-line { display: block; }
+.arch-arrow { color: var(--sf-accent); }
+
+/* Content sections */
+.content-section { padding: var(--space-2xl) 0; }
+.content-section.alt-bg { background: white; }
+.section-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); }
+.section-title {
+    font-size: 1.5rem; font-weight: 800; color: var(--gray-900);
+    margin-bottom: var(--space-xl); position: relative; padding-bottom: var(--space-md);
+}
+.section-title::after {
+    content: ''; position: absolute; bottom: 0; left: 0; width: 56px; height: 4px;
+    background: linear-gradient(90deg, var(--sf-accent), var(--sf-headers)); border-radius: var(--radius-full);
+}
+
+.overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.overview-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); padding: var(--space-xl); }
+.overview-card.highlight { background: linear-gradient(135deg, #eaf7fd, white); border-color: var(--sf-accent); }
+.overview-card h3 { font-size: 0.95rem; color: var(--gray-700); margin-bottom: var(--space-md); }
+.overview-card p { text-transform: none; font-family: var(--font-body); color: var(--gray-600); }
+.learning-list { list-style: none; }
+.learning-list li { position: relative; padding-left: var(--space-lg); margin-bottom: var(--space-sm); color: var(--gray-600); text-transform: none; font-family: var(--font-body); }
+.learning-list li::before { content: ''; position: absolute; left: 0; top: 8px; width: 8px; height: 8px; background: var(--sf-accent); border-radius: 50%; }
+.tech-tags { display: flex; flex-wrap: wrap; gap: var(--space-sm); }
+.tech-tag {
+    display: inline-flex; align-items: center; background: var(--gray-100);
+    padding: var(--space-xs) var(--space-sm); border-radius: var(--radius-sm);
+    font-size: 0.78rem; color: var(--gray-700); font-family: var(--font-mono); text-transform: none;
+}
+
+.prerequisites-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-lg); }
+.prereq-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius-md); padding: var(--space-lg); display: flex; gap: var(--space-md); align-items: flex-start; }
+.prereq-icon { width: 28px; height: 28px; flex-shrink: 0; color: var(--sf-accent); }
+.prereq-info h4 { font-size: 0.9rem; color: var(--gray-800); margin-bottom: var(--space-xs); }
+.prereq-info p { font-family: var(--font-body); font-size: 0.85rem; color: var(--gray-500); text-transform: none; }
+
+/* Progress tracker */
+.progress-tracker {
+    position: fixed; left: 0; top: var(--header-height); bottom: 0; width: var(--sidebar-width);
+    background: white; border-right: 1px solid var(--gray-200); padding: var(--space-xl); overflow-y: auto; z-index: 50;
+}
+.progress-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md); font-family: var(--font-head); font-weight: 700; font-size: 0.8rem; color: var(--gray-700); }
+.progress-percent { color: var(--sf-accent); }
+.progress-bar { height: 6px; background: var(--gray-200); border-radius: var(--radius-full); margin-bottom: var(--space-xl); overflow: hidden; }
+.progress-fill { height: 100%; background: linear-gradient(90deg, var(--sf-accent), var(--sf-green)); border-radius: var(--radius-full); width: 0%; transition: width 250ms ease; }
+.steps-nav { display: flex; flex-direction: column; gap: var(--space-xs); }
+.step-nav-item {
+    display: flex; align-items: center; gap: var(--space-sm); padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md); color: var(--gray-600); font-size: 0.82rem; text-decoration: none;
+}
+.step-nav-item:hover { background: var(--gray-100); }
+.step-nav-item.active { background: #eaf7fd; color: var(--sf-headers); font-weight: 700; }
+.step-nav-item.completed { color: var(--sf-green); }
+.step-nav-item .step-indicator {
+    width: 22px; height: 22px; border-radius: 50%; border: 2px solid currentColor;
+    display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: 700; flex-shrink: 0;
+}
+.step-nav-item.completed .step-indicator { background: var(--sf-green); border-color: var(--sf-green); color: white; }
+
+/* Steps container */
+.steps-container { margin-left: var(--sidebar-width); padding: var(--space-2xl); max-width: calc(var(--content-max-width) + var(--sidebar-width) + var(--space-3xl) * 2); }
+
+.callout { display: flex; gap: var(--space-md); padding: var(--space-lg); border-radius: var(--radius-md); margin: 0 0 var(--space-xl) 0; }
+.callout-icon { flex-shrink: 0; width: 24px; height: 24px; }
+.callout-icon svg { width: 100%; height: 100%; }
+.callout-content { flex: 1; }
+.callout-title { display: block; margin-bottom: var(--space-xs); font-family: var(--font-head); font-size: 0.85rem; letter-spacing: 0.5px; }
+.callout-content p { margin: 0; font-size: 0.92rem; font-family: var(--font-body); text-transform: none; color: var(--gray-700); }
+.callout-warning { background: #fff4e6; border-left: 4px solid var(--sf-orange); }
+.callout-warning .callout-icon { color: var(--sf-orange); }
+.callout-info { background: #eaf7fd; border-left: 4px solid var(--sf-accent); }
+.callout-info .callout-icon { color: var(--sf-accent); }
+.callout-tip { background: #eafaf3; border-left: 4px solid var(--sf-green); }
+.callout-tip .callout-icon { color: var(--sf-green); }
+
+.step-card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius-lg); margin-bottom: var(--space-xl); overflow: hidden; scroll-margin-top: calc(var(--header-height) + var(--space-lg)); }
+.step-card.completed { border-color: var(--sf-green); }
+.step-card.completed .step-number { background: var(--sf-green); }
+.step-header { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-lg); background: var(--gray-50); border-bottom: 1px solid var(--gray-200); cursor: pointer; }
+.step-number {
+    width: 40px; height: 40px; background: var(--sf-headers); color: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 800; font-size: 1.05rem; flex-shrink: 0;
+}
+.step-info { flex: 1; }
+.step-title { font-size: 1.05rem; font-weight: 800; color: var(--gray-800); margin: 0; text-transform: none; }
+.step-duration { font-family: var(--font-body); font-size: 0.78rem; color: var(--gray-500); text-transform: none; }
+.step-toggle { background: none; border: none; padding: var(--space-sm); cursor: pointer; color: var(--gray-400); transition: transform 150ms ease; }
+.step-toggle[aria-expanded="false"] { transform: rotate(-90deg); }
+.step-toggle svg { width: 22px; height: 22px; fill: currentColor; }
+.step-content { padding: var(--space-xl); }
+.step-content.collapsed { display: none; }
+.step-description { color: var(--gray-600); margin-bottom: var(--space-lg); line-height: 1.75; text-transform: none; font-family: var(--font-body); }
+.step-description strong { color: var(--gray-800); }
+.step-description code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.85rem; }
+.step-actions { display: flex; justify-content: flex-end; padding-top: var(--space-lg); border-top: 1px solid var(--gray-200); margin-top: var(--space-xl); }
+.btn-check {
+    display: inline-flex; align-items: center; gap: var(--space-sm); background: var(--gray-100); color: var(--gray-700);
+    border: none; padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md); font-family: var(--font-head);
+    font-weight: 700; font-size: 0.78rem; letter-spacing: 0.5px; text-transform: uppercase; cursor: pointer;
+}
+.btn-check:hover { background: var(--sf-green); color: white; }
+.btn-check svg { width: 16px; height: 16px; fill: currentColor; }
+.btn-check:disabled { cursor: default; }
+
+.sub-heading { font-family: var(--font-head); font-size: 0.85rem; color: var(--sf-headers); letter-spacing: 0.5px; margin: var(--space-lg) 0 var(--space-sm) 0; }
+
+/* Code blocks */
+.code-block { background: var(--gray-900); border-radius: var(--radius-md); margin: var(--space-md) 0 var(--space-lg) 0; overflow: hidden; }
+.code-header { display: flex; justify-content: space-between; align-items: center; padding: var(--space-sm) var(--space-md); background: var(--gray-800); border-bottom: 1px solid var(--gray-700); }
+.code-language { color: var(--gray-400); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; font-family: var(--font-head); }
+.code-actions { display: flex; gap: var(--space-xs); }
+.code-actions button { background: transparent; border: none; padding: var(--space-xs) var(--space-sm); cursor: pointer; color: var(--gray-400); border-radius: var(--radius-sm); font-family: var(--font-head); font-size: 0.7rem; font-weight: 700; letter-spacing: 0.5px; }
+.code-actions button:hover { background: var(--gray-700); color: var(--sf-accent); }
+.code-block pre { margin: 0; padding: var(--space-lg); overflow-x: auto; max-height: 480px; }
+.code-block code { font-family: var(--font-mono); font-size: 0.82rem; line-height: 1.6; color: var(--gray-100); white-space: pre; }
+
+/* Tables */
+.table-wrapper { overflow-x: auto; margin: var(--space-lg) 0; border-radius: var(--radius-md); border: 1px solid var(--gray-200); }
+.data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.data-table th { background: var(--gray-100); padding: var(--space-sm) var(--space-md); text-align: left; font-family: var(--font-head); font-weight: 700; font-size: 0.72rem; letter-spacing: 0.5px; text-transform: uppercase; color: var(--gray-700); border-bottom: 2px solid var(--gray-300); white-space: nowrap; }
+.data-table td { padding: var(--space-sm) var(--space-md); border-bottom: 1px solid var(--gray-200); color: var(--gray-600); }
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table code { background: var(--gray-100); padding: 2px 6px; border-radius: var(--radius-sm); font-size: 0.78rem; }
+
+/* Completion */
+.completion-section { display: none; background: linear-gradient(135deg, var(--sf-green), #1f8a5f); color: white; padding: var(--space-3xl) 0; text-align: center; margin-left: var(--sidebar-width); }
+.completion-section.visible { display: block; }
+.completion-container { max-width: 600px; margin: 0 auto; padding: 0 var(--space-xl); }
+.completion-icon { width: 72px; height: 72px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto var(--space-xl); }
+.completion-icon svg { width: 42px; height: 42px; fill: var(--sf-green); }
+.completion-section h2 { font-size: 1.7rem; margin-bottom: var(--space-md); color: white; }
+.completion-section p { text-transform: none; font-family: var(--font-body); }
+.completion-summary { display: flex; justify-content: center; gap: var(--space-2xl); margin: var(--space-xl) 0; }
+.summary-item { text-align: center; }
+.summary-label { display: block; font-size: 0.8rem; opacity: 0.9; margin-bottom: var(--space-xs); text-transform: none; font-family: var(--font-body); }
+.summary-value { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; }
+.next-actions { background: rgba(255,255,255,0.12); border-radius: var(--radius-lg); padding: var(--space-xl); margin-top: var(--space-xl); text-align: left; }
+.next-actions h3 { font-size: 0.9rem; margin-bottom: var(--space-md); }
+.next-actions ul { list-style: none; text-transform: none; font-family: var(--font-body); }
+.next-actions li { padding: var(--space-xs) 0; }
+
+/* Footer */
+.hol-footer { background: var(--gray-900); color: var(--gray-400); padding: var(--space-xl) 0; margin-left: var(--sidebar-width); }
+.footer-container { max-width: 1200px; margin: 0 auto; padding: 0 var(--space-xl); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: var(--space-md); }
+.footer-brand { display: flex; align-items: center; gap: var(--space-md); }
+.footer-brand .sf-logo-mark { filter: brightness(0) invert(1); }
+.footer-meta { text-align: right; font-size: 0.78rem; }
+
+@media (max-width: 992px) {
+    .progress-tracker { display: none; }
+    .steps-container, .hol-footer, .completion-section { margin-left: 0; }
+    .hero-container, .overview-grid, .prerequisites-grid { grid-template-columns: 1fr; }
+    .header-nav { display: none; }
+}
+
+
+/* ============================================================
+   EXTENSIONES SEMANTICAS DEL HOL
+   Traduce el vocabulario del HOL real (paso-criterio, modalidad-badge,
+   bug-real, wow, evidencia, prompt de CoCo, ubicate, arquitectura)
+   al lenguaje visual del skill (paleta #29B5E8 / #11567F).
+   ============================================================ */
+
+/* --- Criterio de exito por paso (franja verde) --- */
+.step-criterio {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-sm);
+    background: rgba(47,179,128,0.08);
+    border-left: 3px solid var(--sf-green);
+    border-radius: var(--radius-sm);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+    font-size: 0.9375rem;
+    color: var(--gray-700);
+}
+.step-criterio strong { color: #1c7a56; }
+.step-criterio.hard {
+    background: rgba(229,72,77,0.07);
+    border-left-color: var(--sf-red);
+}
+.step-criterio.hard strong { color: #b3282c; }
+
+/* --- Badge de modalidad de ejecucion (SQL / Snowsight / CoCo / CLI) --- */
+.modalidad-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
+    margin-bottom: var(--space-sm);
+}
+.modalidad-badge.sql   { background: rgba(41,181,232,0.14); color: #14708f; border: 1px solid rgba(41,181,232,0.35); }
+.modalidad-badge.ui    { background: rgba(17,86,127,0.10);  color: var(--sf-headers); border: 1px solid rgba(17,86,127,0.28); }
+.modalidad-badge.coco  { background: rgba(139,92,246,0.12); color: #6d3fd4; border: 1px solid rgba(139,92,246,0.32); }
+.modalidad-badge.cli   { background: rgba(100,116,139,0.12); color: var(--gray-600); border: 1px solid rgba(100,116,139,0.30); }
+
+/* --- Bug real encontrado en la validacion (borde rojo punteado) --- */
+.bug-real {
+    border: 2px dashed var(--sf-red);
+    border-radius: var(--radius-md);
+    background: rgba(229,72,77,0.04);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.bug-titulo {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.9375rem;
+    color: #b3282c;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.bug-real p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.bug-real p:last-child { margin-bottom: 0; }
+
+/* --- Momento WOW: construye algo que impresiona (borde morado) --- */
+.wow {
+    border: 2px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, rgba(139,92,246,0.06) 0%, rgba(41,181,232,0.05) 100%);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+.wow-titulo {
+    font-family: var(--font-head);
+    font-weight: 800;
+    font-size: 1rem;
+    color: #6d3fd4;
+    margin-bottom: var(--space-sm);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.wow p { margin-bottom: var(--space-sm); font-size: 0.9375rem; }
+.wow p:last-child { margin-bottom: 0; }
+
+/* --- Evidencia verificada (borde verde punteado) --- */
+.evidencia {
+    border: 1px dashed var(--sf-green);
+    border-radius: var(--radius-md);
+    background: rgba(47,179,128,0.05);
+    padding: var(--space-md) var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-size: 0.9rem;
+    color: var(--gray-700);
+}
+.evidencia code { background: rgba(47,179,128,0.12); color: #1c7a56; }
+
+/* --- Prompt para CoCo (estilo burbuja de chat) --- */
+.prompt-label {
+    font-family: var(--font-head);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #6d3fd4;
+    margin: var(--space-md) 0 var(--space-xs);
+}
+.prompt-coco {
+    position: relative;
+    background: #f5f3ff;
+    border: 1px solid rgba(139,92,246,0.30);
+    border-left: 4px solid #8b5cf6;
+    border-radius: var(--radius-md);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-md);
+    font-family: var(--font-body);
+    font-size: 0.9375rem;
+    font-style: italic;
+    color: var(--gray-800);
+    line-height: 1.65;
+}
+
+/* --- "Ubicate": donde pararse antes de ejecutar el paso --- */
+.ubicate {
+    font-family: var(--font-head);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--sf-headers);
+    background: rgba(41,181,232,0.10);
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    margin-right: 6px;
+}
+
+/* --- Detalle colapsable: "ver el SQL que corre por debajo" --- */
+details.underlying {
+    border: 1px solid var(--gray-200);
+    border-radius: var(--radius-md);
+    background: var(--gray-50);
+    padding: var(--space-sm) var(--space-md);
+    margin: var(--space-md) 0;
+}
+details.underlying > summary {
+    cursor: pointer;
+    font-family: var(--font-head);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--sf-headers);
+    list-style: none;
+}
+details.underlying > summary::before { content: '▸ '; color: var(--sf-accent); }
+details.underlying[open] > summary::before { content: '▾ '; }
+details.underlying[open] > summary { margin-bottom: var(--space-md); }
+
+/* --- Diagrama de arquitectura en texto (sin dependencias externas) --- */
+.arch-diagram {
+    background: var(--gray-900);
+    color: #cbd5e1;
+    border-radius: var(--radius-md);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    overflow-x: auto;
+    white-space: pre;
+}
+.arch-diagram .n { color: var(--sf-accent); font-weight: 700; }
+.arch-diagram .g { color: var(--sf-green); }
+
+/* --- Badges de estado de track (PASA / conectas-no-construyes) --- */
+.track-badge {
+    display: inline-block;
+    font-family: var(--font-head);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 3px 10px;
+    border-radius: var(--radius-full);
+    margin-left: var(--space-sm);
+    vertical-align: middle;
+}
+.track-badge.pasa    { background: rgba(47,179,128,0.15); color: #1c7a56; }
+.track-badge.connect { background: rgba(41,181,232,0.15); color: #14708f; }
+.track-badge.excep   { background: rgba(255,146,43,0.15); color: #b35f00; }
+
+/* Sobre fondo oscuro (hero) los badges necesitan fondo solido para tener contraste */
+.hero-section .track-badge.pasa,
+.hero-section .track-badge.connect,
+.hero-section .track-badge.excep {
+    background: rgba(255,255,255,0.92);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.18);
+}
+
+/* --- Rol del proveedor (nota de gobernanza del Anexo 11) --- */
+.rol-proveedor {
+    font-size: 0.8125rem;
+    color: var(--gray-500);
+    font-style: italic;
+}
+
+
+/* figures + expected (generated by _build/build_labs.py) */
+.step-figure { margin: var(--space-md) 0 var(--space-lg); text-align: center; }
+.step-figure img { max-width: 100%; border-radius: 10px; border: 1px solid #dbe6f0; box-shadow: 0 6px 22px rgba(17,86,127,0.12); }
+.step-figure figcaption { margin-top: 6px; font-size: 0.8rem; color: var(--gray-500, #6b7280); font-style: italic; }
+.step-text { margin: var(--space-md) 0; line-height: 1.65; }
+.step-text p { margin: 0 0 0.6em; }
+.code-label { font-weight: 600; margin-left: 8px; color: #9fd8f0; text-transform: none; }
+.step-resumen { margin: 10px 0 12px; padding: 10px 14px; border-radius: 10px; background: linear-gradient(90deg, rgba(41,181,232,0.12), rgba(41,181,232,0.02)); border: 1px solid rgba(41,181,232,0.25); font-size: 0.95rem; line-height: 1.55; }
+.step-resumen strong { color: #11567F; }
+.callout-expected { background: #f2f7ff; border-left: 4px solid #11567F; }
+
+.hol-footer{margin-left:0!important}
+/* ===== visual layer v2 (generated by _build/build_labs.py) ===== */
+html { scroll-behavior: smooth; scroll-padding-top: 88px; }
+.progress-tracker {
+  top: calc(var(--header-height) + 18px); left: 18px; bottom: auto; max-height: calc(100vh - var(--header-height) - 36px);
+  width: calc(var(--sidebar-width) - 36px); border: 1px solid rgba(41,181,232,0.22); border-radius: 18px;
+  background: rgba(255,255,255,0.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 48px rgba(17,86,127,0.16); padding: 18px 14px;
+  opacity: 0; transform: translateX(-16px); pointer-events: none; transition: opacity .35s ease, transform .35s ease;
+}
+body.in-steps .progress-tracker { opacity: 1; transform: none; pointer-events: auto; }
+.step-nav-item { align-items: flex-start; line-height: 1.3; padding: 7px 10px; font-size: 0.8rem; transition: background .2s, color .2s; }
+.step-nav-item .nav-label { flex: 1; }
+.step-nav-item .nav-min { flex-shrink: 0; font-size: 0.68rem; font-weight: 700; color: #11567F; background: rgba(41,181,232,0.12); border-radius: 999px; padding: 2px 7px; margin-top: 1px; }
+.step-nav-item.active { box-shadow: inset 3px 0 0 var(--sf-accent); }
+.steps-container { max-width: calc(980px + var(--sidebar-width)); margin-left: var(--sidebar-width); margin-right: auto; }
+@media (min-width: 1500px) { .steps-container { margin-left: calc(var(--sidebar-width) + (100vw - var(--sidebar-width) - 1060px) / 2 - 40px); } }
+
+.step-card { border: 1px solid #e3edf5; border-radius: 20px; box-shadow: 0 2px 4px rgba(17,86,127,0.04), 0 14px 36px rgba(17,86,127,0.08); overflow: hidden; transition: box-shadow .25s, transform .25s; }
+.step-card:hover { box-shadow: 0 2px 4px rgba(17,86,127,0.05), 0 22px 54px rgba(17,86,127,0.14); }
+.step-card.active-card { border-color: rgba(41,181,232,0.55); }
+.step-header { background: linear-gradient(100deg, #f5fbff 0%, #ffffff 70%); border-bottom: 1px solid #eef4f9; }
+.step-number { background: linear-gradient(135deg, #29B5E8, #11567F) !important; color: #fff !important; border: none !important; box-shadow: 0 6px 16px rgba(41,181,232,0.45); }
+.step-duration { display: inline-block; background: rgba(41,181,232,0.12); color: #11567F; font-weight: 700; border-radius: 999px; padding: 2px 10px; font-size: 0.75rem; }
+.step-content { padding-top: 18px; }
+.modalidad-badge { letter-spacing: .6px; }
+.modalidad-badge.ui { background: rgba(255,146,43,0.14); color: #b45309; border: 1px solid rgba(255,146,43,0.4); }
+.modalidad-badge.cli, .modalidad-badge.python { background: rgba(125,68,207,0.12); color: #6d28d9; border: 1px solid rgba(125,68,207,0.35); }
+.modalidad-badge.ia { background: rgba(212,91,144,0.12); color: #be185d; border: 1px solid rgba(212,91,144,0.35); }
+.step-resumen { position: relative; padding-left: 44px; }
+.step-resumen::before { content: "→"; position: absolute; left: 14px; top: 8px; width: 20px; height: 20px; border-radius: 50%; background: #29B5E8; color: #fff; font-size: 12px; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+.step-text { font-size: 0.97rem; color: #1f2937; }
+.step-text p:first-child { margin-top: 0; }
+.step-text table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 0.88rem; }
+.step-text th, .step-text td { border-bottom: 1px solid #e5edf4; padding: 7px 10px; text-align: left; vertical-align: top; }
+.step-text th { background: #f2f8fc; color: #11567F; }
+
+.code-block { background: #0b1220; border: 1px solid #1c2a44; border-radius: 14px; box-shadow: 0 10px 30px rgba(2,8,23,0.28); }
+.code-header { background: linear-gradient(180deg, #131d33, #0f1829); border-bottom: 1px solid #1c2a44; padding: 9px 14px !important; display: flex; align-items: center; }
+.code-header::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: #ff5f57; box-shadow: 16px 0 0 #febc2e, 32px 0 0 #28c840; margin-right: 46px; flex-shrink: 0; }
+.code-language { color: #7dd3fc !important; font-size: 0.7rem !important; letter-spacing: 1px; }
+.code-label { color: #cbd5e1 !important; font-weight: 500 !important; letter-spacing: 0; }
+.code-actions { margin-left: auto; }
+.btn-copy { background: rgba(41,181,232,0.16) !important; color: #e0f2fe !important; border: 1px solid rgba(41,181,232,0.45) !important; border-radius: 8px !important; padding: 4px 12px !important; font-weight: 700; cursor: pointer; transition: background .2s, transform .1s; }
+.btn-copy:hover { background: #29B5E8 !important; color: #fff !important; }
+.btn-copy:active { transform: scale(.96); }
+.code-block pre { max-height: 560px; }
+.code-block code { color: #e2e8f0; font-size: 0.83rem; }
+.code-block .tk-c { color: #64748b; font-style: italic; }
+.code-block .tk-k { color: #7dd3fc; font-weight: 600; }
+.code-block .tk-s { color: #fcd34d; }
+.code-block .tk-n { color: #f0abfc; }
+.code-block .tk-f { color: #86efac; }
+
+.step-figure { margin: 18px 0 24px; }
+.step-figure img { max-height: 460px; width: auto; max-width: 100%; object-fit: contain; background: #fff; border-radius: 14px; cursor: zoom-in; transition: transform .25s, box-shadow .25s; }
+.step-figure img:hover { transform: translateY(-2px); box-shadow: 0 16px 40px rgba(17,86,127,0.22); }
+.step-figure figcaption::before { content: "🔍 "; font-style: normal; }
+.lightbox { position: fixed; inset: 0; z-index: 999; background: rgba(5,11,24,0.88); display: none; align-items: center; justify-content: center; padding: 32px; cursor: zoom-out; backdrop-filter: blur(6px); }
+.lightbox.open { display: flex; }
+.lightbox img { max-width: 96vw; max-height: 92vh; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,0.6); background: #fff; }
+
+.callout { border-radius: 14px; }
+.callout-expected { background: linear-gradient(100deg, #eef6ff, #f8fbff); border-left-color: #11567F; }
+.btn-check { border-radius: 10px !important; transition: transform .1s, box-shadow .2s; }
+.btn-check:hover { box-shadow: 0 8px 22px rgba(47,179,128,0.35); }
+@media (max-width: 992px) { .steps-container { margin-left: 0 !important; } .code-header::before { display: none; } }
+</style>
+</head>
+<body data-hol-id="z2s-lab9-apps">
+
+<header class="hol-header">
+    <div class="header-container">
+        <div class="logo-section">
+            <svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="var(--sf-accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="var(--sf-accent)" stroke="none"/></svg>
+            <span class="brand-name">Snowflake</span>
+            <span class="logo-divider"></span>
+            <span class="hol-badge">Hands-On Lab</span>
+        </div>
+        <nav class="header-nav">
+            <a href="#overview">Vision General</a>
+            <a href="#prerequisites">Requisitos</a>
+            <a href="#steps">Pasos</a>
+            <a href="#resources">Recursos</a>
+            <a href="index.html">Indice</a>
+        </nav>
+    </div>
+</header>
+
+<section class="hero-section">
+    <div class="hero-container">
+        <div class="hero-content">
+            <span class="industry-tag">TASTY BYTES · FOOD TRUCKS GLOBALES</span>
+            <h1 class="hero-title">LAB 9: Del agente a tus apps: Streamlit + React</h1>
+            <p class="hero-subtitle"><strong>Objetivo:</strong> llevar el agente de Snowflake CoWork y la analitica de Tasty Bytes a dos apps que corren dentro de Snowflake: un Copilot en Streamlit y un Command Center en React con Snowflake App Runtime.</p>
+            <div class="hero-meta">
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm0 18c-4.4 0-8-3.6-8-8s3.6-8 8-8 8 3.6 8 8-3.6 8-8 8zm.5-13H11v6l5.2 3.2.8-1.3-4.5-2.7V7z"/></svg><span>12 minutos</span></div>
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2zm0 4l7.5 13h-15L12 6z"/></svg><span>Nivel Intermedio</span></div>
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><span>4 pasos</span></div>
+                <div class="meta-item"><svg class="meta-icon" viewBox="0 0 24 24"><path d="M12 12c2.2 0 4-1.8 4-4s-1.8-4-4-4-4 1.8-4 4 1.8 4 4 4zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z"/></svg><span>Streamlit + React</span></div>
+            </div>
+            <a href="#step-1" class="hero-cta">Comenzar Lab 9</a>
+        </div>
+        <div class="hero-visual">
+            <div class="arch-diagram"><span class="n">NAVEGADOR</span>
+   |
+   v
+<span class="n">Streamlit</span> (container runtime)   <span class="n">Next.js</span> en SPCS
+ TB_101.ANALYTICS            Snowflake App Runtime
+   |                             |
+   +-------- SQL + <span class="g">TASTY_BYTES_AGENT</span> ---+
+                   |
+     Cortex Analyst · Cortex Search · SP</div>
+        </div>
+    </div>
+</section>
+
+<section id="overview" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Vision General</h2>
+        <div class="overview-grid"><div class="overview-card"><h3>Lo que vas a construir</h3><ul class="learning-list"><li>Una app Streamlit en Snowflake (container runtime) con KPIs, mapa 3D, voz del cliente y Copilot</li><li>Una app React (Next.js) desplegada con Snowflake App Runtime en SPCS (Snowpark Container Services)</li><li>Chat con el agente de Snowflake CoWork desde ambas apps, incluido streaming por SSE (Server-Sent Events)</li></ul></div><div class="overview-card"><h3>Tecnologias utilizadas</h3><div class="tech-tags"><span class="tech-tag">Streamlit in Snowflake</span><span class="tech-tag">Container runtime</span><span class="tech-tag">pydeck</span><span class="tech-tag">Altair</span><span class="tech-tag">Snowflake App Runtime</span><span class="tech-tag">Next.js 16</span><span class="tech-tag">React 19</span><span class="tech-tag">deck.gl</span><span class="tech-tag">Cortex Agents REST API</span><span class="tech-tag">DATA_AGENT_RUN</span><span class="tech-tag">Snowflake CLI</span><span class="tech-tag">Cortex Code (CoCo)</span></div></div><div class="overview-card highlight"><h3>Por que importa</h3><p>El agente del lab 8 sirve mas cuando vive donde trabaja el equipo. Aqui lo llevas a dos apps: una en Python para analistas y una web a la medida para la direccion de Tasty Bytes, ambas dentro del perimetro de seguridad de Snowflake.</p></div></div>
+    </div>
+</section>
+
+<section id="prerequisites" class="content-section alt-bg">
+    <div class="section-container">
+        <h2 class="section-title">Requisitos Previos</h2>
+        <div class="prerequisites-grid"><div class="prereq-card"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><div class="prereq-info"><h4>LAB 7 y LAB 8 completados</h4><p>Tablas <code>TB_101.ANALYTICS.*</code>, Semantic View, Cortex Search y el agente <code>TASTY_BYTES_AGENT</code> publicado.</p></div></div><div class="prereq-card"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><div class="prereq-info"><h4>Warehouse TB_ANALYST_WH</h4><p>Creado en el lab 0 y usado como query warehouse por ambas apps.</p></div></div><div class="prereq-card"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><div class="prereq-info"><h4>Para la app React</h4><p>Snowflake CLI 3.26+ con una conexion configurada (o Cortex Code) y la carpeta <code>react-app/</code> que comparte el instructor.</p></div></div></div>
+    </div>
+</section>
+
+<aside class="progress-tracker" id="progressTracker">
+    <div class="progress-header"><span>PROGRESO</span><span class="progress-percent">0%</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <nav class="steps-nav" id="stepsNav">
+        <a href="#step-1" class="step-nav-item" data-step="1"><span class="step-indicator">1</span><span class="nav-label">Crear app Streamlit</span><span class="nav-min">4'</span></a>
+        <a href="#step-2" class="step-nav-item" data-step="2"><span class="step-indicator">2</span><span class="nav-label">Explorar Streamlit</span><span class="nav-min">3'</span></a>
+        <a href="#step-3" class="step-nav-item" data-step="3"><span class="step-indicator">3</span><span class="nav-label">Desplegar React</span><span class="nav-min">3'</span></a>
+        <a href="#step-4" class="step-nav-item" data-step="4"><span class="step-indicator">4</span><span class="nav-label">Explorar Command Center</span><span class="nav-min">2'</span></a>
+    </nav>
+</aside>
+
+<main class="steps-container" id="steps">
+<div class="callout callout-info"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#29B5E8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="callout-content"><strong class="callout-title">Como trabajar este lab</strong><p>Este lab es casi todo UI y terminal. Para el unico comando SQL (solo si lo necesitas) abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab9_apps</code>. El codigo Python, los comandos de terminal y el prompt se copian con el boton <strong>Copiar</strong> de cada bloque.</p></div></div>
+<figure class="step-figure"><img src="img/quickstart/streamlit-logo.png" alt="Streamlit in Snowflake" loading="lazy"><figcaption>Streamlit in Snowflake</figcaption></figure>
+
+    <article class="step-card" id="step-1" data-step="1">
+        <div class="step-header">
+            <div class="step-number">1</div>
+            <div class="step-info">
+                <h2 class="step-title">Crear la app Streamlit en Snowflake</h2>
+                <span class="step-duration">~4 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge ui">UI</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Creamos una app Streamlit dentro de Snowflake con dashboard y chat con el agente, sin servidores externos.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> La app <code>TASTY_BYTES_COPILOT</code> corre en <code>TB_101.ANALYTICS</code> y muestra sus cinco pestanas sin errores.</div>
+<div class="step-text"><p>Vas a convertir todo lo construido (ventas, reviews con sentimiento y el agente) en una app que el equipo de operaciones de Tasty Bytes puede usar sin escribir SQL. <strong>Streamlit in Snowflake</strong> corre dentro de la cuenta: sin servidores, sin credenciales fuera de Snowflake y con los mismos roles y politicas de gobierno.</p><ol><li>En Snowsight ve a <strong>Projects &gt; Streamlit</strong> y haz clic en <strong>+ Streamlit App</strong>.</li><li><strong>App title:</strong> <code>TASTY_BYTES_COPILOT</code>.</li><li><strong>App location:</strong> base <code>TB_101</code>, schema <code>ANALYTICS</code>.</li><li><strong>Query warehouse:</strong> <code>TB_ANALYST_WH</code>.</li><li><strong>Runtime:</strong> elige <em>Run on container</em> (container runtime) con el compute pool <code>SYSTEM_COMPUTE_POOL_CPU</code>.</li><li>Clic en <strong>Create</strong>.</li><li>En el editor, borra todo el codigo de ejemplo, pega el codigo completo de abajo y haz clic en <strong>Run</strong>.</li></ol></div>
+<figure class="step-figure"><img src="img/quickstart/vignette-5/create_streamlit_app.gif" alt="Crear una app Streamlit desde Snowsight (quickstart Zero to Snowflake)" loading="lazy"><figcaption>Crear una app Streamlit desde Snowsight (quickstart Zero to Snowflake)</figcaption></figure>
+<div class="code-block" data-language="python">
+  <div class="code-header"><span class="code-language">PYTHON<span class="code-label">streamlit_app.py (codigo completo)</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;Tasty Bytes Copilot — Streamlit in Snowflake (HOL Zero to Snowflake, Track 9)
+
+Dashboard + chat con el agente de Snowflake CoWork TASTY_BYTES_AGENT.
+Datos: TB_101.ANALYTICS (tracks 0, 6, 7) y el agente del track 8.
+&quot;</span><span class="tk-s">&quot;&quot;</span>
+
+<span class="tk-c"># Librerias: datos, graficas Altair, mapas pydeck y Streamlit</span>
+<span class="tk-k">import</span> json
+<span class="tk-k">import</span> os
+
+<span class="tk-k">import</span> altair <span class="tk-k">as</span> alt
+<span class="tk-k">import</span> pandas <span class="tk-k">as</span> pd
+<span class="tk-k">import</span> pydeck <span class="tk-k">as</span> pdk
+<span class="tk-k">import</span> streamlit <span class="tk-k">as</span> st
+
+st.<span class="tk-f">set_page_config</span>(page_title=<span class="tk-s">&quot;Tasty Bytes Copilot&quot;</span>, page_icon=<span class="tk-s">&quot;:truck:&quot;</span>, layout=<span class="tk-s">&quot;wide&quot;</span>)
+
+<span class="tk-c"># Agente de CoWork y esquema con los datos del lab</span>
+AGENT = <span class="tk-s">&quot;SNOWFLAKE_INTELLIGENCE.AGENTS.TASTY_BYTES_AGENT&quot;</span>
+T = <span class="tk-s">&quot;TB_101.ANALYTICS&quot;</span>
+AZUL, CELESTE, NARANJA = <span class="tk-s">&quot;#29B5E8&quot;</span>, <span class="tk-s">&quot;#71D3DC&quot;</span>, <span class="tk-s">&quot;#FF9F36&quot;</span>
+
+
+<span class="tk-c"># Sesion de Snowpark compartida por toda la app</span>
+@st.cache_resource
+<span class="tk-k">def</span> <span class="tk-f">get_session</span>():
+    conn = st.<span class="tk-f">connection</span>(<span class="tk-s">&quot;snowflake&quot;</span>, connection_name=os.<span class="tk-f">getenv</span>(<span class="tk-s">&quot;SNOWFLAKE_DEFAULT_CONNECTION_NAME&quot;</span>) <span class="tk-k">or</span> <span class="tk-s">&quot;default&quot;</span>)
+    <span class="tk-k">return</span> conn.<span class="tk-f">session</span>()
+
+
+session = <span class="tk-f">get_session</span>()
+
+
+<span class="tk-c"># Ejecuta SQL con binds y cachea el resultado 10 min</span>
+@st.<span class="tk-f">cache_data</span>(ttl=<span class="tk-n">600</span>, show_spinner=<span class="tk-k">False</span>)
+<span class="tk-k">def</span> <span class="tk-f">run_query</span>(sql: str, params: tuple = ()) -&gt; pd.DataFrame:
+    df = session.<span class="tk-f">sql</span>(sql, params=<span class="tk-f">list</span>(params)).<span class="tk-f">to_pandas</span>()
+    df.columns = [c.<span class="tk-f">lower</span>() <span class="tk-k">for</span> c <span class="tk-k">in</span> df.columns]
+    <span class="tk-k">return</span> df
+
+
+<span class="tk-k">def</span> <span class="tk-f">money</span>(n: float) -&gt; str:
+    <span class="tk-k">for</span> unidad, div <span class="tk-k">in</span> ((<span class="tk-s">&quot;B&quot;</span>, 1e9), (<span class="tk-s">&quot;M&quot;</span>, 1e6), (<span class="tk-s">&quot;K&quot;</span>, 1e3)):
+        <span class="tk-k">if</span> <span class="tk-f">abs</span>(n) &gt;= div:
+            <span class="tk-k">return</span> f<span class="tk-s">&quot;${n / div:,.2f}{unidad}&quot;</span>
+    <span class="tk-k">return</span> f<span class="tk-s">&quot;${n:,.2f}&quot;</span>
+
+
+<span class="tk-c"># ---------------------------------------------------------------- Header</span>
+st.<span class="tk-f">markdown</span>(
+    f<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;&lt;div style=&quot;</span>padding:18px 22px;border-radius:16px;background:linear-<span class="tk-f">gradient</span>(120deg,<span class="tk-c">#11567F,{AZUL});color:white&quot;&gt;</span>
+    &lt;div style=<span class="tk-s">&quot;font-size:26px;font-weight:800&quot;</span>&gt;Tasty Bytes Copilot&lt;/div&gt;
+    &lt;div style=<span class="tk-s">&quot;opacity:.9&quot;</span>&gt;<span class="tk-n">450</span> food trucks · <span class="tk-n">30</span> ciudades · <span class="tk-n">15</span> paises — datos en vivo desde Snowflake + agente de CoWork&lt;/div&gt;
+    &lt;/div&gt;<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;,
+    unsafe_allow_html=True,
+)
+st.write(&quot;</span><span class="tk-s">&quot;)
+
+# Filtro global de anio y las cinco pestanas
+anio = st.segmented_control(&quot;</span>Anio<span class="tk-s">&quot;, [2019, 2020, 2021, 2022], default=2022, label_visibility=&quot;</span>collapsed<span class="tk-s">&quot;) or 2022
+
+tab_panorama, tab_ciudad, tab_menu, tab_clientes, tab_copilot = st.tabs(
+    [&quot;</span>Panorama global<span class="tk-s">&quot;, &quot;</span>Ciudad viva 3D<span class="tk-s">&quot;, &quot;</span>Menu y flujos<span class="tk-s">&quot;, &quot;</span>Voz del cliente<span class="tk-s">&quot;, &quot;</span>Copilot (agente CoWork)<span class="tk-s">&quot;]
+)
+
+# ---------------------------------------------------------------- Panorama
+with tab_panorama:
+    # KPIs del anio y comparacion contra el anio anterior
+    kpi = run_query(
+        f&quot;</span><span class="tk-s">&quot;&quot;</span>SELECT <span class="tk-f">SUM</span>(ventas) <span class="tk-k">AS</span> ventas, <span class="tk-f">SUM</span>(ordenes) <span class="tk-k">AS</span> ordenes,
+                   <span class="tk-f">SUM</span>(ventas) / <span class="tk-f">NULLIF</span>(<span class="tk-f">SUM</span>(ordenes), <span class="tk-n">0</span>) <span class="tk-k">AS</span> ticket,
+                   <span class="tk-f">COUNT</span>(DISTINCT truck_id) <span class="tk-k">AS</span> camiones
+            <span class="tk-k">FROM</span> {T}.ventas_diarias WHERE <span class="tk-f">YEAR</span>(fecha) = ?<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;,
+        (anio,),
+    ).iloc[0]
+    prev = run_query(
+        f&quot;</span><span class="tk-s">&quot;&quot;</span>SELECT <span class="tk-f">SUM</span>(ventas) <span class="tk-k">AS</span> ventas <span class="tk-k">FROM</span> {T}.ventas_diarias
+            WHERE <span class="tk-f">YEAR</span>(fecha) = ? - <span class="tk-n">1</span>
+              <span class="tk-k">AND</span> <span class="tk-f">DAYOFYEAR</span>(fecha) &lt;= (SELECT <span class="tk-f">MAX</span>(<span class="tk-f">DAYOFYEAR</span>(fecha)) <span class="tk-k">FROM</span> {T}.ventas_diarias WHERE <span class="tk-f">YEAR</span>(fecha) = ?)<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;,
+        (anio, anio),
+    ).iloc[0][&quot;</span>ventas<span class="tk-s">&quot;]
+
+    c1, c2, c3, c4 = st.columns(4)
+    delta = f&quot;</span>{(kpi.ventas / prev - <span class="tk-n">1</span>) * <span class="tk-n">100</span>:+.1f}% vs {anio - <span class="tk-n">1</span>}<span class="tk-s">&quot; if prev else None
+    c1.metric(f&quot;</span>Ventas {anio}<span class="tk-s">&quot;, money(kpi.ventas), delta, border=True)
+    c2.metric(&quot;</span>Ordenes<span class="tk-s">&quot;, f&quot;</span>{kpi.ordenes / 1e6:,.1f}M<span class="tk-s">&quot;, border=True)
+    c3.metric(&quot;</span>Ticket promedio<span class="tk-s">&quot;, f&quot;</span>${kpi.ticket:,.2f}<span class="tk-s">&quot;, border=True)
+    c4.metric(&quot;</span>Camiones activos<span class="tk-s">&quot;, f&quot;</span>{<span class="tk-f">int</span>(kpi.camiones)}<span class="tk-s">&quot;, border=True)
+
+    # Ventas por ciudad para el mapa 3D
+    ciudades = run_query(
+        f&quot;</span><span class="tk-s">&quot;&quot;</span>SELECT c.ciudad, c.pais, c.latitud, c.longitud, <span class="tk-f">SUM</span>(v.ventas) <span class="tk-k">AS</span> ventas, <span class="tk-f">SUM</span>(v.ordenes) <span class="tk-k">AS</span> ordenes
+            <span class="tk-k">FROM</span> {T}.ventas_diarias v JOIN {T}.ciudades c ON c.ciudad = v.ciudad
+            WHERE <span class="tk-f">YEAR</span>(v.fecha) = ? GROUP BY ALL<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;,
+        (anio,),
+    )
+    ciudades[&quot;</span>ventas_txt<span class="tk-s">&quot;] = ciudades[&quot;</span>ventas<span class="tk-s">&quot;].map(money)
+    ciudades[&quot;</span>altura<span class="tk-s">&quot;] = ciudades[&quot;</span>ventas<span class="tk-s">&quot;] / ciudades[&quot;</span>ventas<span class="tk-s">&quot;].max()
+
+    col_mapa, col_marcas = st.columns([3, 2])
+    with col_mapa:
+        st.subheader(&quot;</span>Ventas por ciudad<span class="tk-s">&quot;)
+        st.pydeck_chart(
+            pdk.Deck(
+                map_style=&quot;</span>dark<span class="tk-s">&quot;,
+                initial_view_state=pdk.ViewState(latitude=30, longitude=10, zoom=0.9, pitch=45),
+                layers=[
+                    pdk.Layer(
+                        &quot;</span>ColumnLayer<span class="tk-s">&quot;,
+                        data=ciudades,
+                        get_position=[&quot;</span>longitud<span class="tk-s">&quot;, &quot;</span>latitud<span class="tk-s">&quot;],
+                        get_elevation=&quot;</span>altura<span class="tk-s">&quot;,
+                        elevation_scale=2_500_000,
+                        radius=140_000,
+                        get_fill_color=[41, 181, 232, 220],
+                        pickable=True,
+                        extruded=True,
+                    )
+                ],
+                tooltip={&quot;</span>html<span class="tk-s">&quot;: &quot;</span>&lt;b&gt;{ciudad}, {pais}&lt;/b&gt;&lt;br/&gt;Ventas: {ventas_txt}<span class="tk-s">&quot;},
+            ),
+            height=420,
+        )
+    with col_marcas:
+        st.subheader(&quot;</span>Top <span class="tk-n">10</span> marcas<span class="tk-s">&quot;)
+        marcas = run_query(
+            f&quot;</span><span class="tk-s">&quot;&quot;</span>SELECT marca, <span class="tk-f">SUM</span>(ventas) <span class="tk-k">AS</span> ventas <span class="tk-k">FROM</span> {T}.ventas_diarias
+                WHERE <span class="tk-f">YEAR</span>(fecha) = ? GROUP BY marca ORDER BY ventas DESC LIMIT <span class="tk-n">10</span><span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;,
+            (anio,),
+        )
+        st.altair_chart(
+            alt.Chart(marcas)
+            .mark_bar(cornerRadiusEnd=6, color=AZUL)
+            .encode(
+                x=alt.X(&quot;</span>ventas:Q<span class="tk-s">&quot;, title=&quot;</span>Ventas (USD)<span class="tk-s">&quot;, axis=alt.Axis(format=&quot;</span>$~s<span class="tk-s">&quot;)),
+                y=alt.Y(&quot;</span>marca:N<span class="tk-s">&quot;, sort=&quot;</span>-x<span class="tk-s">&quot;, title=None),
+                tooltip=[&quot;</span>marca<span class="tk-s">&quot;, alt.Tooltip(&quot;</span>ventas:Q<span class="tk-s">&quot;, format=&quot;</span>$,.0f<span class="tk-s">&quot;)],
+            )
+            .properties(height=420),
+            use_container_width=True,
+        )
+
+    st.subheader(&quot;</span>Tendencia mensual <span class="tk-n">2019</span>-<span class="tk-n">2022</span><span class="tk-s">&quot;)
+    tendencia = run_query(
+        f&quot;</span><span class="tk-s">&quot;&quot;</span>SELECT <span class="tk-f">DATE_TRUNC</span>(<span class="tk-s">&#x27;month&#x27;</span>, fecha) <span class="tk-k">AS</span> mes, <span class="tk-f">SUM</span>(ventas) <span class="tk-k">AS</span> ventas
+            <span class="tk-k">FROM</span> {T}.ventas_diarias
+            WHERE fecha &lt; (SELECT <span class="tk-f">DATE_TRUNC</span>(<span class="tk-s">&#x27;month&#x27;</span>, <span class="tk-f">MAX</span>(fecha)) <span class="tk-k">FROM</span> {T}.ventas_diarias)
+            GROUP BY <span class="tk-n">1</span> ORDER BY <span class="tk-n">1</span><span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;
+    )
+    st.altair_chart(
+        alt.Chart(tendencia)
+        .mark_area(line={&quot;</span>color<span class="tk-s">&quot;: AZUL}, color=alt.Gradient(gradient=&quot;</span>linear<span class="tk-s">&quot;, stops=[
+            alt.GradientStop(color=&quot;</span><span class="tk-f">rgba</span>(<span class="tk-n">41</span>,<span class="tk-n">181</span>,<span class="tk-n">232</span>,<span class="tk-n">0.05</span>)<span class="tk-s">&quot;, offset=0),
+            alt.GradientStop(color=&quot;</span><span class="tk-f">rgba</span>(<span class="tk-n">41</span>,<span class="tk-n">181</span>,<span class="tk-n">232</span>,<span class="tk-n">0.6</span>)<span class="tk-s">&quot;, offset=1)], x1=1, x2=1, y1=1, y2=0))
+        .encode(x=alt.X(&quot;</span>mes:T<span class="tk-s">&quot;, title=None), y=alt.Y(&quot;</span>ventas:Q<span class="tk-s">&quot;, title=&quot;</span>Ventas (USD)<span class="tk-s">&quot;, axis=alt.Axis(format=&quot;</span>$~s<span class="tk-s">&quot;)),
+                tooltip=[alt.Tooltip(&quot;</span>mes:T<span class="tk-s">&quot;, format=&quot;</span>%Y-%m<span class="tk-s">&quot;), alt.Tooltip(&quot;</span>ventas:Q<span class="tk-s">&quot;, format=&quot;</span>$,.0f<span class="tk-s">&quot;)])
+        .properties(height=260),
+        use_container_width=True,
+    )
+
+# ---------------------------------------------------------------- Ciudad viva
+# Ciudad procedural: grilla de edificios, calles y rutas
+GRID, STEP = 12, 0.0018
+ORIG = -(GRID * STEP) / 2
+PALETA = [[41, 181, 232], [255, 159, 54], [113, 211, 220], [125, 68, 207], [212, 91, 144], [143, 211, 120]]
+
+
+def nodo(i: int, j: int) -&gt; list[float]:
+    return [ORIG + i * STEP, ORIG + j * STEP]
+
+
+@st.cache_data(show_spinner=False)
+def ciudad_procedural(nombre: str) -&gt; tuple[pd.DataFrame, list[dict]]:
+    &quot;</span><span class="tk-s">&quot;&quot;</span>Edificios y calles deterministas por ciudad (semilla = nombre).<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;
+    import random
+
+    rnd = random.Random(nombre)
+    edificios = []
+    centro = GRID / 2
+    for i in range(GRID):
+        for j in range(GRID):
+            if rnd.random() &lt; 0.12:
+                continue
+            d = ((i + 0.5 - centro) ** 2 + (j + 0.5 - centro) ** 2) ** 0.5 / centro
+            x0, y0 = ORIG + i * STEP + STEP * 0.15, ORIG + j * STEP + STEP * 0.15
+            x1, y1 = x0 + STEP * 0.7, y0 + STEP * (0.45 + rnd.random() * 0.25)
+            edificios.append({
+                &quot;</span>poligono<span class="tk-s">&quot;: [[x0, y0], [x1, y0], [x1, y1], [x0, y1]],
+                &quot;</span>altura<span class="tk-s">&quot;: 20 + max(0.0, 1 - d) ** 2.2 * 420 * (0.4 + rnd.random()),
+                &quot;</span>luz<span class="tk-s">&quot;: rnd.random(),
+            })
+    calles = [{&quot;</span>path<span class="tk-s">&quot;: [nodo(i, 0), nodo(i, GRID)]} for i in range(GRID + 1)]
+    calles += [{&quot;</span>path<span class="tk-s">&quot;: [nodo(0, i), nodo(GRID, i)]} for i in range(GRID + 1)]
+    return pd.DataFrame(edificios), calles
+
+
+@st.cache_data(show_spinner=False)
+def rutas(nombre: str, hora: int, flota: tuple) -&gt; list[dict]:
+    &quot;</span><span class="tk-s">&quot;&quot;</span>Una ruta por truck sobre la grilla; la flota viene de la demanda real por marca.<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;
+    import random
+
+    rnd = random.Random(f&quot;</span>{nombre}-{hora}<span class="tk-s">&quot;)
+    out = []
+    for idx, (marca, n) in enumerate(flota):
+        for _ in range(n):
+            i, j, t = rnd.randint(0, GRID), rnd.randint(0, GRID), rnd.random() * 60
+            path, ts = [nodo(i, j)], [t]
+            while t &lt; 600:
+                if rnd.random() &lt; 0.5:
+                    i = min(GRID, max(0, i + rnd.choice([-1, 1])))
+                else:
+                    j = min(GRID, max(0, j + rnd.choice([-1, 1])))
+                t += 15 + rnd.random() * 10
+                path.append(nodo(i, j))
+                ts.append(t)
+            out.append({&quot;</span>path<span class="tk-s">&quot;: path, &quot;</span>ts<span class="tk-s">&quot;: ts, &quot;</span>color<span class="tk-s">&quot;: PALETA[idx % len(PALETA)], &quot;</span>marca<span class="tk-s">&quot;: marca})
+    return out
+
+
+with tab_ciudad:
+    # Demanda real por hora, ciudad y marca
+    hora_df = run_query(f&quot;</span>SELECT ciudad, hora, marca, ordenes, ventas, camiones <span class="tk-k">FROM</span> {T}.ventas_hora_ciudad<span class="tk-s">&quot;)
+    ranking = hora_df.groupby(&quot;</span>ciudad<span class="tk-s">&quot;)[&quot;</span>ventas<span class="tk-s">&quot;].sum().sort_values(ascending=False).index.tolist()
+    cc1, cc2 = st.columns([1, 3])
+    ciudad_sel = cc1.selectbox(&quot;</span>Ciudad<span class="tk-s">&quot;, ranking)
+    animar = cc1.toggle(&quot;</span>Animar el dia<span class="tk-s">&quot;, value=True)
+    st.caption(&quot;</span>Ciudad procedural; la flota, los hotspots y la iluminacion siguen la demanda real por hora de <span class="tk-n">2022</span> (ORDERS_V).<span class="tk-s">&quot;)
+
+    # Fragmento que se refresca cada segundo para animar
+    @st.fragment(run_every=1.0 if animar else None)
+    def ciudad_viva():
+        df = hora_df[hora_df.ciudad == ciudad_sel]
+        horas = sorted(df.hora.unique().tolist())
+        st.session_state.setdefault(&quot;</span>tick<span class="tk-s">&quot;, 0)
+        if animar:
+            st.session_state.tick += 1
+        tick = st.session_state.tick
+        hora = horas[(tick // 6) % len(horas)]
+        tiempo = (tick % 6) * 100 + 100
+
+        por_hora = df.groupby(&quot;</span>hora<span class="tk-s">&quot;)[&quot;</span>ventas<span class="tk-s">&quot;].sum()
+        actual = df[df.hora == hora].sort_values(&quot;</span>ventas<span class="tk-s">&quot;, ascending=False)
+        intensidad = float(actual.ventas.sum() / por_hora.max())
+        n = int(14 + intensidad * 60)
+        flota = tuple((m, max(1, round(v / actual.ventas.sum() * n))) for m, v in zip(actual.marca, actual.ventas))
+
+        edificios, calles = ciudad_procedural(ciudad_sel)
+        edificios = edificios.assign(
+            color=edificios.luz.map(lambda l: [60, 150, 220, 235] if l &lt; 0.25 + intensidad * 0.55 else [16, 32, 60, 235])
+        )
+        import random
+
+        rnd = random.Random(ciudad_sel)
+        hotspots = pd.DataFrame([{&quot;</span>pos<span class="tk-s">&quot;: nodo(rnd.randint(1, GRID - 1), rnd.randint(1, GRID - 1)), &quot;</span>w<span class="tk-s">&quot;: rnd.random()} for _ in range(18)])
+        hotspots[&quot;</span>alto<span class="tk-s">&quot;] = 60 + hotspots.w * 520 * intensidad
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric(&quot;</span>Hora<span class="tk-s">&quot;, f&quot;</span>{hora:02d}:<span class="tk-n">00</span><span class="tk-s">&quot;, border=True)
+        m2.metric(&quot;</span>Ventas en la hora<span class="tk-s">&quot;, money(actual.ventas.sum()), border=True)
+        m3.metric(&quot;</span>Ordenes<span class="tk-s">&quot;, f&quot;</span>{<span class="tk-f">int</span>(actual.ordenes.<span class="tk-f">sum</span>()):,}<span class="tk-s">&quot;, border=True)
+        m4.metric(&quot;</span>Marca lider<span class="tk-s">&quot;, actual.marca.iloc[0] if len(actual) else &quot;</span>-<span class="tk-s">&quot;, border=True)
+
+        st.pydeck_chart(
+            pdk.Deck(
+                map_style=None,
+                initial_view_state=pdk.ViewState(latitude=0, longitude=0, zoom=14.4, pitch=58, bearing=(tick * 3) % 360),
+                layers=[
+                    pdk.Layer(&quot;</span>PathLayer<span class="tk-s">&quot;, calles, get_path=&quot;</span>path<span class="tk-s">&quot;, get_color=[41, 181, 232, 80], get_width=6, width_min_pixels=1),
+                    pdk.Layer(&quot;</span>PolygonLayer<span class="tk-s">&quot;, edificios, get_polygon=&quot;</span>poligono<span class="tk-s">&quot;, extruded=True, get_elevation=&quot;</span>altura<span class="tk-s">&quot;, get_fill_color=&quot;</span>color<span class="tk-s">&quot;),
+                    pdk.Layer(&quot;</span>ColumnLayer<span class="tk-s">&quot;, hotspots, get_position=&quot;</span>pos<span class="tk-s">&quot;, get_elevation=&quot;</span>alto<span class="tk-s">&quot;, radius=22, get_fill_color=[255, 159, 54, 200], extruded=True),
+                    pdk.Layer(&quot;</span>TripsLayer<span class="tk-s">&quot;, rutas(ciudad_sel, hora, flota), get_path=&quot;</span>path<span class="tk-s">&quot;, get_timestamps=&quot;</span>ts<span class="tk-s">&quot;, get_color=&quot;</span>color<span class="tk-s">&quot;,
+                              width_min_pixels=4, trail_length=180, current_time=tiempo, rounded=True),
+                ],
+            ),
+            height=520,
+        )
+        st.altair_chart(
+            alt.Chart(por_hora.reset_index())
+            .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4)
+            .encode(
+                x=alt.X(&quot;</span>hora:O<span class="tk-s">&quot;, title=&quot;</span>Hora del dia<span class="tk-s">&quot;),
+                y=alt.Y(&quot;</span>ventas:Q<span class="tk-s">&quot;, title=None, axis=alt.Axis(format=&quot;</span>$~s<span class="tk-s">&quot;)),
+                color=alt.condition(alt.datum.hora == hora, alt.value(NARANJA), alt.value(AZUL)),
+                tooltip=[&quot;</span>hora<span class="tk-s">&quot;, alt.Tooltip(&quot;</span>ventas:Q<span class="tk-s">&quot;, format=&quot;</span>$,.0f<span class="tk-s">&quot;)],
+            )
+            .properties(height=140),
+            use_container_width=True,
+        )
+
+    ciudad_viva()
+
+# ---------------------------------------------------------------- Menu y flujos
+with tab_menu:
+    hora_df = run_query(f&quot;</span>SELECT ciudad, hora, marca, ordenes, ventas, camiones <span class="tk-k">FROM</span> {T}.ventas_hora_ciudad<span class="tk-s">&quot;)
+    # Ventas, unidades y precio por item del menu
+    items = run_query(
+        f&quot;</span><span class="tk-s">&quot;&quot;</span>SELECT categoria_item, item_menu, <span class="tk-f">SUM</span>(ventas) <span class="tk-k">AS</span> ventas, <span class="tk-f">SUM</span>(unidades) <span class="tk-k">AS</span> unidades,
+                   <span class="tk-f">SUM</span>(ventas) / <span class="tk-f">NULLIF</span>(<span class="tk-f">SUM</span>(unidades), <span class="tk-n">0</span>) <span class="tk-k">AS</span> precio
+            <span class="tk-k">FROM</span> {T}.ventas_items_mes WHERE <span class="tk-f">YEAR</span>(mes) = ? GROUP BY ALL<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;,
+        (anio,),
+    )
+    r1, r2 = st.columns(2)
+    with r1:
+        st.subheader(&quot;</span>Reloj de demanda (<span class="tk-n">2022</span>)<span class="tk-s">&quot;)
+        reloj = hora_df.groupby(&quot;</span>hora<span class="tk-s">&quot;, as_index=False)[&quot;</span>ventas<span class="tk-s">&quot;].sum()
+        base = alt.Chart(reloj).encode(
+            theta=alt.Theta(&quot;</span>hora:O<span class="tk-s">&quot;, sort=&quot;</span>ascending<span class="tk-s">&quot;),
+            radius=alt.Radius(&quot;</span>ventas:Q<span class="tk-s">&quot;, scale=alt.Scale(type=&quot;</span>sqrt<span class="tk-s">&quot;, zero=True, rangeMin=30)),
+            color=alt.Color(&quot;</span>ventas:Q<span class="tk-s">&quot;, scale=alt.Scale(range=[&quot;</span><span class="tk-c">#11567F&quot;, AZUL, NARANJA]), legend=None),</span>
+            tooltip=[<span class="tk-s">&quot;hora&quot;</span>, alt.<span class="tk-f">Tooltip</span>(<span class="tk-s">&quot;ventas:Q&quot;</span>, format=<span class="tk-s">&quot;$,.0f&quot;</span>)],
+        )
+        st.<span class="tk-f">altair_chart</span>(
+            (base.<span class="tk-f">mark_arc</span>(innerRadius=<span class="tk-n">25</span>, stroke=<span class="tk-s">&quot;#fff&quot;</span>) + base.<span class="tk-f">mark_text</span>(radiusOffset=<span class="tk-n">14</span>, color=<span class="tk-s">&quot;#888&quot;</span>).<span class="tk-f">encode</span>(text=<span class="tk-s">&quot;hora:O&quot;</span>))
+            .<span class="tk-f">properties</span>(height=<span class="tk-n">380</span>),
+            use_container_width=<span class="tk-k">True</span>,
+        )
+    <span class="tk-k">with</span> r2:
+        st.<span class="tk-f">subheader</span>(f<span class="tk-s">&quot;Precio vs volumen por item ({anio})&quot;</span>)
+        st.<span class="tk-f">altair_chart</span>(
+            alt.<span class="tk-f">Chart</span>(items)
+            .<span class="tk-f">mark_circle</span>(opacity=<span class="tk-n">0.75</span>, stroke=<span class="tk-s">&quot;white&quot;</span>, strokeWidth=<span class="tk-n">0.5</span>)
+            .<span class="tk-f">encode</span>(
+                x=alt.<span class="tk-f">X</span>(<span class="tk-s">&quot;unidades:Q&quot;</span>, scale=alt.<span class="tk-f">Scale</span>(type=<span class="tk-s">&quot;log&quot;</span>), title=<span class="tk-s">&quot;Unidades&quot;</span>),
+                y=alt.<span class="tk-f">Y</span>(<span class="tk-s">&quot;precio:Q&quot;</span>, title=<span class="tk-s">&quot;Precio promedio&quot;</span>, axis=alt.<span class="tk-f">Axis</span>(format=<span class="tk-s">&quot;$&quot;</span>)),
+                size=alt.<span class="tk-f">Size</span>(<span class="tk-s">&quot;ventas:Q&quot;</span>, scale=alt.<span class="tk-f">Scale</span>(range=[<span class="tk-n">30</span>, <span class="tk-n">1600</span>]), legend=<span class="tk-k">None</span>),
+                color=alt.<span class="tk-f">Color</span>(<span class="tk-s">&quot;categoria_item:N&quot;</span>, title=<span class="tk-s">&quot;Categoria&quot;</span>),
+                tooltip=[<span class="tk-s">&quot;item_menu&quot;</span>, <span class="tk-s">&quot;categoria_item&quot;</span>, alt.<span class="tk-f">Tooltip</span>(<span class="tk-s">&quot;ventas:Q&quot;</span>, format=<span class="tk-s">&quot;$,.0f&quot;</span>), <span class="tk-s">&quot;unidades&quot;</span>],
+            )
+            .<span class="tk-f">properties</span>(height=<span class="tk-n">380</span>)
+            .<span class="tk-f">interactive</span>(),
+            use_container_width=<span class="tk-k">True</span>,
+        )
+    st.<span class="tk-f">subheader</span>(<span class="tk-s">&quot;Mapa de calor: ciudad x hora (2022)&quot;</span>)
+    st.<span class="tk-f">altair_chart</span>(
+        alt.<span class="tk-f">Chart</span>(hora_df.<span class="tk-f">groupby</span>([<span class="tk-s">&quot;ciudad&quot;</span>, <span class="tk-s">&quot;hora&quot;</span>], as_index=<span class="tk-k">False</span>)[<span class="tk-s">&quot;ventas&quot;</span>].<span class="tk-f">sum</span>())
+        .<span class="tk-f">mark_rect</span>(cornerRadius=<span class="tk-n">3</span>)
+        .<span class="tk-f">encode</span>(
+            x=alt.<span class="tk-f">X</span>(<span class="tk-s">&quot;hora:O&quot;</span>, title=<span class="tk-s">&quot;Hora&quot;</span>),
+            y=alt.<span class="tk-f">Y</span>(<span class="tk-s">&quot;ciudad:N&quot;</span>, title=<span class="tk-k">None</span>, sort=<span class="tk-s">&quot;-color&quot;</span>),
+            color=alt.<span class="tk-f">Color</span>(<span class="tk-s">&quot;ventas:Q&quot;</span>, scale=alt.<span class="tk-f">Scale</span>(scheme=<span class="tk-s">&quot;blues&quot;</span>), legend=alt.<span class="tk-f">Legend</span>(format=<span class="tk-s">&quot;$~s&quot;</span>)),
+            tooltip=[<span class="tk-s">&quot;ciudad&quot;</span>, <span class="tk-s">&quot;hora&quot;</span>, alt.<span class="tk-f">Tooltip</span>(<span class="tk-s">&quot;ventas:Q&quot;</span>, format=<span class="tk-s">&quot;$,.0f&quot;</span>)],
+        )
+        .<span class="tk-f">properties</span>(height=<span class="tk-n">620</span>),
+        use_container_width=<span class="tk-k">True</span>,
+    )
+
+<span class="tk-c"># ---------------------------------------------------------------- Voz del cliente</span>
+<span class="tk-k">with</span> tab_clientes:
+    <span class="tk-c"># Reviews por marca y sentimiento (AI_SENTIMENT)</span>
+    sent = <span class="tk-f">run_query</span>(
+        f<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;SELECT marca, sentimiento, COUNT(*) AS reviews
+            FROM {T}.reviews_sentimiento GROUP BY ALL&quot;</span><span class="tk-s">&quot;&quot;</span>
+    )
+    st.<span class="tk-f">subheader</span>(<span class="tk-s">&quot;Sentimiento por marca (calculado con AI_SENTIMENT)&quot;</span>)
+    st.<span class="tk-f">altair_chart</span>(
+        alt.<span class="tk-f">Chart</span>(sent)
+        .<span class="tk-f">mark_bar</span>()
+        .<span class="tk-f">encode</span>(
+            x=alt.<span class="tk-f">X</span>(<span class="tk-s">&quot;sum(reviews):Q&quot;</span>, stack=<span class="tk-s">&quot;normalize&quot;</span>, title=<span class="tk-s">&quot;% de reviews&quot;</span>, axis=alt.<span class="tk-f">Axis</span>(format=<span class="tk-s">&quot;%&quot;</span>)),
+            y=alt.<span class="tk-f">Y</span>(<span class="tk-s">&quot;marca:N&quot;</span>, title=<span class="tk-k">None</span>),
+            color=alt.<span class="tk-f">Color</span>(<span class="tk-s">&quot;sentimiento:N&quot;</span>, scale=alt.<span class="tk-f">Scale</span>(
+                domain=[<span class="tk-s">&quot;positive&quot;</span>, <span class="tk-s">&quot;neutral&quot;</span>, <span class="tk-s">&quot;mixed&quot;</span>, <span class="tk-s">&quot;negative&quot;</span>],
+                range=[<span class="tk-s">&quot;#22c55e&quot;</span>, <span class="tk-s">&quot;#94a3b8&quot;</span>, NARANJA, <span class="tk-s">&quot;#f43f5e&quot;</span>])),
+            tooltip=[<span class="tk-s">&quot;marca&quot;</span>, <span class="tk-s">&quot;sentimiento&quot;</span>, <span class="tk-s">&quot;reviews&quot;</span>],
+        )
+        .<span class="tk-f">properties</span>(height=<span class="tk-n">440</span>),
+        use_container_width=<span class="tk-k">True</span>,
+    )
+
+    marca_sel = st.<span class="tk-f">selectbox</span>(<span class="tk-s">&quot;Ver reviews de&quot;</span>, [<span class="tk-s">&quot;Todas&quot;</span>] + <span class="tk-f">sorted</span>(sent[<span class="tk-s">&quot;marca&quot;</span>].<span class="tk-f">unique</span>().<span class="tk-f">tolist</span>()))
+    reviews = <span class="tk-f">run_query</span>(
+        f<span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;SELECT marca, ciudad, fecha, sentimiento, review
+            FROM {T}.reviews_sentimiento
+            WHERE (? = &#x27;Todas&#x27; OR marca = ?)
+            ORDER BY fecha DESC LIMIT 50&quot;</span><span class="tk-s">&quot;&quot;</span>,
+        (marca_sel, marca_sel),
+    )
+    st.<span class="tk-f">dataframe</span>(reviews, use_container_width=<span class="tk-k">True</span>, hide_index=<span class="tk-k">True</span>, height=<span class="tk-n">320</span>)
+
+<span class="tk-c"># ---------------------------------------------------------------- Copilot</span>
+TOOL_LABELS = {
+    <span class="tk-s">&quot;VentasTastyBytes&quot;</span>: <span class="tk-s">&quot;Cortex Analyst&quot;</span>,
+    <span class="tk-s">&quot;ReviewsClientes&quot;</span>: <span class="tk-s">&quot;Cortex Search&quot;</span>,
+    <span class="tk-s">&quot;PronosticoVentas&quot;</span>: <span class="tk-s">&quot;Pronostico (stored procedure)&quot;</span>,
+    <span class="tk-s">&quot;data_to_chart&quot;</span>: <span class="tk-s">&quot;Grafica&quot;</span>,
+}
+SUGERIDAS = [
+    <span class="tk-s">&quot;Cuales son las 5 marcas con mas ventas en 2022? Muestralo en una grafica&quot;</span>,
+    <span class="tk-s">&quot;Que dicen los clientes de Freezing Point?&quot;</span>,
+    <span class="tk-s">&quot;Pronostica las ventas de Kitakata Ramen Bar para los proximos 3 meses&quot;</span>,
+    <span class="tk-s">&quot;Llueve menos = vendemos mas? Analiza Seattle en 2022&quot;</span>,
+]
+
+
+<span class="tk-c"># Llama al agente con DATA_AGENT_RUN y el historial</span>
+<span class="tk-k">def</span> <span class="tk-f">call_agent</span>(history: list[dict]) -&gt; dict:
+    body = {<span class="tk-s">&quot;messages&quot;</span>: [{<span class="tk-s">&quot;role&quot;</span>: m[<span class="tk-s">&quot;role&quot;</span>], <span class="tk-s">&quot;content&quot;</span>: [{<span class="tk-s">&quot;type&quot;</span>: <span class="tk-s">&quot;text&quot;</span>, <span class="tk-s">&quot;text&quot;</span>: m[<span class="tk-s">&quot;text&quot;</span>]}]} <span class="tk-k">for</span> m <span class="tk-k">in</span> history[-<span class="tk-n">10</span>:]]}
+    row = session.<span class="tk-f">sql</span>(
+        <span class="tk-s">&quot;SELECT SNOWFLAKE.CORTEX.DATA_AGENT_RUN(?, ?) AS resp&quot;</span>, params=[AGENT, json.<span class="tk-f">dumps</span>(body)]
+    ).<span class="tk-f">collect</span>()[<span class="tk-n">0</span>]
+    <span class="tk-k">return</span> json.<span class="tk-f">loads</span>(row[<span class="tk-s">&quot;RESP&quot;</span>])
+
+
+<span class="tk-c"># Dibuja herramientas, SQL, graficas y texto del agente</span>
+<span class="tk-k">def</span> <span class="tk-f">render_answer</span>(resp: dict) -&gt; str:
+    <span class="tk-s">&quot;&quot;</span><span class="tk-s">&quot;Draws tool calls, SQL, charts and text from the agent response; returns the plain text.&quot;</span><span class="tk-s">&quot;&quot;</span>
+    texto = <span class="tk-s">&quot;&quot;</span>
+    <span class="tk-k">for</span> item <span class="tk-k">in</span> resp.<span class="tk-f">get</span>(<span class="tk-s">&quot;content&quot;</span>, []):
+        tipo = item.<span class="tk-f">get</span>(<span class="tk-s">&quot;type&quot;</span>)
+        <span class="tk-k">if</span> tipo == <span class="tk-s">&quot;tool_use&quot;</span>:
+            name = item[<span class="tk-s">&quot;tool_use&quot;</span>].<span class="tk-f">get</span>(<span class="tk-s">&quot;name&quot;</span>, <span class="tk-s">&quot;&quot;</span>)
+            st.<span class="tk-f">caption</span>(f<span class="tk-s">&quot;:material/build: {TOOL_LABELS.get(name, name)} · `{name}`&quot;</span>)
+        <span class="tk-k">elif</span> tipo == <span class="tk-s">&quot;tool_result&quot;</span>:
+            <span class="tk-k">for</span> c <span class="tk-k">in</span> item[<span class="tk-s">&quot;tool_result&quot;</span>].<span class="tk-f">get</span>(<span class="tk-s">&quot;content&quot;</span>, []):
+                sql = (c.<span class="tk-f">get</span>(<span class="tk-s">&quot;json&quot;</span>) <span class="tk-k">or</span> {}).<span class="tk-f">get</span>(<span class="tk-s">&quot;sql&quot;</span>)
+                <span class="tk-k">if</span> sql:
+                    <span class="tk-k">with</span> st.<span class="tk-f">expander</span>(<span class="tk-s">&quot;SQL generado por Cortex Analyst&quot;</span>):
+                        st.<span class="tk-f">code</span>(sql, language=<span class="tk-s">&quot;sql&quot;</span>)
+        <span class="tk-k">elif</span> tipo == <span class="tk-s">&quot;chart&quot;</span>:
+            spec = json.<span class="tk-f">loads</span>(item[<span class="tk-s">&quot;chart&quot;</span>][<span class="tk-s">&quot;chart_spec&quot;</span>])
+            st.<span class="tk-f">vega_lite_chart</span>(spec, use_container_width=<span class="tk-k">True</span>)
+        <span class="tk-k">elif</span> tipo == <span class="tk-s">&quot;text&quot;</span>:
+            texto += item.<span class="tk-f">get</span>(<span class="tk-s">&quot;text&quot;</span>, <span class="tk-s">&quot;&quot;</span>)
+    <span class="tk-k">if</span> texto:
+        st.<span class="tk-f">markdown</span>(texto)
+    <span class="tk-k">if</span> resp.<span class="tk-f">get</span>(<span class="tk-s">&quot;code&quot;</span>) <span class="tk-k">and</span> <span class="tk-k">not</span> resp.<span class="tk-f">get</span>(<span class="tk-s">&quot;content&quot;</span>):
+        st.<span class="tk-f">error</span>(resp.<span class="tk-f">get</span>(<span class="tk-s">&quot;message&quot;</span>, <span class="tk-s">&quot;El agente devolvio un error&quot;</span>))
+    <span class="tk-k">return</span> texto
+
+
+<span class="tk-k">with</span> tab_copilot:
+    st.<span class="tk-f">caption</span>(<span class="tk-s">&quot;El mismo agente que publicaste en Snowflake CoWork, consumido desde una app. Usa Analyst, Search, un stored procedure y graficas.&quot;</span>)
+    <span class="tk-k">if</span> <span class="tk-s">&quot;chat&quot;</span> <span class="tk-k">not</span> <span class="tk-k">in</span> st.session_state:
+        st.session_state.chat = []
+
+    cols = st.<span class="tk-f">columns</span>(<span class="tk-f">len</span>(SUGERIDAS))
+    pregunta = <span class="tk-k">None</span>
+    <span class="tk-k">for</span> col, q <span class="tk-k">in</span> <span class="tk-f">zip</span>(cols, SUGERIDAS):
+        <span class="tk-k">if</span> col.<span class="tk-f">button</span>(q, use_container_width=<span class="tk-k">True</span>):
+            pregunta = q
+
+    <span class="tk-k">for</span> m <span class="tk-k">in</span> st.session_state.chat:
+        <span class="tk-k">with</span> st.<span class="tk-f">chat_message</span>(m[<span class="tk-s">&quot;role&quot;</span>]):
+            <span class="tk-k">if</span> m[<span class="tk-s">&quot;role&quot;</span>] == <span class="tk-s">&quot;assistant&quot;</span> <span class="tk-k">and</span> m.<span class="tk-f">get</span>(<span class="tk-s">&quot;resp&quot;</span>):
+                <span class="tk-f">render_answer</span>(m[<span class="tk-s">&quot;resp&quot;</span>])
+            <span class="tk-k">else</span>:
+                st.<span class="tk-f">markdown</span>(m[<span class="tk-s">&quot;text&quot;</span>])
+
+    <span class="tk-c"># Envia la pregunta al agente y guarda la respuesta</span>
+    pregunta = st.<span class="tk-f">chat_input</span>(<span class="tk-s">&quot;Pregunta lo que quieras de Tasty Bytes&quot;</span>) <span class="tk-k">or</span> pregunta
+    <span class="tk-k">if</span> pregunta:
+        st.session_state.chat.<span class="tk-f">append</span>({<span class="tk-s">&quot;role&quot;</span>: <span class="tk-s">&quot;user&quot;</span>, <span class="tk-s">&quot;text&quot;</span>: pregunta})
+        <span class="tk-k">with</span> st.<span class="tk-f">chat_message</span>(<span class="tk-s">&quot;user&quot;</span>):
+            st.<span class="tk-f">markdown</span>(pregunta)
+        <span class="tk-k">with</span> st.<span class="tk-f">chat_message</span>(<span class="tk-s">&quot;assistant&quot;</span>):
+            <span class="tk-k">with</span> st.<span class="tk-f">spinner</span>(<span class="tk-s">&quot;El agente esta pensando, eligiendo herramientas y consultando Snowflake...&quot;</span>):
+                <span class="tk-k">try</span>:
+                    resp = <span class="tk-f">call_agent</span>(st.session_state.chat)
+                <span class="tk-k">except</span> Exception <span class="tk-k">as</span> e:
+                    resp = {<span class="tk-s">&quot;code&quot;</span>: <span class="tk-s">&quot;error&quot;</span>, <span class="tk-s">&quot;message&quot;</span>: <span class="tk-f">str</span>(e)}
+            texto = <span class="tk-f">render_answer</span>(resp)
+        st.session_state.chat.<span class="tk-f">append</span>({<span class="tk-s">&quot;role&quot;</span>: <span class="tk-s">&quot;assistant&quot;</span>, <span class="tk-s">&quot;text&quot;</span>: texto, <span class="tk-s">&quot;resp&quot;</span>: resp})</code></pre>
+</div>
+<div class="callout callout-info"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#29B5E8"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg></div><div class="callout-content"><strong class="callout-title">Sin External Access Integration</strong><p>La app solo usa paquetes preinstalados en el container runtime (<code>streamlit</code>, <code>pandas</code>, <code>altair</code>, <code>pydeck</code>), por lo que no necesita una External Access Integration (EAI) para descargar librerias.</p></div></div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Arriba, el selector de anio (2019 a 2022) y cinco pestanas: <strong>Panorama global</strong>, <strong>Ciudad viva 3D</strong>, <strong>Menu y flujos</strong>, <strong>Voz del cliente</strong> y <strong>Copilot (agente CoWork)</strong>. Resultado verificado: Streamlit <code>TASTY_BYTES_COPILOT</code> en <code>TB_101.ANALYTICS</code>, container runtime <code>SYSTEM$ST_CONTAINER_RUNTIME_PY3_11</code>, pool <code>SYSTEM_COMPUTE_POOL_CPU</code>, warehouse <code>TB_ANALYST_WH</code>; solo paquetes preinstalados, sin EAI.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(1)">Marcar paso 1 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-2" data-step="2">
+        <div class="step-header">
+            <div class="step-number">2</div>
+            <div class="step-info">
+                <h2 class="step-title">Explorar las cinco pestanas de la app Streamlit</h2>
+                <span class="step-duration">~3 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge ui">UI</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Recorremos las cinco pestanas de la app para ver datos en vivo y el agente integrado en una aplicacion.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Navegas las cinco pestanas, ves la ciudad animada y obtienes al menos una respuesta del agente en la pestana Copilot.</div>
+<div class="step-text"><p>La misma app combina analitica descriptiva, simulacion visual, voz del cliente y conversacion con el agente: el gerente de una marca pasa de <em>que paso</em> a <em>por que</em> sin cambiar de herramienta. Todo se consulta en vivo sobre <code>TB_101.ANALYTICS</code>.</p><ul><li><strong>Panorama global</strong>: KPIs del anio elegido (ventas, ordenes, ticket promedio, camiones) contra el anio anterior, mapa 3D de ciudades con pydeck, top de marcas y tendencia mensual, desde <code>ventas_diarias</code>.</li><li><strong>Ciudad viva 3D</strong>: eliges una ciudad y la app dibuja una ciudad procedural en 3D (edificios y calles) por la que circulan los food trucks. Con <em>Animar el dia</em> encendido, un fragmento de Streamlit se refresca cada segundo y avanza las horas del dia: el tamano de la flota por marca, los hotspots y la iluminacion de los edificios siguen la demanda real por hora de 2022, que viene de la tabla <code>ventas_hora_ciudad</code>.</li><li><strong>Menu y flujos</strong>: un reloj de demanda (ventas por hora del dia, tambien desde <code>ventas_hora_ciudad</code>) y el desempeno de categorias e items del menu (ventas, unidades y precio promedio) desde <code>ventas_items_mes</code>.</li><li><strong>Voz del cliente</strong>: sentimiento por marca calculado con <code>AI_SENTIMENT</code> (<code>reviews_sentimiento</code>) y las reviews de los clientes.</li><li><strong>Copilot (agente CoWork)</strong>: chat con el mismo agente <code>TASTY_BYTES_AGENT</code> del lab 8, invocado desde Python con <code>SNOWFLAKE.CORTEX.DATA_AGENT_RUN</code>. La app muestra que herramientas uso el agente, el SQL generado y las graficas Vega-Lite.</li></ul></div>
+<div class="callout callout-tip"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#10b981"><path d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"/></svg></div><div class="callout-content"><strong class="callout-title">Prueba</strong><p>Pregunta en Copilot: <em>"Cuales fueron las 5 marcas con mas ventas en 2022?"</em> y abre el detalle de herramientas para ver el SQL que genero Cortex Analyst. Luego ve a <strong>Ciudad viva 3D</strong>, elige Tokyo y observa como crece la flota en las horas pico.</p></div></div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Los KPIs cambian al mover el selector de anio; en <strong>Ciudad viva 3D</strong> la hora avanza sola y la flota y las luces suben y bajan con la demanda; Copilot responde con texto, SQL y, si aplica, una grafica.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(2)">Marcar paso 2 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-3" data-step="3">
+        <div class="step-header">
+            <div class="step-number">3</div>
+            <div class="step-info">
+                <h2 class="step-title">Desplegar el Command Center React con Snowflake App Runtime</h2>
+                <span class="step-duration">~3 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge cli">CLI</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Desplegamos una app web React en Snowflake App Runtime para llevar los datos a una experiencia a medida.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> <code>snow app deploy</code> termina sin errores y <code>snow app open</code> abre <code>TASTY_BYTES_COMMAND_CENTER</code> en tu navegador.</div>
+<div class="step-text"><p>Cuando el negocio pide una experiencia a la medida (3D, interacciones ricas, streaming), una app web completa tambien puede vivir dentro de Snowflake. <strong>Tasty Bytes Command Center</strong> es una app Next.js 16 + React 19 que se despliega con <strong>Snowflake App Runtime</strong> y queda servida en SPCS (Snowpark Container Services). El instructor comparte la carpeta <code>react-app/</code>: descargala (o abrela si ya la tienes) y abre una terminal en ella. No hay infraestructura que montar.</p><p>Requiere <strong>Snowflake CLI 3.26 o superior</strong>. Instala o actualiza la CLI y confirma la version.</p></div>
+<div class="code-block" data-language="bash">
+  <div class="code-header"><span class="code-language">BASH<span class="code-label">Snowflake CLI &gt;= 3.26</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c"># Instala o actualiza Snowflake CLI</span>
+<span class="tk-k">pip</span> <span class="tk-k">install</span> -U snowflake-cli
+<span class="tk-c"># Verifica la version (3.26 o superior)</span>
+<span class="tk-k">snow</span> --version</code></pre>
+</div>
+<div class="step-text"><p>El manifiesto <code>app.yml</code> (version 2) describe la app: nombre <code>TASTY_BYTES_COMMAND_CENTER</code>, <code>database: USER$</code> (tu base de datos personal; cada asistente tiene la suya), <code>schema: PUBLIC</code> y <code>query_warehouse: TB_ANALYST_WH</code>. Desde la carpeta, prepara y valida el proyecto antes de desplegar.</p></div>
+<div class="code-block" data-language="bash">
+  <div class="code-header"><span class="code-language">BASH<span class="code-label">Preparar y validar</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c"># Entra a la carpeta de la app React</span>
+<span class="tk-k">cd</span> react-<span class="tk-k">app</span>
+<span class="tk-c"># Prepara la app segun app.yml</span>
+<span class="tk-k">snow</span> <span class="tk-k">app</span> <span class="tk-k">setup</span>
+<span class="tk-c"># Valida la configuracion antes de desplegar</span>
+<span class="tk-k">snow</span> <span class="tk-k">app</span> <span class="tk-k">validate</span></code></pre>
+</div>
+<div class="step-text"><p>Ahora despliega y abre la app. No necesitas <code>npm install</code> en tu laptop: tu maquina solo sube el codigo fuente; <code>npm ci</code>, <code>npm run build</code> y el empaquetado standalone de Next.js corren dentro de Snowflake.</p></div>
+<div class="code-block" data-language="bash">
+  <div class="code-header"><span class="code-language">BASH<span class="code-label">Desplegar y abrir</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c"># Construye y despliega la app en Snowflake</span>
+<span class="tk-k">snow</span> <span class="tk-k">app</span> <span class="tk-k">deploy</span> --verbose -c &lt;tu_conexion&gt;
+<span class="tk-c"># Abre la app en el navegador</span>
+<span class="tk-k">snow</span> <span class="tk-k">app</span> <span class="tk-k">open</span> -c &lt;tu_conexion&gt;</code></pre>
+</div>
+<div class="step-text"><p><strong>Alternativa con Cortex Code Desktop:</strong> abre la carpeta <code>react-app/</code> en Cortex Code y pega este prompt; el agente ejecuta los mismos pasos por ti.</p></div>
+<div class="code-block" data-language="text">
+  <div class="code-header"><span class="code-language">TEXT<span class="code-label">Prompt para Cortex Code Desktop</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code># Prompt para pegar en Cortex Code
+Despliega esta app de Snowflake App Runtime en mi cuenta usando app.yml. Verifica que tengo Snowflake CLI 3.26 o superior, ejecuta snow app setup, snow app validate y snow app deploy con mi conexion activa, y al terminar abrela con snow app open.</code></pre>
+</div>
+<div class="callout callout-warning"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#b45309"><path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z"/></svg></div><div class="callout-content"><strong class="callout-title">Bug real: "Database 'TB_101' does not exist or not authorized"</strong><p>La app React en <code>USER$</code> corre con el rol con que se desplego. Si es un rol propio que no hereda <code>TB_ANALYST</code> (y tu usuario tiene <code>DEFAULT_SECONDARY_ROLES = []</code>), las consultas fallan con ese error. Solucion: despliega con ACCOUNTADMIN/SYSADMIN (ya heredan TB_ANALYST via TB_ADMIN) o, en tu SQL File, otorga el rol: <code>GRANT ROLE TB_ANALYST TO ROLE &lt;tu_rol&gt;;</code></p></div></div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>Resultado verificado: <code>snow app deploy</code> en 4 min 06 s de punta a punta (build en Snowflake 1 min 37 s), validado con Snowflake CLI 3.29.0; la app queda en tu base personal <code>USER$</code> y <code>snow app open</code> la abre en el navegador.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(3)">Marcar paso 3 como completado</button></div>
+        </div>
+    </article>
+
+    <article class="step-card" id="step-4" data-step="4">
+        <div class="step-header">
+            <div class="step-number">4</div>
+            <div class="step-info">
+                <h2 class="step-title">Explorar el Command Center</h2>
+                <span class="step-duration">~2 min</span>
+            </div>
+            <button class="step-toggle" aria-expanded="true"><svg viewBox="0 0 24 24"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg></button>
+        </div>
+        <div class="step-content">
+            <span class="modalidad-badge ui">UI</span>
+            <div class="step-resumen"><strong>En este paso:</strong> Exploramos el Command Center y entendemos como la app consulta datos y conversa con el agente en streaming.</div>
+            <div class="step-criterio"><strong>Criterio de exito:</strong> Recorres las tres pestanas, ves la ciudad animada y recibes una respuesta del agente en streaming.</div>
+<div class="step-text"><p>El Command Center es la vista ejecutiva de Tasty Bytes, en vivo sobre las tablas de los labs anteriores, sin datos simulados. Tiene tres pestanas y el chat del agente:</p><ul><li><strong>Panorama global</strong>: KPIs animados con crecimiento contra el mismo periodo del anio anterior, globo 3D (deck.gl) con la red global de food trucks, top 10 marcas (un clic filtra las reviews), tendencia mensual 2019-2022, mapa de calor dia de la semana x mes, sentimiento por marca (<code>AI_SENTIMENT</code>) y voz del cliente.</li><li><strong>Ciudad viva 3D</strong>: food trucks en tiempo simulado, animados con el <code>TripsLayer</code> de deck.gl; la demanda por hora de 2022 sale de <code>ventas_hora_ciudad</code>.</li><li><strong>Menu y flujos</strong>: mapa del menu (categoria &gt; item), reloj de demanda de las top 5 marcas por hora, flujo de ventas pais &gt; tipo de menu y precio vs volumen por item.</li><li><strong>Chat del agente</strong>: el navegador llama a <code>/api/agent</code>, que dentro de App Runtime usa el token del servicio para invocar la REST API <code>/api/v2/databases/.../agents/TASTY_BYTES_AGENT:run</code> con <code>stream: true</code>. Ves el razonamiento token a token, los chips de herramientas (Cortex Analyst, Cortex Search, Pronostico, Grafica), el SQL, las graficas Vega-Lite y las reviews citadas.</li></ul></div>
+<div class="code-block" data-language="text">
+  <div class="code-header"><span class="code-language">TEXT<span class="code-label">Arquitectura</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code># Flujo de una consulta en el Command Center
+NAVEGADOR
+   |
+   v
+Next.js en SPCS (Snowflake App Runtime)
+   +--&gt; /api/dashboard, /api/insights, /api/reviews   SQL con binds -&gt; TB_101.ANALYTICS
+   +--&gt; /api/agent   SSE: REST agents:run stream=true (token del servicio)
+           |
+           v
+Agente de Snowflake CoWork (TASTY_BYTES_AGENT)
+   +--&gt; Cortex Analyst (Semantic View)
+   +--&gt; Cortex Search (reviews)
+   +--&gt; SP sp_pronostico_ventas</code></pre>
+</div>
+<div class="callout callout-expected"><div class="callout-icon"><svg viewBox="0 0 24 24" fill="#11567F"><path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/></svg></div><div class="callout-content"><strong class="callout-title">Que deberias ver</strong><p>KPIs 2022: ventas <strong>$5.08B</strong> (+83.6% vs mismo periodo 2021), <strong>126.32M</strong> ordenes, ticket <strong>$40.21</strong>, <strong>450</strong> camiones, <strong>30</strong> ciudades. Ciudad top: Tokyo <strong>$268.1M</strong>. La respuesta del agente llega token a token.</p></div></div>
+            <div class="step-actions"><button class="btn-check" onclick="markStepComplete(4)">Marcar paso 4 como completado</button></div>
+        </div>
+    </article>
+</main>
+
+<section id="resources" class="content-section">
+    <div class="section-container">
+        <h2 class="section-title">Recursos Adicionales</h2>
+        <div class="prerequisites-grid"><a href="https://docs.snowflake.com/en/developer-guide/snowflake-app-runtime/deploy" class="prereq-card" target="_blank" style="text-decoration:none;"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><div class="prereq-info"><h4>Documentacion: Snowflake App Runtime</h4><p>Despliegue con snow app deploy y el manifiesto app.yml.</p></div></a><a href="https://docs.snowflake.com/en/developer-guide/streamlit/about-streamlit" class="prereq-card" target="_blank" style="text-decoration:none;"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><div class="prereq-info"><h4>Documentacion: Streamlit in Snowflake</h4><p>Crear y desplegar apps Streamlit dentro de tu cuenta.</p></div></a><a href="https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents" class="prereq-card" target="_blank" style="text-decoration:none;"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><div class="prereq-info"><h4>Documentacion: Cortex Agents</h4><p>API REST de agentes y ejecucion con streaming.</p></div></a><a href="https://docs.snowflake.com/en/developer-guide/snowpark-container-services/overview" class="prereq-card" target="_blank" style="text-decoration:none;"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><div class="prereq-info"><h4>Documentacion: Snowpark Container Services</h4><p>El servicio de contenedores donde corre la app React.</p></div></a><a href="https://github.com/sfc-gh-jparrado/HOL" class="prereq-card" target="_blank" style="text-decoration:none;"><svg class="prereq-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg><div class="prereq-info"><h4>Repositorio del HOL</h4><p>Codigo de las apps y SQL de todos los labs.</p></div></a></div>
+    </div>
+</section>
+
+<section class="completion-section" id="completionSection">
+    <div class="completion-container">
+        <div class="completion-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg></div>
+        <h2>Apps listas!</h2>
+        <p>Completaste el LAB 9: tu agente ya vive en una app Streamlit y en un Command Center React, ambos dentro de Snowflake.</p>
+        <div class="completion-summary">
+            <div class="summary-item"><span class="summary-label">Tiempo total</span><span class="summary-value" id="totalTime">--</span></div>
+            <div class="summary-item"><span class="summary-label">Pasos completados</span><span class="summary-value">4/4</span></div>
+            <div class="summary-item"><span class="summary-label">Duracion del lab</span><span class="summary-value">12 min</span></div>
+        </div>
+        <div class="next-actions"><h3>Siguiente laboratorio</h3><ul><li><strong><a href="lab10_cierre.html" style="color:white;text-decoration:underline;">LAB 10: Cierre &rarr;</a></strong> recap de la arquitectura, siguientes pasos y cleanup opcional.</li></ul></div>
+    </div>
+</section>
+
+<footer class="hol-footer">
+    <div class="footer-container">
+        <div class="footer-brand">
+            <svg class="sf-logo-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px;"><g transform="rotate(0 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(60 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(120 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(180 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(240 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><g transform="rotate(300 12 12)"><path d="M12 12V2.2M12 5.6 9.4 3.4M12 5.6l2.6-2.2M12 9l-2-1.6M12 9l2-1.6"/></g><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>
+            <p>Snowflake Hands-On Labs · Zero to Snowflake</p>
+        </div>
+        <div class="footer-meta">
+            <p>LAB 9 de 10 · Del agente a tus apps: Streamlit + React</p>
+            <p>&copy; 2026 Snowflake Inc. All Rights Reserved.</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+
+const HOLState = {
+    totalSteps: 0,
+    completedSteps: new Set(),
+    startTime: null,
+    currentStep: 1
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+    initializeHOL();
+});
+
+function initializeHOL() {
+    HOLState.totalSteps = document.querySelectorAll('.step-card').length;
+    HOLState.startTime = new Date();
+    loadProgress();
+    initStepToggles();
+    initScrollSpy();
+    initKeyboardShortcuts();
+    updateProgressUI();
+}
+
+function markStepComplete(stepNumber) {
+    HOLState.completedSteps.add(stepNumber);
+
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) {
+        stepCard.classList.add('completed');
+        const btn = stepCard.querySelector('.btn-check');
+        if (btn) {
+            btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> Completado`;
+            btn.disabled = true;
+            btn.style.background = 'var(--sf-green)';
+            btn.style.color = 'white';
+        }
+    }
+
+    const navItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (navItem) { navItem.classList.add('completed'); }
+
+    saveProgress();
+    updateProgressUI();
+
+    if (HOLState.completedSteps.size === HOLState.totalSteps) {
+        showCompletion();
+    } else if (stepNumber < HOLState.totalSteps) {
+        setTimeout(() => { scrollToStep(stepNumber + 1); }, 500);
+    }
+}
+
+function updateProgressUI() {
+    const progress = (HOLState.completedSteps.size / HOLState.totalSteps) * 100;
+    const progressFill = document.getElementById('progressFill');
+    if (progressFill) { progressFill.style.width = `${progress}%`; }
+    const progressPercent = document.querySelector('.progress-percent');
+    if (progressPercent) { progressPercent.textContent = `${Math.round(progress)}%`; }
+}
+
+function saveProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const data = {
+        completedSteps: Array.from(HOLState.completedSteps),
+        startTime: HOLState.startTime.toISOString(),
+        lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem(`hol-progress-${holId}`, JSON.stringify(data));
+}
+
+function loadProgress() {
+    const holId = document.body.dataset.holId || 'default-hol';
+    const saved = localStorage.getItem(`hol-progress-${holId}`);
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            data.completedSteps.forEach(step => {
+                HOLState.completedSteps.add(step);
+                const stepCard = document.getElementById(`step-${step}`);
+                if (stepCard) { stepCard.classList.add('completed'); }
+                const navItem = document.querySelector(`.step-nav-item[data-step="${step}"]`);
+                if (navItem) { navItem.classList.add('completed'); }
+            });
+            if (data.startTime) { HOLState.startTime = new Date(data.startTime); }
+        } catch (e) { console.error('Error loading progress:', e); }
+    }
+}
+
+function initStepToggles() {
+    document.querySelectorAll('.step-toggle').forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const stepCard = this.closest('.step-card');
+            const content = stepCard.querySelector('.step-content');
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            content.classList.toggle('collapsed', isExpanded);
+        });
+    });
+    document.querySelectorAll('.step-header').forEach(header => {
+        header.addEventListener('click', function() {
+            const toggle = this.querySelector('.step-toggle');
+            if (toggle) { toggle.click(); }
+        });
+    });
+}
+
+function copyCode(button) {
+    const codeBlock = button.closest('.code-block');
+    const code = codeBlock.querySelector('code');
+    const text = code.textContent;
+
+    navigator.clipboard.writeText(text).then(() => {
+        const originalText = button.textContent;
+        button.textContent = 'Copiado ✓';
+        setTimeout(() => { button.textContent = originalText; }, 2000);
+    }).catch(err => {
+        console.error('Error copying:', err);
+        alert('Error al copiar el código');
+    });
+}
+
+function initScrollSpy() {
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const stepNumber = entry.target.dataset.step;
+                updateActiveNavItem(stepNumber);
+                HOLState.currentStep = parseInt(stepNumber);
+            }
+        });
+    }, { rootMargin: '-100px 0px -50% 0px' });
+
+    document.querySelectorAll('.step-card').forEach(card => { observer.observe(card); });
+}
+
+function updateActiveNavItem(stepNumber) {
+    document.querySelectorAll('.step-nav-item').forEach(item => { item.classList.remove('active'); });
+    const activeItem = document.querySelector(`.step-nav-item[data-step="${stepNumber}"]`);
+    if (activeItem) { activeItem.classList.add('active'); }
+}
+
+function scrollToStep(stepNumber) {
+    const stepCard = document.getElementById(`step-${stepNumber}`);
+    if (stepCard) { stepCard.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+
+function initKeyboardShortcuts() {
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && e.key >= '1' && e.key <= '9') {
+            const stepNumber = parseInt(e.key);
+            if (stepNumber <= HOLState.totalSteps) { scrollToStep(stepNumber); e.preventDefault(); }
+        }
+        if (e.altKey && e.key === 'c') {
+            if (!HOLState.completedSteps.has(HOLState.currentStep)) { markStepComplete(HOLState.currentStep); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'n') {
+            if (HOLState.currentStep < HOLState.totalSteps) { scrollToStep(HOLState.currentStep + 1); }
+            e.preventDefault();
+        }
+        if (e.altKey && e.key === 'p') {
+            if (HOLState.currentStep > 1) { scrollToStep(HOLState.currentStep - 1); }
+            e.preventDefault();
+        }
+    });
+}
+
+function showCompletion() {
+    const completionSection = document.getElementById('completionSection');
+    if (completionSection) {
+        completionSection.classList.add('visible');
+        completionSection.scrollIntoView({ behavior: 'smooth' });
+        const endTime = new Date();
+        const duration = endTime - HOLState.startTime;
+        const minutes = Math.floor(duration / 60000);
+        const seconds = Math.floor((duration % 60000) / 1000);
+        const totalTimeEl = document.getElementById('totalTime');
+        if (totalTimeEl) { totalTimeEl.textContent = `${minutes}m ${seconds}s`; }
+    }
+}
+
+</script>
+
+<script id="visual-layer">
+(function () {
+  // Tracker only after the hero: avoids covering the title / overview
+  var steps = document.getElementById('steps');
+  if (steps && 'IntersectionObserver' in window) {
+    var toggle = function () { document.body.classList.toggle('in-steps', steps.getBoundingClientRect().top < window.innerHeight * 0.6 && steps.getBoundingClientRect().bottom > 120); };
+    window.addEventListener('scroll', toggle, { passive: true }); toggle();
+  }
+  // Click-to-zoom figures
+  var lb = document.createElement('div'); lb.className = 'lightbox'; lb.innerHTML = '<img alt="">';
+  document.body.appendChild(lb);
+  lb.addEventListener('click', function () { lb.classList.remove('open'); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') lb.classList.remove('open'); });
+  document.querySelectorAll('.step-figure img').forEach(function (img) {
+    img.addEventListener('click', function () { lb.querySelector('img').src = img.src; lb.classList.add('open'); });
+  });
+})();
+</script>
+</body>
+</html>

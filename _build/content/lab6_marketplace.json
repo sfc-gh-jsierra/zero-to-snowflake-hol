@@ -1,0 +1,162 @@
+{
+  "lab": "lab6_marketplace.html",
+  "intro": [
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab6_marketplace</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>."
+    },
+    {
+      "type": "image",
+      "src": "img/quickstart/create_a_worksheet.gif",
+      "caption": "Crear un SQL File en Workspaces (quickstart Zero to Snowflake)"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Obtener el listing de clima (UI o SQL)",
+      "nav": "Obtener listing",
+      "minutes": 2,
+      "badge": "UI",
+      "resumen": "Obtenemos gratis datos de clima del Marketplace, compartidos en vivo por el proveedor, sin copiar archivos ni crear pipelines.",
+      "criterio": "La base <code>ZTS_WEATHERSOURCE</code> aparece en el explorador de objetos y el rol <code>PUBLIC</code> puede leerla.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Tasty Bytes sospecha que el clima mueve sus ventas, pero no tiene datos meteorologicos propios. En el <strong>Snowflake Marketplace</strong> un proveedor comparte su base <strong>en vivo</strong> (Secure Data Sharing): no hay archivos, ni ETL, ni copias; solo una base de solo lectura que apunta a los datos del proveedor. Elige uno de los dos caminos.</p><p><strong>Camino A - UI (Snowsight):</strong></p><ol><li>En el menu izquierdo ve a <strong>Data Products &gt; Marketplace</strong>.</li><li>En el buscador escribe <code>Weather Source frostbyte</code>.</li><li>Abre el listing <strong>\"Pelmorex Weather Source: Frostbyte\"</strong> y pulsa <strong>Get</strong>.</li><li>En <em>Options</em> nombra la base <code>ZTS_WEATHERSOURCE</code>, dale acceso al rol <code>PUBLIC</code> y confirma con <strong>Get</strong>.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-5/weather_source_search.png",
+          "caption": "Buscar Weather Source en el Marketplace"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-5/weather_source_listing.png",
+          "caption": "Listing de Weather Source: boton Get y opciones de la base"
+        },
+        {
+          "type": "text",
+          "html": "<p><strong>Camino B - SQL:</strong> el mismo resultado con una sentencia. <code>CREATE DATABASE ... FROM LISTING</code> equivale al boton <em>Get</em> (si ya lo hiciste por UI, el <code>IF NOT EXISTS</code> no hace nada). <code>IMPORTED PRIVILEGES</code> es el permiso unico que da lectura sobre toda una base compartida.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Instalar listing por SQL",
+          "code": "-- Solo accountadmin puede instalar listings\nUSE ROLE accountadmin;\n\n-- Instalar el listing gratuito por SQL (equivale al boton \"Get\")\nCREATE DATABASE IF NOT EXISTS zts_weathersource FROM LISTING 'GZSOZ1LLEL';\n\n-- Da acceso a la base compartida a todos los roles\nGRANT IMPORTED PRIVILEGES ON DATABASE zts_weathersource TO ROLE public;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Database ZTS_WEATHERSOURCE successfully created.</code> (o <em>already exists</em> si usaste la UI) y <code>Statement executed successfully.</code> Listing verificado: \"Pelmorex Weather Source: Frostbyte\" (global name <code>GZSOZ1LLEL</code>)."
+        }
+      ]
+    },
+    {
+      "title": "Explorar el dato del proveedor y cruzarlo con tus ciudades",
+      "nav": "Vista de clima",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Exploramos el clima del proveedor y lo filtramos a las ciudades donde opera Tasty Bytes con una vista.",
+      "criterio": "El SELECT devuelve 10 filas de clima y <code>harmonized.daily_weather_v</code> se crea sin error.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Cambiamos al rol analista y miramos el dato tal como lo publica el proveedor: clima diario por codigo postal (temperatura, lluvia, viento...). Lo consultas como cualquier tabla propia.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Contexto y vista previa",
+          "code": "-- Contexto: rol analista, base y warehouse\nUSE ROLE tb_analyst;\n\nUSE DATABASE tb_101;\n\nUSE WAREHOUSE tb_analyst_wh;\n\n-- Datos de clima diario por codigo postal, compartidos en vivo por el proveedor\nSELECT * FROM zts_weathersource.onpoint_id.history_day LIMIT 10;"
+        },
+        {
+          "type": "expected",
+          "html": "10 filas con columnas como <code>postal_code</code>, <code>country</code>, <code>date_valid_std</code>, <code>avg_temperature_air_2m_f</code> y <code>tot_precipitation_in</code>."
+        },
+        {
+          "type": "text",
+          "html": "<p>Ahora creamos una vista que se queda solo con el clima de las ciudades donde opera Tasty Bytes: une la tabla de clima con los codigos postales del proveedor y con nuestra tabla <code>raw_pos.country</code>. Es SQL estandar sobre una base compartida.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Vista de clima diario",
+          "code": "-- Vista: clima diario en las ciudades donde opera Tasty Bytes\nCREATE OR REPLACE VIEW harmonized.daily_weather_v\nCOMMENT = 'Clima diario (Weather Source) en las ciudades de Tasty Bytes'\nAS\nSELECT\n    hd.*,\n    TO_VARCHAR(hd.date_valid_std, 'YYYY-MM') AS yyyy_mm,\n    pc.city_name AS city,\n    c.country    AS country_desc\nFROM zts_weathersource.onpoint_id.history_day hd\nJOIN zts_weathersource.onpoint_id.postal_codes pc\n  ON pc.postal_code = hd.postal_code AND pc.country = hd.country\nJOIN raw_pos.country c\n  ON c.iso_country = hd.country AND c.city = hd.city_name;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>View DAILY_WEATHER_V successfully created.</code>"
+        }
+      ]
+    },
+    {
+      "title": "Unir ventas (1st party) con clima (3rd party)",
+      "nav": "Ventas + clima",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Unimos nuestras ventas con el clima de terceros en una vista lista para analizar el impacto del tiempo en el negocio.",
+      "criterio": "La vista <code>analytics.daily_sales_by_weather_v</code> se crea sin error.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>La segunda vista resume las ventas diarias por ciudad desde <code>analytics.orders_v</code> (dato propio) y les pega temperatura promedio, precipitacion y viento maximo (dato de terceros) con un <code>LEFT JOIN</code> por fecha, ciudad y pais.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Vista ventas por clima",
+          "code": "-- Vista: ventas diarias + clima por ciudad (1st party + 3rd party)\nCREATE OR REPLACE VIEW analytics.daily_sales_by_weather_v\nCOMMENT = 'Ventas diarias de Tasty Bytes enriquecidas con clima'\nAS\nWITH ventas AS (\n    SELECT DATE(o.order_ts) AS fecha, o.primary_city AS ciudad, o.country AS pais,\n           SUM(o.price) AS ventas_diarias\n    FROM analytics.orders_v o\n    GROUP BY ALL\n)\nSELECT\n    v.fecha, v.ciudad, v.pais, v.ventas_diarias,\n    ROUND(AVG(w.avg_temperature_air_2m_f), 1)     AS temp_promedio_f,\n    ROUND(AVG(w.tot_precipitation_in), 2)         AS precipitacion_in,\n    ROUND(AVG(w.max_wind_speed_100m_mph), 1)      AS viento_max_mph\nFROM ventas v\nLEFT JOIN harmonized.daily_weather_v w\n  ON w.date_valid_std = v.fecha AND w.city = v.ciudad AND w.country_desc = v.pais\nGROUP BY ALL;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>View DAILY_SALES_BY_WEATHER_V successfully created.</code>"
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Datos de terceros sin ETL",
+          "html": "Acabas de hacer un JOIN entre tus ventas y la base de un proveedor externo sin mover un solo byte: no hubo pipeline, ni archivo, ni copia. Si el proveedor actualiza su dato, tu vista lo ve al instante."
+        }
+      ]
+    },
+    {
+      "title": "Analisis: llueve = venden menos? (Seattle)",
+      "nav": "Analisis Seattle",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Probamos con datos si la lluvia reduce las ventas en Seattle y lo graficamos sin salir del SQL File.",
+      "criterio": "La consulta devuelve los dias de febrero 2022 en Seattle con ventas, temperatura, precipitacion y viento, y lo graficas en Snowsight.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Seattle es famosa por la lluvia: ideal para probar la hipotesis. Consultamos febrero de 2022 dia por dia.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Seattle, febrero 2022",
+          "code": "-- Llueve = venden menos? Seattle, febrero 2022\nSELECT fecha, ventas_diarias, temp_promedio_f, precipitacion_in, viento_max_mph\nFROM analytics.daily_sales_by_weather_v\nWHERE ciudad = 'Seattle' AND fecha BETWEEN '2022-02-01' AND '2022-02-28'\nORDER BY fecha;"
+        },
+        {
+          "type": "expected",
+          "html": "Una fila por dia de febrero 2022. Primer dia verificado: <code>2022-02-01</code>, ventas <strong>$234,563.25</strong>, temperatura promedio <strong>39.4 F</strong>, precipitacion <strong>0.03 in</strong>."
+        },
+        {
+          "type": "text",
+          "html": "<p><strong>Graficalo sin salir del SQL File (UI):</strong></p><ol><li>En el panel de resultados haz clic en <strong>Chart</strong>.</li><li>Elige tipo <strong>Line</strong>, con <code>FECHA</code> en el eje X y <code>VENTAS_DIARIAS</code> como serie.</li><li>Agrega <code>PRECIPITACION_IN</code> como segunda serie (o cambia a <strong>Bar</strong>) para comparar ventas contra lluvia.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-5/line_chart.png",
+          "caption": "Grafico de lineas en Snowsight sobre el resultado"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-5/bar_chart.png",
+          "caption": "Grafico de barras en Snowsight sobre el resultado"
+        }
+      ]
+    }
+  ]
+}

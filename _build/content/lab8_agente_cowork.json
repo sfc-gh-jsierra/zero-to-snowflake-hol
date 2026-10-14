@@ -1,0 +1,285 @@
+{
+  "lab": "lab8_agente_cowork.html",
+  "intro": [
+    {
+      "type": "image",
+      "src": "img/quickstart/si_header.png",
+      "caption": "Snowflake Intelligence / CoWork (quickstart Zero to Snowflake)"
+    },
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab8_agente_cowork</code>. En cada paso: lee la explicacion, pulsa <strong>Copiar</strong>, pega al final del SQL File, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>. Luego compara con <em>Que deberias ver</em>. Los pasos 5 y 6 son en la interfaz, sin SQL."
+    },
+    {
+      "type": "text",
+      "html": "<p>El COO de Tasty Bytes recibe decenas de reportes fragmentados: ventas en un dashboard, opiniones de clientes en otro sistema. Cruzarlos toma horas de analistas. En este lab construyes un <strong>agente de Snowflake Intelligence (CoWork)</strong> que une todo en una conversacion: entiende numeros (Cortex Analyst sobre la Semantic View del LAB 7), lee lo que dicen los clientes (Cortex Search), grafica y ademas <strong>actua</strong> con logica propia (un stored procedure de pronostico).</p><p>A diferencia del quickstart oficial, que crea el agente con clics, aqui lo creamos <strong>por SQL</strong> (infraestructura como codigo) y despues lo usamos y editamos en la UI.</p>"
+    }
+  ],
+  "steps": [
+    {
+      "title": "Custom tool: stored procedure de pronostico",
+      "nav": "SP de pronostico",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Creamos un stored procedure de pronostico que el agente podra usar como herramienta para proyectar ventas futuras.",
+      "criterio": "el procedimiento se crea y el CALL devuelve un texto con el promedio mensual actual y la proyeccion mes a mes de Freezing Point.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Fijamos el contexto: rol <code>accountadmin</code>, base <code>tb_101</code> y el warehouse de analistas que tambien usara el agente.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Contexto",
+          "code": "-- Usa el rol administrador de la cuenta\nUSE ROLE accountadmin;\n-- Trabaja sobre la base del lab\nUSE DATABASE tb_101;\n-- Usa el computo del analista\nUSE WAREHOUSE tb_analyst_wh;"
+        },
+        {
+          "type": "expected",
+          "html": "Tres mensajes <code>Statement executed successfully.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Un agente no solo consulta: tambien puede <strong>actuar</strong> con logica propia. Esa logica es un SP (Stored Procedure) normal en SQL Scripting que proyecta ventas con tendencia lineal (<code>REGR_SLOPE</code> / <code>REGR_INTERCEPT</code>) sobre los ultimos 12 meses completos de <code>ventas_diarias</code>. Recibe la <code>marca</code> y los <code>meses_futuros</code> (acotados entre 1 y 12) y devuelve un texto. El <code>COMMENT</code> describe que hace: buena practica, porque el agente se apoya en descripciones.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Crear sp_pronostico_ventas",
+          "code": "-- Crea el procedimiento de pronostico lineal\nCREATE OR REPLACE PROCEDURE analytics.sp_pronostico_ventas(marca STRING, meses_futuros NUMBER)\nRETURNS STRING\nLANGUAGE SQL\nCOMMENT = 'Proyecta las ventas mensuales de una marca con tendencia lineal sobre los ultimos 12 meses'\nAS\n$$\nDECLARE\n    resultado STRING;\n    rs RESULTSET;\nBEGIN\n    rs := (\n    WITH mensual AS (\n        SELECT DATE_TRUNC('month', fecha) AS mes, SUM(ventas) AS ventas\n        FROM tb_101.analytics.ventas_diarias\n        WHERE marca ILIKE :marca\n        GROUP BY mes\n        QUALIFY ROW_NUMBER() OVER (ORDER BY mes DESC) BETWEEN 2 AND 13   -- 12 meses completos\n    ),\n    modelo AS (\n        SELECT REGR_SLOPE(ventas, DATEDIFF('month', '2019-01-01', mes))     AS pendiente,\n               REGR_INTERCEPT(ventas, DATEDIFF('month', '2019-01-01', mes)) AS intercepto,\n               MAX(mes) AS ultimo_mes, AVG(ventas) AS promedio\n        FROM mensual\n    ),\n    futuro AS (\n        SELECT DATEADD('month', s.n, m.ultimo_mes) AS mes,\n               ROUND(m.intercepto + m.pendiente * DATEDIFF('month', '2019-01-01', DATEADD('month', s.n, m.ultimo_mes)), 0) AS ventas_proyectadas\n        FROM modelo m,\n             (SELECT SEQ4() + 1 AS n FROM TABLE(GENERATOR(ROWCOUNT => 24))) s\n        WHERE s.n <= LEAST(GREATEST(:meses_futuros, 1), 12)\n    )\n    SELECT 'Pronostico para ' || :marca || ' (tendencia lineal, ultimos 12 meses). '\n           || 'Promedio mensual actual: $' || TO_VARCHAR((SELECT ROUND(promedio,0) FROM modelo), '999,999,999') || '. '\n           || 'Proyeccion: ' || LISTAGG(TO_VARCHAR(mes, 'YYYY-MM') || ' = $' || TO_VARCHAR(ventas_proyectadas, '999,999,999'), '; ')\n              WITHIN GROUP (ORDER BY mes) AS texto\n    FROM futuro\n    );\n    LET c CURSOR FOR rs;\n    OPEN c;\n    FETCH c INTO resultado;\n    CLOSE c;\n    RETURN COALESCE(:resultado, 'No encontre ventas para la marca ' || :marca);\nEND;\n$$;"
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Bug real: SELECT ... INTO con WITH en SQL Scripting",
+          "html": "En SQL Scripting no se puede usar <code>SELECT ... INTO</code> cuando la consulta empieza con <code>WITH</code> (CTEs). La solucion del SP: asignar la consulta a un <code>RESULTSET</code> (<code>rs := (WITH ...)</code>), abrir un <code>CURSOR</code> sobre el y hacer <code>FETCH c INTO resultado</code>."
+        },
+        {
+          "type": "expected",
+          "html": "<code>Function SP_PRONOSTICO_VENTAS successfully created.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Probamos la herramienta <em>antes</em> de entregarsela al agente: si falla aqui, fallaria dentro de la conversacion.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Probar el SP",
+          "code": "-- Probamos la herramienta antes de entregarsela al agente\nCALL analytics.sp_pronostico_ventas('Freezing Point', 3);"
+        },
+        {
+          "type": "expected",
+          "html": "Una fila con un texto. Resultado verificado: promedio mensual actual <code>$14,868,096</code>; proyeccion <code>2022-11 = $20,910,037</code> (y dos meses mas)."
+        }
+      ]
+    },
+    {
+      "title": "Crear el agente desde una especificacion",
+      "nav": "Crear el agente",
+      "minutes": 3,
+      "badge": "SQL",
+      "resumen": "Creamos el agente Tasty Bytes Copilot que combina ventas, reviews, pronosticos y graficas en una sola conversacion.",
+      "criterio": "DESCRIBE AGENT muestra TASTY_BYTES_AGENT con sus 4 herramientas y el perfil \"Tasty Bytes Copilot\".",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Los agentes que ve Snowflake Intelligence viven, por convencion, en <code>snowflake_intelligence.agents</code>. Creamos ese esquema si no existe.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Esquema de agentes",
+          "code": "-- Crea el esquema donde viven los agentes\nCREATE SCHEMA IF NOT EXISTS snowflake_intelligence.agents;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Schema AGENTS successfully created.</code> (o un aviso de que ya existe)."
+        },
+        {
+          "type": "text",
+          "html": "<p><code>CREATE AGENT ... FROM SPECIFICATION</code> define el agente completo en YAML. <code>PROFILE</code> le da el nombre visible (<em>Tasty Bytes Copilot</em>); <code>models.orchestration: auto</code> deja que Snowflake elija el LLM; <code>budget</code> limita tiempo (120 s) y tokens por respuesta.</p><p>Las <strong>instrucciones</strong> separan dos cosas: <code>orchestration</code> (cuando usar cada herramienta, y usar ambas si la pregunta mezcla numeros y opiniones) y <code>response</code> (como contestar: espanol ejecutivo, cifra primero, bullets, grafica y recomendacion). <code>sample_questions</code> son las preguntas sugeridas que veras en CoWork.</p><p>Sus <strong>4 herramientas</strong> (<code>tools</code>):</p><ul><li><strong>VentasTastyBytes</strong> (<code>cortex_analyst_text_to_sql</code>): Cortex Analyst sobre la Semantic View <code>SV_TASTY_BYTES</code> del LAB 7. Traduce la pregunta a SQL y la ejecuta: ventas, ordenes, ticket promedio, marcas, ciudades, productos y clima. Su descripcion aclara que NO tiene texto de reviews, para que el orquestador no la use para opiniones.</li><li><strong>ReviewsClientes</strong> (<code>cortex_search</code>): busqueda semantica (por significado, no por palabra exacta) sobre las reviews del servicio <code>TASTY_BYTES_REVIEW_SEARCH</code>, filtrable por <code>MARCA</code>, <code>CIUDAD</code> y <code>SENTIMIENTO</code>. Devuelve hasta 5 reviews que el agente cita como fuente.</li><li><strong>PronosticoVentas</strong> (<code>generic</code>, custom tool): llama al SP del paso 1. El <code>input_schema</code> declara los parametros <code>marca</code> y <code>meses_futuros</code> con su descripcion: asi el LLM sabe que valores extraer de la pregunta para invocar el procedimiento.</li><li><strong>data_to_chart</strong>: genera graficas a partir de los datos devueltos por las otras herramientas (rankings, series de tiempo).</li></ul><p><code>tool_resources</code> conecta cada herramienta con su objeto real (semantic view, search service con sus columnas id/titulo, procedure) y con el warehouse <code>TB_ANALYST_WH</code> y su timeout.</p>"
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Copia el bloque completo",
+          "html": "Copia el bloque <code>$$ ... $$</code> completo: la indentacion del YAML importa."
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "CREATE AGENT",
+          "code": "-- Crea el agente desde su especificacion YAML\nCREATE OR REPLACE AGENT snowflake_intelligence.agents.tasty_bytes_agent\n  COMMENT = 'Analista de negocio de Tasty Bytes: ventas, clientes, clima y pronosticos'\n  PROFILE = '{\"display_name\": \"Tasty Bytes Copilot\", \"color\": \"blue\"}'\n  FROM SPECIFICATION\n$$\nmodels:\n  orchestration: auto\n\norchestration:\n  budget:\n    seconds: 120\n    tokens: 32000\n\ninstructions:\n  response: >\n    Responde siempre en espanol, de forma ejecutiva y concisa. Empieza con la\n    respuesta directa (una cifra o conclusion), luego 2-4 bullets de contexto.\n    Formatea montos en USD con separador de miles. Cuando haya series de tiempo\n    o rankings, genera una grafica. Cierra con una recomendacion accionable.\n  orchestration: >\n    Usa VentasTastyBytes para cualquier pregunta de ventas, ordenes, ticket\n    promedio, marcas, ciudades, paises, productos o clima.\n    Usa ReviewsClientes para saber que dicen u opinan los clientes, quejas o\n    elogios; filtra por marca cuando el usuario la mencione.\n    Usa PronosticoVentas solo cuando pidan proyectar, pronosticar o estimar\n    ventas futuras de una marca.\n    Si la pregunta combina numeros y opiniones, usa ambas herramientas y\n    relaciona los hallazgos.\n  sample_questions:\n    - question: \"Cuales son las 5 marcas con mas ventas en 2022? Muestralo en una grafica\"\n    - question: \"Que dicen los clientes de Freezing Point?\"\n    - question: \"Que ciudad tiene el mejor ticket promedio y que opinan ahi los clientes?\"\n    - question: \"Pronostica las ventas de Kitakata Ramen Bar para los proximos 3 meses\"\n    - question: \"Llueve menos = vendemos mas? Analiza Seattle en 2022\"\n\ntools:\n  - tool_spec:\n      type: \"cortex_analyst_text_to_sql\"\n      name: \"VentasTastyBytes\"\n      description: >\n        Datos estructurados de Tasty Bytes (2019-2022): ventas en USD, ordenes,\n        unidades, ticket promedio por marca, tipo de menu, item, ciudad, pais,\n        fecha, y clima diario por ciudad. NO contiene texto de reviews.\n  - tool_spec:\n      type: \"cortex_search\"\n      name: \"ReviewsClientes\"\n      description: >\n        Busqueda semantica sobre reviews escritas por clientes de los food\n        trucks. Atributos filtrables: MARCA, CIUDAD, SENTIMIENTO (positive,\n        negative, neutral, mixed). Usar para opiniones, quejas y elogios.\n  - tool_spec:\n      type: \"generic\"\n      name: \"PronosticoVentas\"\n      description: >\n        Proyecta las ventas mensuales futuras de UNA marca usando la tendencia\n        lineal de los ultimos 12 meses. Devuelve un texto con el promedio actual\n        y la proyeccion mes a mes.\n      input_schema:\n        type: \"object\"\n        properties:\n          marca:\n            type: \"string\"\n            description: \"Nombre exacto de la marca, ej. 'Freezing Point', 'Kitakata Ramen Bar'\"\n          meses_futuros:\n            type: \"number\"\n            description: \"Cantidad de meses a proyectar, entre 1 y 12. Por defecto 3\"\n        required: [\"marca\", \"meses_futuros\"]\n  - tool_spec:\n      type: \"data_to_chart\"\n      name: \"data_to_chart\"\n      description: \"Genera visualizaciones a partir de los datos devueltos por otras herramientas\"\n\ntool_resources:\n  VentasTastyBytes:\n    semantic_view: \"TB_101.ANALYTICS.SV_TASTY_BYTES\"\n    execution_environment:\n      type: \"warehouse\"\n      warehouse: \"TB_ANALYST_WH\"\n      query_timeout: 120\n  ReviewsClientes:\n    search_service: \"TB_101.ANALYTICS.TASTY_BYTES_REVIEW_SEARCH\"\n    max_results: 5\n    id_column: \"REVIEW_ID\"\n    title_column: \"MARCA\"\n  PronosticoVentas:\n    type: \"procedure\"\n    identifier: \"TB_101.ANALYTICS.SP_PRONOSTICO_VENTAS\"\n    execution_environment:\n      type: \"warehouse\"\n      warehouse: \"TB_ANALYST_WH\"\n      query_timeout: 60\n$$;"
+        },
+        {
+          "type": "expected",
+          "html": "<code>Agent TASTY_BYTES_AGENT successfully created.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Verificamos lo que quedo guardado.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Describir el agente",
+          "code": "-- Revisa herramientas y perfil del agente\nDESCRIBE AGENT snowflake_intelligence.agents.tasty_bytes_agent;"
+        },
+        {
+          "type": "expected",
+          "html": "Una fila para <code>TASTY_BYTES_AGENT</code> con el perfil \"Tasty Bytes Copilot\" y, en la especificacion, las 4 herramientas: VentasTastyBytes, ReviewsClientes, PronosticoVentas y data_to_chart."
+        }
+      ]
+    },
+    {
+      "title": "Permisos y publicar en Snowflake CoWork",
+      "nav": "Permisos y publicar",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Damos permisos al analista y publicamos el agente en Snowflake CoWork para que el negocio lo use.",
+      "criterio": "los GRANT se ejecutan sin error y el bloque de publicacion devuelve \"Agente publicado en Snowflake CoWork\" (o \"El agente ya estaba publicado en CoWork\").",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Con RBAC (Role-Based Access Control) decides quien usa el agente: el rol <code>tb_analyst</code> recibe uso sobre la base, el esquema, el agente, el SP y el warehouse.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Permisos",
+          "code": "-- Da al analista acceso al agente y sus recursos\nGRANT USAGE ON DATABASE snowflake_intelligence TO ROLE tb_analyst;\nGRANT USAGE ON SCHEMA snowflake_intelligence.agents TO ROLE tb_analyst;\nGRANT USAGE ON AGENT snowflake_intelligence.agents.tasty_bytes_agent TO ROLE tb_analyst;\nGRANT USAGE ON PROCEDURE tb_101.analytics.sp_pronostico_ventas(STRING, NUMBER) TO ROLE tb_analyst;\nGRANT USAGE ON WAREHOUSE tb_analyst_wh TO ROLE tb_analyst;"
+        },
+        {
+          "type": "expected",
+          "html": "Cinco <code>Statement executed successfully.</code>"
+        },
+        {
+          "type": "text",
+          "html": "<p>Ahora publicamos el agente: se agrega al objeto de Snowflake CoWork de la cuenta (en SQL conserva su nombre real <code>SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT</code>). Primero lo creamos si no existe y luego le agregamos el agente.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Publicar en CoWork",
+          "code": "-- Crea el objeto de CoWork si no existe\nCREATE SNOWFLAKE INTELLIGENCE IF NOT EXISTS SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT;\n\n-- (si ya estaba publicado, el bloque lo indica en vez de fallar)\nEXECUTE IMMEDIATE $$\nBEGIN\n    ALTER SNOWFLAKE INTELLIGENCE SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT\n        ADD AGENT snowflake_intelligence.agents.tasty_bytes_agent;\n    RETURN 'Agente publicado en Snowflake CoWork';\nEXCEPTION\n    WHEN OTHER THEN RETURN 'El agente ya estaba publicado en CoWork';\nEND;\n$$;"
+        },
+        {
+          "type": "callout",
+          "kind": "info",
+          "title": "Bloque idempotente",
+          "html": "La publicacion va dentro de <code>EXECUTE IMMEDIATE</code> con un <code>EXCEPTION</code>: si el agente ya estaba publicado, devuelve un mensaje en vez de fallar. Puedes re-ejecutar este paso sin romper nada."
+        },
+        {
+          "type": "expected",
+          "html": "<code>Agente publicado en Snowflake CoWork</code> (o <code>El agente ya estaba publicado en CoWork</code>)."
+        }
+      ]
+    },
+    {
+      "title": "Probar el agente por SQL",
+      "nav": "Probar por SQL",
+      "minutes": 1,
+      "badge": "SQL",
+      "resumen": "Probamos el agente con una llamada SQL para confirmar que responde antes de abrirlo al negocio.",
+      "criterio": "la columna RESPUESTA_AGENTE devuelve el contenido de la respuesta con las 3 marcas con mas ventas en 2022.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p><code>SNOWFLAKE.CORTEX.DATA_AGENT_RUN</code> invoca al agente desde SQL con un mensaje en formato JSON: es la misma API que usara la app del LAB 9. <code>TRY_PARSE_JSON(...):content</code> extrae el contenido: texto de la respuesta, herramientas usadas y SQL ejecutado.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "DATA_AGENT_RUN",
+          "code": "-- Pregunta al agente por SQL y extrae la respuesta\nSELECT TRY_PARSE_JSON(\n  SNOWFLAKE.CORTEX.DATA_AGENT_RUN(\n    'SNOWFLAKE_INTELLIGENCE.AGENTS.TASTY_BYTES_AGENT',\n    $${\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"Cuales son las 3 marcas con mas ventas en 2022?\"}]}]}$$\n  )\n):content AS respuesta_agente;"
+        },
+        {
+          "type": "expected",
+          "html": "Una columna <code>RESPUESTA_AGENTE</code> con un JSON que incluye las 3 marcas con mas ventas en 2022 (Kitakata Ramen Bar primero). Puede tardar varias decenas de segundos."
+        }
+      ]
+    },
+    {
+      "title": "Usar el agente en Snowflake CoWork",
+      "nav": "Usar en CoWork",
+      "minutes": 4,
+      "badge": "UI",
+      "resumen": "Conversamos con el agente en CoWork y vemos como elige herramientas, genera SQL y cita reviews.",
+      "criterio": "las 5 preguntas sugeridas responden con la herramienta esperada y \"Show details\" muestra herramientas, SQL generado y citas de reviews.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Ahora como usuario de negocio: sin SQL, solo preguntas.</p><ol><li>Abre Snowflake CoWork: en Snowsight, <strong>AI &amp; ML &gt; Snowflake CoWork</strong> (en el quickstart aparece como <em>Snowflake Intelligence</em>), o directamente <code>ai.snowflake.com</code>.</li><li>En el selector de agentes elige <strong>\"Tasty Bytes Copilot\"</strong>.</li><li>Haz las 5 preguntas sugeridas (aparecen como sugerencias en la pantalla inicial).</li><li>En cada respuesta abre <strong>\"Show details\"</strong>: veras que herramienta eligio el agente, el SQL que genero Cortex Analyst y las reviews citadas por Cortex Search.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/snowflake-intelligence-interface.gif",
+          "caption": "Interfaz de Snowflake Intelligence: elegir el agente y preguntar (quickstart; alli el agente tiene otro nombre)"
+        },
+        {
+          "type": "text",
+          "html": "<table class=\"data-table\"><thead><tr><th>#</th><th>Pregunta</th><th>Herramienta(s)</th><th>Resultado verificado</th></tr></thead><tbody><tr><td>1</td><td>Cuales son las 5 marcas con mas ventas en 2022? Muestralo en una grafica</td><td>VentasTastyBytes + data_to_chart</td><td>Kitakata Ramen Bar <code>$514,197,279.50</code>, Nani's Kitchen <code>$488,849,952</code> (las 5 suman ~$2,184.9M)</td></tr><tr><td>2</td><td>Que dicen los clientes de Freezing Point?</td><td>ReviewsClientes</td><td>Elogian Waffle Cone y paletas; quejas por producto en mal estado / temperatura</td></tr><tr><td>3</td><td>Que ciudad tiene el mejor ticket promedio y que opinan ahi los clientes?</td><td>VentasTastyBytes + ReviewsClientes</td><td>Manchester <code>$41.48</code> por orden en 2022</td></tr><tr><td>4</td><td>Pronostica las ventas de Kitakata Ramen Bar para los proximos 3 meses</td><td>PronosticoVentas + data_to_chart</td><td>~$184.4M (2022-11 $59,768,738; 2022-12 $61,471,567; 2023-01 $63,174,397)</td></tr><tr><td>5</td><td>Llueve menos = vendemos mas? Analiza Seattle en 2022</td><td>VentasTastyBytes</td><td>Dias sin lluvia vendieron ~23% mas; correlacion -0.33</td></tr></tbody></table>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/snowflake-intelligence-prompt1.png",
+          "caption": "Ejemplo de respuesta con grafica (quickstart)"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/snowflake-intelligence-prompt2.png",
+          "caption": "Ejemplo de respuesta que cruza reviews y metricas de negocio (quickstart)"
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "El agente encadena Analyst + Search en una misma respuesta",
+          "html": "En la pregunta 3 nadie le dijo que herramientas usar: el agente llama a VentasTastyBytes para encontrar la ciudad con mejor ticket (Manchester $41.48) y luego a ReviewsClientes para saber que opinan ahi los clientes, y relaciona numeros y opiniones en una sola respuesta."
+        },
+        {
+          "type": "expected",
+          "html": "Cada respuesta tarda entre 26 y 70 s: el agente planea, ejecuta herramientas y redacta."
+        }
+      ]
+    },
+    {
+      "title": "Editar el agente desde la UI",
+      "nav": "Editar el agente",
+      "minutes": 1,
+      "badge": "UI",
+      "resumen": "Ajustamos el estilo del agente desde la interfaz, sin codigo, y comprobamos el cambio al instante.",
+      "criterio": "tras guardar el cambio, la misma pregunta se responde con el nuevo estilo.",
+      "blocks": [
+        {
+          "type": "callout",
+          "kind": "info",
+          "title": "Nosotros lo creamos por SQL",
+          "html": "En el quickstart oficial el agente se crea con clics (<em>AI &amp; ML &gt; Agents &gt; Create agent</em>) y se le agregan Cortex Analyst y Cortex Search en la pestana <em>Tools</em>. Nosotros hicimos lo mismo con <code>CREATE AGENT ... FROM SPECIFICATION</code>: es el mismo objeto, y puedes verlo y editarlo en la UI. La imagen siguiente es solo referencia; no crees otro agente."
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/snowflake-intelligence-create-agent.png",
+          "caption": "Referencia: crear un agente desde la UI (quickstart). No es necesario: ya lo creaste por SQL."
+        },
+        {
+          "type": "text",
+          "html": "<p>El comportamiento del agente vive en sus instrucciones: cambiarlas no requiere codigo.</p><ol><li><strong>AI &amp; ML &gt; Agents &gt; TASTY_BYTES_AGENT &gt; Edit</strong>.</li><li>Ve a la seccion <strong>Orchestration</strong> y cambia la instruccion de respuesta (por ejemplo: <em>\"responde como un chef\"</em>).</li><li>Pulsa <strong>Save</strong>.</li><li>Vuelve a Snowflake CoWork y repite una de las preguntas: compara el tono con la respuesta anterior.</li></ol>"
+        },
+        {
+          "type": "image",
+          "src": "img/quickstart/vignette-3/snowflake-intelligence-edit-agent.gif",
+          "caption": "Abrir el agente y pulsar Edit (quickstart)"
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Re-ejecutar el CREATE pisa tus cambios",
+          "html": "Si vuelves a correr el <code>CREATE OR REPLACE AGENT</code> del paso 2, las ediciones hechas en la UI se reemplazan por la especificacion SQL."
+        }
+      ]
+    }
+  ]
+}

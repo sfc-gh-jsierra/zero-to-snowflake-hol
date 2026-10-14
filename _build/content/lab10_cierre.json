@@ -1,0 +1,151 @@
+{
+  "lab": "lab10_cierre.html",
+  "intro": [
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "Como trabajar este lab",
+      "html": "Para el cleanup opcional abre <strong>Projects &gt; Workspaces</strong>, crea un <strong>SQL File</strong> nuevo (<em>+ Add new &gt; SQL File</em>) y nombralo <code>lab10_cierre</code>. Pega cada bloque, selecciona solo lo que pegaste y ejecuta con <strong>Ctrl/Cmd + Enter</strong>."
+    }
+  ],
+  "steps": [
+    {
+      "title": "Recap y arquitectura final",
+      "nav": "Recap",
+      "minutes": 1,
+      "badge": "UI",
+      "resumen": "Repasamos la arquitectura completa construida y ubicamos cada lab y funcionalidad de Snowflake usada.",
+      "criterio": "Puedes ubicar cada lab en la arquitectura final y nombrar la funcionalidad de Snowflake que uso.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>En 90 minutos Tasty Bytes paso de archivos en S3 a un agente conversacional con apps, todo en una sola plataforma y con un solo modelo de gobierno.</p><table class=\"data-table\"><thead><tr><th>Lab</th><th>Lo que construiste</th><th>Funcionalidad de Snowflake</th></tr></thead><tbody><tr><td>0 Setup</td><td>Base TB_101, roles, warehouses y carga desde S3</td><td>COPY INTO, warehouses Gen2, stages</td></tr><tr><td>1 Fundamentos</td><td>Warehouses, cache, clonado y recuperacion</td><td>Result Cache, Zero-Copy Clone, UNDROP, Resource Monitors</td></tr><tr><td>2 Pipeline</td><td>Ingesta de menu y pipeline de ingredientes</td><td>VARIANT, FLATTEN, Dynamic Tables</td></tr><tr><td>3 Cortex AISQL</td><td>Analisis de reviews con IA en SQL</td><td>AI_SENTIMENT, AI_CLASSIFY, AI_COMPLETE, AI_SUMMARIZE_AGG</td></tr><tr><td>4 Multimodal</td><td>Audio, documentos e imagenes analizados con SQL</td><td>AI_TRANSCRIBE, AI_EXTRACT, AI_COMPLETE con imagenes</td></tr><tr><td>5 Gobierno</td><td>Clasificacion, enmascaramiento, filas por rol y calidad</td><td>RBAC (Role-Based Access Control), clasificacion de PII (Personally Identifiable Information), Masking/Row Access Policies, DMF (Data Metric Function)</td></tr><tr><td>6 Marketplace</td><td>Clima unido a ventas sin ETL</td><td>Snowflake Marketplace, Secure Data Sharing</td></tr><tr><td>7 Semantica y busqueda</td><td>Tablas curadas, servicio de busqueda y modelo semantico</td><td>Cortex Search, SV (Semantic View), Cortex Analyst</td></tr><tr><td>8 Agente CoWork</td><td>Agente con herramientas y pronostico</td><td>Cortex Agents, SP (Stored Procedure), Snowflake CoWork</td></tr><tr><td>9 Apps</td><td>Copilot Streamlit y Command Center React</td><td>Streamlit in Snowflake, Snowflake App Runtime, SPCS (Snowpark Container Services)</td></tr></tbody></table>"
+        },
+        {
+          "type": "code",
+          "lang": "text",
+          "label": "Arquitectura final",
+          "code": "# Arquitectura final de punta a punta\nS3 --> RAW --> Dynamic Tables --> ANALYTICS\n                                  |\n  Marketplace (clima) ------------+\n                                  v\n  AISQL · Multimodal   Semantic View + Cortex Search\n  Gobierno (RBAC, masking, RLS, DMF)        |\n                                  v\n                Agente Snowflake CoWork\n                                  |\n                   Streamlit  ·  React (App Runtime)"
+        },
+        {
+          "type": "callout",
+          "kind": "info",
+          "title": "Una sola plataforma",
+          "html": "Datos, IA, gobierno, Marketplace, agente y apps conviven en la misma cuenta: sin mover datos entre sistemas y con los mismos roles aplicando en todas las capas."
+        }
+      ]
+    },
+    {
+      "title": "Siguientes pasos y comunidad",
+      "nav": "Siguientes pasos",
+      "minutes": 1,
+      "badge": "UI",
+      "resumen": "Compartimos recursos y comunidad para seguir practicando y llevar lo aprendido a proyectos reales.",
+      "criterio": "Tienes a mano el quickstart oficial y la documentacion para seguir practicando.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Repite el recorrido a tu ritmo y profundiza en los temas que mas aplican a tu caso de uso.</p><ul><li><a href=\"https://www.snowflake.com/en/developers/guides/zero-to-snowflake/\" target=\"_blank\">Quickstart oficial: Zero to Snowflake</a></li><li><a href=\"https://docs.snowflake.com/en/user-guide/snowflake-cortex/cortex-agents\" target=\"_blank\">Documentacion: Cortex Agents</a></li><li><a href=\"https://docs.snowflake.com/en/user-guide/views-semantic/overview\" target=\"_blank\">Documentacion: Semantic Views</a></li><li><a href=\"https://docs.snowflake.com/en/developer-guide/snowflake-app-runtime/about-snowflake-app-runtime\" target=\"_blank\">Documentacion: Snowflake App Runtime</a></li><li><a href=\"https://www.snowflake.com/en/developers/guides/\" target=\"_blank\">Mas quickstarts en Snowflake Developers</a></li><li><a href=\"https://github.com/sfc-gh-jparrado/HOL\" target=\"_blank\">Repositorio del HOL con las apps</a></li></ul>"
+        },
+        {
+          "type": "callout",
+          "kind": "tip",
+          "title": "Comunidad",
+          "html": "Unete a la comunidad Snowflake (grupos de usuarios y foros) para compartir lo que construyas y resolver dudas con otros practicantes."
+        }
+      ]
+    },
+    {
+      "title": "Cleanup opcional",
+      "nav": "Cleanup",
+      "minutes": 2,
+      "badge": "SQL",
+      "resumen": "Borramos opcionalmente todo lo creado en el HOL para dejar la cuenta limpia y sin consumo.",
+      "criterio": "Todos los bloques terminan sin errores y <code>SHOW DATABASES LIKE 'TB_101'</code> no devuelve filas.",
+      "blocks": [
+        {
+          "type": "text",
+          "html": "<p>Si usaste una cuenta de prueba que vas a seguir usando, libera los objetos del HOL. Si quieres seguir practicando, no lo ejecutes.</p>"
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Irreversible",
+          "html": "Estos bloques eliminan bases, warehouses, roles, el agente y las apps. No se puede deshacer, salvo con <code>UNDROP</code> dentro del periodo de Time Travel (los roles y warehouses no se recuperan)."
+        },
+        {
+          "type": "text",
+          "html": "<p>Empieza, en tu SQL File, por la app Streamlit. Usamos <code>ACCOUNTADMIN</code> porque vamos a borrar objetos creados por varios roles.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Apps",
+          "code": "-- Usa el rol administrador para limpiar\nUSE ROLE accountadmin;\n\n-- Apps\nDROP STREAMLIT IF EXISTS tb_101.analytics.tasty_bytes_copilot;"
+        },
+        {
+          "type": "text",
+          "html": "<p>El agente se retira primero de Snowflake CoWork y luego se borra. El bloque <code>EXECUTE IMMEDIATE</code> captura la excepcion, asi no falla si el agente no estaba publicado.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Agente",
+          "code": "-- La app React se elimina desde la carpeta react-app con:  snow app teardown --force\n-- Agente: quitarlo de Snowflake CoWork y borrarlo\nEXECUTE IMMEDIATE $$\nBEGIN\n    ALTER SNOWFLAKE INTELLIGENCE SNOWFLAKE_INTELLIGENCE_OBJECT_DEFAULT\n        DROP AGENT snowflake_intelligence.agents.tasty_bytes_agent;\n    RETURN 'Agente retirado de CoWork';\nEXCEPTION\n    WHEN OTHER THEN RETURN 'El agente no estaba publicado';\nEND;\n$$;\n\n-- Borra el agente\nDROP AGENT IF EXISTS snowflake_intelligence.agents.tasty_bytes_agent;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Las politicas de gobierno se desasocian antes de borrar la base, y se elimina el rol del data steward.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Gobierno",
+          "code": "-- Gobierno (las politicas se desasocian antes de borrar la base)\nALTER TABLE IF EXISTS tb_101.raw_customer.customer_loyalty DROP ALL ROW ACCESS POLICIES;\n-- Quita las masking policies del tag PII\nALTER TAG IF EXISTS tb_101.governance.pii UNSET MASKING POLICY tb_101.governance.mask_string_pii, MASKING POLICY tb_101.governance.mask_date_pii;\n-- Borra el rol de data steward\nDROP ROLE IF EXISTS tb_data_steward;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Por ultimo, las bases (la del lab y la del Marketplace), los warehouses, el resource monitor y los roles.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Bases de datos",
+          "code": "-- Base de datos del lab, Marketplace, warehouses y roles\nDROP DATABASE IF EXISTS tb_101;\n-- Borra la base del Marketplace\nDROP DATABASE IF EXISTS zts_weathersource;"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Warehouses",
+          "code": "-- Borra los warehouses del lab\nDROP WAREHOUSE IF EXISTS my_wh;\nDROP WAREHOUSE IF EXISTS tb_de_wh;\nDROP WAREHOUSE IF EXISTS tb_dev_wh;\nDROP WAREHOUSE IF EXISTS tb_analyst_wh;"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Warehouse Cortex y resource monitor",
+          "code": "-- Borra el warehouse de Cortex\nDROP WAREHOUSE IF EXISTS tb_cortex_wh;\n-- Borra el monitor de recursos\nDROP RESOURCE MONITOR IF EXISTS my_resource_monitor;"
+        },
+        {
+          "type": "code",
+          "lang": "sql",
+          "label": "Roles",
+          "code": "-- Borra los roles del lab\nDROP ROLE IF EXISTS tb_admin;\nDROP ROLE IF EXISTS tb_data_engineer;\nDROP ROLE IF EXISTS tb_dev;\nDROP ROLE IF EXISTS tb_analyst;"
+        },
+        {
+          "type": "text",
+          "html": "<p>Finalmente la app React: no vive en <code>TB_101</code> sino en tu base personal <code>USER$</code>, asi que se elimina desde la carpeta <code>react-app/</code> en tu terminal.</p>"
+        },
+        {
+          "type": "code",
+          "lang": "bash",
+          "label": "Eliminar la app React",
+          "code": "# Elimina la app React (desde react-app)\nsnow app teardown --force"
+        },
+        {
+          "type": "expected",
+          "html": "Cada <code>DROP</code> responde <code>... successfully dropped.</code> (o <code>Statement executed successfully.</code> si el objeto ya no existia); el bloque del agente devuelve <code>Agente retirado de CoWork</code> o <code>El agente no estaba publicado</code>. Al final, <code>SHOW DATABASES LIKE 'TB_101'</code> no devuelve filas."
+        }
+      ]
+    }
+  ]
+}
