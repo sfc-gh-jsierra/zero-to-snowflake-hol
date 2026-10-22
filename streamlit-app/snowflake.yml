@@ -1,0 +1,15 @@
+definition_version: 2
+entities:
+  tasty_bytes_copilot:
+    type: streamlit
+    identifier:
+      name: TASTY_BYTES_COPILOT
+      database: TB_101
+      schema: ANALYTICS
+    query_warehouse: TB_ANALYST_WH
+    runtime_name: SYSTEM$ST_CONTAINER_RUNTIME_PY3_11
+    compute_pool: SYSTEM_COMPUTE_POOL_CPU
+    title: "Tasty Bytes Copilot"
+    main_file: streamlit_app.py
+    artifacts:
+      - streamlit_app.py

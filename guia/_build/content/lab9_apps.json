@@ -24,12 +24,22 @@
       "blocks": [
         {
           "type": "text",
-          "html": "<p>Vas a convertir todo lo construido (ventas, reviews con sentimiento y el agente) en una app que el equipo de operaciones de Tasty Bytes puede usar sin escribir SQL. <strong>Streamlit in Snowflake</strong> corre dentro de la cuenta: sin servidores, sin credenciales fuera de Snowflake y con los mismos roles y politicas de gobierno.</p><ol><li>En Snowsight ve a <strong>Projects &gt; Streamlit</strong> y haz clic en <strong>+ Streamlit App</strong>.</li><li><strong>App title:</strong> <code>TASTY_BYTES_COPILOT</code>.</li><li><strong>App location:</strong> base <code>TB_101</code>, schema <code>ANALYTICS</code>.</li><li><strong>Query warehouse:</strong> <code>TB_ANALYST_WH</code>.</li><li><strong>Runtime:</strong> elige <em>Run on container</em> (container runtime) con el compute pool <code>SYSTEM_COMPUTE_POOL_CPU</code>.</li><li>Clic en <strong>Create</strong>.</li><li>En el editor, borra todo el codigo de ejemplo, pega el codigo completo de abajo y haz clic en <strong>Run</strong>.</li></ol>"
+          "html": "<p>Vas a convertir todo lo construido (ventas, reviews con sentimiento y el agente) en una app que el equipo de operaciones de Tasty Bytes puede usar sin escribir SQL. <strong>Streamlit in Snowflake</strong> corre dentro de la cuenta: sin servidores, sin credenciales fuera de Snowflake y con los mismos roles y politicas de gobierno.</p><ol><li>En Snowsight ve a <strong>Projects &gt; Streamlit</strong> y haz clic en <strong>+ Streamlit App</strong>.</li><li><strong>App title:</strong> <code>TASTY_BYTES_COPILOT</code>.</li><li><strong>App location:</strong> base <code>TB_101</code>, schema <code>ANALYTICS</code>.</li><li><strong>Query warehouse:</strong> <code>TB_ANALYST_WH</code>.</li><li><strong>Runtime:</strong> elige <em>Run on container</em> (container runtime) con el compute pool <code>SYSTEM_COMPUTE_POOL_CPU</code>.</li><li>Clic en <strong>Create</strong>.</li><li>En el editor, borra todo el codigo de ejemplo, pega el codigo de la app (elige una de las tres opciones de abajo) y haz clic en <strong>Run</strong>.</li></ol>"
         },
         {
           "type": "image",
           "src": "img/quickstart/vignette-5/create_streamlit_app.gif",
           "caption": "Crear una app Streamlit desde Snowsight (quickstart Zero to Snowflake)"
+        },
+        {
+          "type": "text",
+          "html": "<p><strong>Tres formas de obtener el codigo de la app:</strong></p><ol><li><strong>Descargarlo de GitHub:</strong> abre <a href=\"https://raw.githubusercontent.com/sfc-gh-jsierra/zero-to-snowflake-hol/main/streamlit-app/streamlit_app.py\" target=\"_blank\" rel=\"noopener\">streamlit_app.py</a>, copia todo y pegalo en el editor. Si quieres todo el HOL (apps, archivos y SQL), descarga el <a href=\"https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol/archive/refs/heads/main.zip\">paquete completo en ZIP</a> o visita el <a href=\"https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol\" target=\"_blank\" rel=\"noopener\">repositorio</a>.</li><li><strong>Pedirselo a Cortex Code:</strong> pega el prompt de abajo en Cortex Code (en Snowsight o en Desktop) y el agente construye y despliega la app por ti.</li><li><strong>Copiarlo de esta guia:</strong> usa el bloque de codigo completo mas abajo.</li></ol>"
+        },
+        {
+          "type": "code",
+          "lang": "text",
+          "label": "Prompt para Cortex Code",
+          "code": "# Prompt para pegar en Cortex Code\nCrea una app Streamlit in Snowflake llamada TASTY_BYTES_COPILOT en TB_101.ANALYTICS,\ncon warehouse TB_ANALYST_WH, container runtime SYSTEM$ST_CONTAINER_RUNTIME_PY3_11\ny compute pool SYSTEM_COMPUTE_POOL_CPU. Usa como codigo el archivo:\nhttps://raw.githubusercontent.com/sfc-gh-jsierra/zero-to-snowflake-hol/main/streamlit-app/streamlit_app.py\nSolo usa paquetes preinstalados (streamlit, pandas, altair, pydeck), sin EAI.\nAl terminar, dame el enlace para abrir la app en Snowsight."
         },
         {
           "type": "code",
@@ -83,7 +93,7 @@
       "blocks": [
         {
           "type": "text",
-          "html": "<p>Cuando el negocio pide una experiencia a la medida (3D, interacciones ricas, streaming), una app web completa tambien puede vivir dentro de Snowflake. <strong>Tasty Bytes Command Center</strong> es una app Next.js 16 + React 19 que se despliega con <strong>Snowflake App Runtime</strong> y queda servida en SPCS (Snowpark Container Services). El instructor comparte la carpeta <code>react-app/</code>: descargala (o abrela si ya la tienes) y abre una terminal en ella. No hay infraestructura que montar.</p><p>Requiere <strong>Snowflake CLI 3.26 o superior</strong>. Instala o actualiza la CLI y confirma la version.</p>"
+          "html": "<p>Cuando el negocio pide una experiencia a la medida (3D, interacciones ricas, streaming), una app web completa tambien puede vivir dentro de Snowflake. <strong>Tasty Bytes Command Center</strong> es una app Next.js 16 + React 19 que se despliega con <strong>Snowflake App Runtime</strong> y queda servida en SPCS (Snowpark Container Services). Descarga el <a href=\"https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol/archive/refs/heads/main.zip\">paquete completo en ZIP</a> desde el <a href=\"https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol\" target=\"_blank\" rel=\"noopener\">repositorio del HOL</a>, descomprimelo y entra a la carpeta <code>react-app/</code>, y abre una terminal en ella. No hay infraestructura que montar.</p><p>Requiere <strong>Snowflake CLI 3.26 o superior</strong>. Instala o actualiza la CLI y confirma la version.</p>"
         },
         {
           "type": "code",

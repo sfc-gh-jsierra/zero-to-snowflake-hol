@@ -1,2 +1,11 @@
 .DS_Store
 __pycache__/
+*.pyc
+node_modules/
+.next/
+.venv-snowcli/
+streamlit/
+streamlit-app/output/
+*.tsbuildinfo
+.env*
+snowflake.log

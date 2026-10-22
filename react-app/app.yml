@@ -1,0 +1,36 @@
+version: 2
+
+name: TASTY_BYTES_COMMAND_CENTER
+# USER$ = la base de datos personal de quien despliega (cada asistente tiene la suya)
+database: USER$
+schema: PUBLIC
+query_warehouse: TB_ANALYST_WH
+
+label: "Tasty Bytes Command Center"
+description: "Centro de mando de Tasty Bytes: globo 3D de ventas, analitica avanzada y chat con el agente de Snowflake CoWork."
+icon: "public/icon.svg"
+
+ignore:
+  - node_modules
+  - .env*
+  - __pycache__
+  - "*.pyc"
+  - .next
+  - .git
+  - snowflake.log
+
+install:
+  commands:
+    - ["npm", "ci", "--include=dev"]
+
+build:
+  commands:
+    - ["npm", "run", "build"]
+    # Standalone mode
+    - ["cp", "-r", ".next/static", ".next/standalone/.next/static"]
+    - ["cp", "-r", "public", ".next/standalone/public"]
+    # Standalone already bundles its own node_modules
+    - ["rm", "-rf", "node_modules"]
+
+run:
+  command: ["node", ".next/standalone/server.js"]

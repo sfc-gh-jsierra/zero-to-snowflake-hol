@@ -1,0 +1,58 @@
+{
+  "name": "tasty-bytes-command-center",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@deck.gl/core": "^9.4.0",
+    "@deck.gl/geo-layers": "^9.4.0",
+    "@deck.gl/layers": "^9.4.0",
+    "@deck.gl/react": "^9.4.0",
+    "@radix-ui/react-separator": "^1.1.15",
+    "@radix-ui/react-slot": "^1.2.4",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@tanstack/react-query": "^5.103.2",
+    "@types/topojson-client": "^3.1.5",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "deck.gl": "^9.4.0",
+    "echarts": "^5.6.0",
+    "echarts-for-react": "^3.0.6",
+    "framer-motion": "^12.43.0",
+    "lucide-react": "^1.47.0",
+    "next": "^16.3.5",
+    "postcss": "^8.5.15",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "snowflake-sdk": "^3.3.0",
+    "tailwind-merge": "^3.7.0",
+    "tailwindcss": "^4.3.3",
+    "topojson-client": "^3.1.0",
+    "vega": "^6.4.0",
+    "vega-embed": "^7.3.0",
+    "vega-lite": "^6.5.0",
+    "world-atlas": "^2.0.2"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^26.6.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/snowflake-sdk": "^1.6.24",
+    "@types/topojson-specification": "^1.0.5",
+    "smol-toml": "^1.8.0",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "axios": "^1.16.1",
+    "postcss": "^8.5.15"
+  }
+}
