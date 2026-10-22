@@ -98,6 +98,12 @@
         {
           "type": "code",
           "lang": "bash",
+          "label": "Descargar todo el HOL",
+          "code": "# Opcion A: con git (descarga todo el HOL)\ngit clone https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol.git\ncd zero-to-snowflake-hol/react-app\n\n# Opcion B: sin git (descarga el ZIP y lo descomprime)\ncurl -L -o zero-to-snowflake-hol.zip https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol/archive/refs/heads/main.zip\nunzip zero-to-snowflake-hol.zip\ncd zero-to-snowflake-hol-main/react-app"
+        },
+        {
+          "type": "code",
+          "lang": "bash",
           "label": "Snowflake CLI >= 3.26",
           "code": "# Instala o actualiza Snowflake CLI\npip install -U snowflake-cli\n# Verifica la version (3.26 o superior)\nsnow --version"
         },

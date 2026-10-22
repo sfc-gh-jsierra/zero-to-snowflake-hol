@@ -1179,6 +1179,17 @@ SUGERIDAS = [
             <div class="step-criterio"><strong>Criterio de exito:</strong> <code>snow app deploy</code> termina sin errores y <code>snow app open</code> abre <code>TASTY_BYTES_COMMAND_CENTER</code> en tu navegador.</div>
 <div class="step-text"><p>Cuando el negocio pide una experiencia a la medida (3D, interacciones ricas, streaming), una app web completa tambien puede vivir dentro de Snowflake. <strong>Tasty Bytes Command Center</strong> es una app Next.js 16 + React 19 que se despliega con <strong>Snowflake App Runtime</strong> y queda servida en SPCS (Snowpark Container Services). Descarga el <a href="https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol/archive/refs/heads/main.zip">paquete completo en ZIP</a> desde el <a href="https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol" target="_blank" rel="noopener">repositorio del HOL</a>, descomprimelo y entra a la carpeta <code>react-app/</code>, y abre una terminal en ella. No hay infraestructura que montar.</p><p>Requiere <strong>Snowflake CLI 3.26 o superior</strong>. Instala o actualiza la CLI y confirma la version.</p></div>
 <div class="code-block" data-language="bash">
+  <div class="code-header"><span class="code-language">BASH<span class="code-label">Descargar todo el HOL</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
+  <pre><code><span class="tk-c"># Opcion A: con git (descarga todo el HOL)</span>
+<span class="tk-k">git</span> clone https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol.<span class="tk-k">git</span>
+<span class="tk-k">cd</span> zero-to-snowflake-hol/react-<span class="tk-k">app</span>
+
+<span class="tk-c"># Opcion B: sin git (descarga el ZIP y lo descomprime)</span>
+curl -L -o zero-to-snowflake-hol.zip https://github.com/sfc-gh-jsierra/zero-to-snowflake-hol/archive/refs/heads/main.zip
+unzip zero-to-snowflake-hol.zip
+<span class="tk-k">cd</span> zero-to-snowflake-hol-main/react-<span class="tk-k">app</span></code></pre>
+</div>
+<div class="code-block" data-language="bash">
   <div class="code-header"><span class="code-language">BASH<span class="code-label">Snowflake CLI &gt;= 3.26</span></span><div class="code-actions"><button class="btn-copy" onclick="copyCode(this)" title="Copiar codigo">Copiar</button></div></div>
   <pre><code><span class="tk-c"># Instala o actualiza Snowflake CLI</span>
 <span class="tk-k">pip</span> <span class="tk-k">install</span> -U snowflake-cli
